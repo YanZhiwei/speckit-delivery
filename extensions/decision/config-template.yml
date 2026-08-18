@@ -1,0 +1,8 @@
+adr_directories:
+  - docs/architecture/decisions
+context_files:
+  - AGENTS.md
+  - CONTEXT.md
+accepted_statuses: [accepted]
+proposed_statuses: [proposed]
+final_records_may_reference_ephemeral_specs: false

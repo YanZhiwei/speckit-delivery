@@ -1,0 +1,29 @@
+{
+  "skill_name": "speckit-delivery",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Add a Redis-backed L2 cache to an application that already has an ADR for process-local caching. The Spec files are gitignored. Run the complete delivery workflow and preserve the final architectural reasoning.",
+      "expected_output": "Routes to Feature, retrieves the local-cache ADR, keeps decisions proposed through implementation, uses tasks as the Ralph queue, finalizes a self-contained ADR after review, and does not cite ignored Spec artifacts in durable records.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Users intermittently receive duplicate notifications after retry. Diagnose and fix it test-first, but avoid creating unnecessary design documents.",
+      "expected_output": "Routes to Bugfix, establishes reproduction/red evidence, diagnoses ownership or retry semantics, escalates only if an architecture decision changes, and records regression evidence.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Rename a misspelled heading in one Markdown file and prepare it for review.",
+      "expected_output": "Routes to Lightweight, avoids the full SDD ceremony, runs targeted documentation checks, and produces a concise handoff.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Use $sd to add an audit trail. Choose the appropriate delivery lane and explain its next durable artifact.",
+      "expected_output": "The short facade loads the canonical speckit-delivery router, performs normal lane discovery rather than assuming Feature, and preserves the router as the sole lifecycle-policy owner.",
+      "files": []
+    }
+  ]
+}

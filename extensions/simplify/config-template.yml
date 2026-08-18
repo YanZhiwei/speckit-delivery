@@ -1,0 +1,4 @@
+default_scope: diff
+repository_audit_requires_explicit_request: true
+auto_route_local_behavior_preserving_candidates: true
+require_net_deletion: true

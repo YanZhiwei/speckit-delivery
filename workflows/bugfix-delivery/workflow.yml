@@ -1,0 +1,79 @@
+schema_version: "1.0"
+workflow:
+  id: "bugfix-delivery"
+  name: "Spec Kit Bugfix Delivery"
+  version: "0.1.0"
+  author: "Yan Zhiwei"
+  description: "Guided bug assessment, fix, regression validation, review, evidence, and handoff."
+
+requires:
+  speckit_version: ">=0.16.4"
+  integrations:
+    any: ["codex", "claude", "copilot", "gemini", "opencode", "generic"]
+
+inputs:
+  report:
+    type: string
+    required: true
+    prompt: "Describe or link the bug report"
+  integration:
+    type: string
+    default: "auto"
+
+steps:
+  - id: assess
+    command: speckit.bug.assess
+    integration: "{{ inputs.integration }}"
+    input: { args: "{{ inputs.report }}" }
+
+  - id: assessment-gate
+    type: gate
+    message: "Confirm the bug is bounded; escalate architectural or cross-module remediation to Feature Delivery."
+    options: [approve, reject]
+    on_reject: abort
+
+  - id: decision-context
+    command: speckit.decision.context
+    integration: "{{ inputs.integration }}"
+    input: { args: "mode=resolve {{ inputs.report }}" }
+
+  - id: fix
+    command: speckit.bug.fix
+    integration: "{{ inputs.integration }}"
+    input: { args: "{{ inputs.report }}" }
+
+  - id: regression-test
+    command: speckit.bug.test
+    integration: "{{ inputs.integration }}"
+    input: { args: "{{ inputs.report }}" }
+
+  - id: simplify
+    command: speckit.simplify.scan
+    integration: "{{ inputs.integration }}"
+    input: { args: "scope=diff {{ inputs.report }}" }
+
+  - id: review
+    command: speckit.review.run
+    integration: "{{ inputs.integration }}"
+    input: { args: "lane=bugfix {{ inputs.report }}" }
+
+  - id: review-gate
+    type: gate
+    message: "Approve when regression evidence passes and no blocking review finding remains."
+    options: [approve, reject]
+    on_reject: abort
+
+  - id: decision-check
+    command: speckit.decision.check
+    integration: "{{ inputs.integration }}"
+    input: { args: "{{ inputs.report }}" }
+
+  - id: evidence
+    command: speckit.evidence.collect
+    integration: "{{ inputs.integration }}"
+    input: { args: "{{ inputs.report }}" }
+
+  - id: handoff
+    command: speckit.delivery.handoff
+    integration: "{{ inputs.integration }}"
+    input: { args: "lane=bugfix {{ inputs.report }}" }

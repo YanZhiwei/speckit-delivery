@@ -1,0 +1,43 @@
+schema_version: "1.0"
+
+bundle:
+  id: "speckit-delivery"
+  name: "Spec Kit Delivery"
+  version: "0.1.0"
+  role: "developer"
+  description: "Evidence-driven SDD with decision memory, Ralph orchestration, convergence, simplification, review, documentation sync, and PR handoff."
+  author: "Yan Zhiwei"
+  license: "MIT"
+
+requires:
+  speckit_version: ">=0.16.4"
+  tools: []
+  mcp: []
+
+provides:
+  extensions:
+    - id: "bug"
+      version: "1.0.0"
+    - id: "delivery"
+      version: "0.1.0"
+    - id: "decision"
+      version: "0.1.0"
+    - id: "ralph"
+      version: "0.1.0"
+    - id: "review"
+      version: "0.1.0"
+    - id: "simplify"
+      version: "0.1.0"
+    - id: "evidence"
+      version: "0.1.0"
+    - id: "docs-sync"
+      version: "0.1.0"
+  workflows:
+    - id: "feature-delivery"
+      version: "0.1.0"
+    - id: "bugfix-delivery"
+      version: "0.1.0"
+    - id: "lightweight-delivery"
+      version: "0.1.0"
+
+tags: ["sdd", "delivery", "adr", "multi-agent", "review"]

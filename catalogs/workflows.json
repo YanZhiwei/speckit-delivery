@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "updated_at": "2026-08-18T00:00:00Z",
+  "catalog_url": "https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.0/catalogs/workflows.json",
+  "workflows": {
+    "feature-delivery": {
+      "id": "feature-delivery",
+      "name": "Spec Kit Feature Delivery",
+      "description": "Full SDD delivery with decisions, Ralph, convergence, simplification, review, evidence, and handoff.",
+      "author": "Yan Zhiwei",
+      "version": "0.1.0",
+      "url": "https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.0/workflows/feature-delivery/workflow.yml",
+      "repository": "https://github.com/YanZhiwei/speckit-delivery",
+      "license": "MIT",
+      "requires": {"speckit_version": ">=0.16.4"},
+      "tags": ["sdd", "feature", "delivery"]
+    },
+    "bugfix-delivery": {
+      "id": "bugfix-delivery",
+      "name": "Spec Kit Bugfix Delivery",
+      "description": "Bug assessment, remediation, regression verification, review, evidence, and handoff.",
+      "author": "Yan Zhiwei",
+      "version": "0.1.0",
+      "url": "https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.0/workflows/bugfix-delivery/workflow.yml",
+      "repository": "https://github.com/YanZhiwei/speckit-delivery",
+      "license": "MIT",
+      "requires": {"speckit_version": ">=0.16.4"},
+      "tags": ["sdd", "bugfix", "delivery"]
+    },
+    "lightweight-delivery": {
+      "id": "lightweight-delivery",
+      "name": "Spec Kit Lightweight Delivery",
+      "description": "Proportional review and evidence for mechanical or behavior-preserving changes.",
+      "author": "Yan Zhiwei",
+      "version": "0.1.0",
+      "url": "https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.0/workflows/lightweight-delivery/workflow.yml",
+      "repository": "https://github.com/YanZhiwei/speckit-delivery",
+      "license": "MIT",
+      "requires": {"speckit_version": ">=0.16.4"},
+      "tags": ["small-change", "lightweight", "delivery"]
+    }
+  }
+}

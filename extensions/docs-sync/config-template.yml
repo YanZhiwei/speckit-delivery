@@ -1,0 +1,7 @@
+enabled: false
+source_roots: [docs]
+generated_roots: []
+manifest: null
+sync_command: null
+verify_command: null
+source_is_authoritative: true

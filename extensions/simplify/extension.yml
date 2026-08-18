@@ -1,0 +1,32 @@
+schema_version: "1.0"
+
+extension:
+  id: simplify
+  name: Evidence-Driven Simplification
+  version: "0.1.0"
+  description: "Find and verify simplifications using consumer evidence, ownership analysis, and net deletion."
+  category: code
+  effect: read-write
+  author: Yan Zhiwei
+  repository: https://github.com/YanZhiwei/speckit-delivery
+  homepage: https://github.com/YanZhiwei/speckit-delivery/tree/main/extensions/simplify
+  license: MIT
+
+requires:
+  speckit_version: ">=0.16.4"
+
+provides:
+  commands:
+    - name: speckit.simplify.scan
+      file: commands/speckit.simplify.scan.md
+      description: "Find evidence-backed simplification candidates in the current diff or explicit repository scope."
+    - name: speckit.simplify.verify
+      file: commands/speckit.simplify.verify.md
+      description: "Verify an implemented simplification reduced surface area without losing required behavior."
+  config:
+    - name: simplify-config.yml
+      template: config-template.yml
+      description: "Simplification scope and routing defaults."
+      required: false
+
+tags: ["simplification", "dead-code", "architecture", "review"]

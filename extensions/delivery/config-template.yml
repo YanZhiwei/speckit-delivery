@@ -1,0 +1,9 @@
+schema_version: "1.0"
+artifact_policy: tracked
+issue_tracker: github
+context_files: [AGENTS.md, CONTEXT.md]
+adr_directories: [docs/architecture/decisions]
+max_convergence_rounds: 3
+max_review_fix_rounds: 3
+docs_sync: auto
+pull_request_template: templates/pull-request.md

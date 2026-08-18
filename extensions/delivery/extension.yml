@@ -1,0 +1,38 @@
+schema_version: "1.0"
+
+extension:
+  id: delivery
+  name: Spec Kit Delivery Core
+  version: "0.1.0"
+  description: "Route delivery work, initialize local policy, and render a durable pull-request handoff from final evidence."
+  category: process
+  effect: read-write
+  author: Yan Zhiwei
+  repository: https://github.com/YanZhiwei/speckit-delivery
+  homepage: https://github.com/YanZhiwei/speckit-delivery/tree/main/extensions/delivery
+  license: MIT
+
+requires:
+  speckit_version: ">=0.16.4"
+
+provides:
+  commands:
+    - name: speckit.delivery.route
+      file: commands/speckit.delivery.route.md
+      description: "Choose and orchestrate the Feature, Bugfix, or Lightweight delivery lane."
+    - name: speckit.delivery.init
+      file: commands/speckit.delivery.init.md
+      description: "Discover project governance and create a project-local delivery configuration."
+    - name: speckit.delivery.handoff
+      file: commands/speckit.delivery.handoff.md
+      description: "Render a stable PR body from durable requirements, decisions, review, and evidence."
+    - name: speckit.delivery.lightweight
+      file: commands/speckit.delivery.lightweight.md
+      description: "Implement a verified small change without creating full feature artifacts."
+  config:
+    - name: delivery-config.yml
+      template: config-template.yml
+      description: "Project-local delivery lanes, artifact policy, paths, and loop bounds."
+      required: true
+
+tags: ["sdd", "delivery", "routing", "handoff", "configuration"]

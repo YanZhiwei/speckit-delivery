@@ -1,0 +1,6 @@
+provider: auto
+max_parallel: 4
+max_retries: 2
+artifact_policy: tracked
+generic_fallback: sequential
+orchestrator_marks_completion: true

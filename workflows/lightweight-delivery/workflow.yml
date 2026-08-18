@@ -1,0 +1,42 @@
+schema_version: "1.0"
+workflow:
+  id: "lightweight-delivery"
+  name: "Spec Kit Lightweight Delivery"
+  version: "0.1.0"
+  author: "Yan Zhiwei"
+  description: "Proportional delivery for mechanical, documentation-only, or behavior-preserving changes."
+
+requires:
+  speckit_version: ">=0.16.4"
+  integrations:
+    any: ["codex", "claude", "copilot", "gemini", "opencode", "generic"]
+
+inputs:
+  change:
+    type: string
+    required: true
+    prompt: "Describe the small change"
+  integration:
+    type: string
+    default: "auto"
+
+steps:
+  - id: implement
+    command: speckit.delivery.lightweight
+    integration: "{{ inputs.integration }}"
+    input: { args: "{{ inputs.change }}" }
+
+  - id: review
+    command: speckit.review.run
+    integration: "{{ inputs.integration }}"
+    input: { args: "lane=lightweight {{ inputs.change }}" }
+
+  - id: evidence
+    command: speckit.evidence.collect
+    integration: "{{ inputs.integration }}"
+    input: { args: "lane=lightweight {{ inputs.change }}" }
+
+  - id: handoff
+    command: speckit.delivery.handoff
+    integration: "{{ inputs.integration }}"
+    input: { args: "lane=lightweight {{ inputs.change }}" }

@@ -1,0 +1,24 @@
+schema_version: "1.0"
+
+extension:
+  id: review
+  name: Delivery Code Review
+  version: "0.1.0"
+  description: "Review the live outgoing diff against standards, specification, architecture, correctness, and risk."
+  category: code
+  effect: read-only
+  author: Yan Zhiwei
+  repository: https://github.com/YanZhiwei/speckit-delivery
+  homepage: https://github.com/YanZhiwei/speckit-delivery/tree/main/extensions/review
+  license: MIT
+
+requires:
+  speckit_version: ">=0.16.4"
+
+provides:
+  commands:
+    - name: speckit.review.run
+      file: commands/speckit.review.run.md
+      description: "Perform a structured delivery review against a verified base/head scope."
+
+tags: ["review", "quality", "spec", "standards"]

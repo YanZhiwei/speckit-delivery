@@ -1,0 +1,38 @@
+schema_version: "1.0"
+
+extension:
+  id: decision
+  name: Decision Memory
+  version: "0.1.0"
+  description: "Retrieve, propose, finalize, and validate durable architecture decisions around Spec Kit delivery."
+  category: process
+  effect: read-write
+  author: Yan Zhiwei
+  repository: https://github.com/YanZhiwei/speckit-delivery
+  homepage: https://github.com/YanZhiwei/speckit-delivery/tree/main/extensions/decision
+  license: MIT
+
+requires:
+  speckit_version: ">=0.16.4"
+
+provides:
+  commands:
+    - name: speckit.decision.context
+      file: commands/speckit.decision.context.md
+      description: "Retrieve decisions and durable project context governing the current work."
+    - name: speckit.decision.propose
+      file: commands/speckit.decision.propose.md
+      description: "Create or revise Proposed ADRs from the implementation plan."
+    - name: speckit.decision.finalize
+      file: commands/speckit.decision.finalize.md
+      description: "Reconcile Proposed ADRs with repository HEAD after review."
+    - name: speckit.decision.check
+      file: commands/speckit.decision.check.md
+      description: "Validate ADR links, status, citations, and implementation consistency."
+  config:
+    - name: decision-config.yml
+      template: config-template.yml
+      description: "Decision and context paths for this project."
+      required: false
+
+tags: ["adr", "architecture", "governance", "memory"]

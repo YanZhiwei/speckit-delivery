@@ -1,0 +1,29 @@
+schema_version: "1.0"
+
+extension:
+  id: evidence
+  name: Diff-Driven Evidence
+  version: "0.1.0"
+  description: "Select and run the narrowest credible verification for the actual outgoing diff."
+  category: process
+  effect: read-write
+  author: Yan Zhiwei
+  repository: https://github.com/YanZhiwei/speckit-delivery
+  homepage: https://github.com/YanZhiwei/speckit-delivery/tree/main/extensions/evidence
+  license: MIT
+
+requires:
+  speckit_version: ">=0.16.4"
+
+provides:
+  commands:
+    - name: speckit.evidence.collect
+      file: commands/speckit.evidence.collect.md
+      description: "Select, run, and report credible checks for the outgoing diff."
+  config:
+    - name: evidence-config.yml
+      template: config-template.yml
+      description: "Project verification commands and change-to-check mappings."
+      required: false
+
+tags: ["verification", "testing", "pre-push", "evidence"]

@@ -1,0 +1,59 @@
+name: Validate distribution
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Install Spec Kit
+        run: uv tool install specify-cli==0.16.4
+
+      - name: Validate JSON catalogs
+        run: |
+          python -m json.tool catalogs/extensions.json > /dev/null
+          python -m json.tool catalogs/workflows.json > /dev/null
+          python -m json.tool catalogs/bundles.json > /dev/null
+          python -m json.tool evals/evals.json > /dev/null
+
+      - name: Build extension archives
+        run: python scripts/package_components.py --version 0.1.0 --output dist
+
+      - name: Check local Markdown links
+        run: python scripts/check_links.py
+
+      - name: Install components in a clean project
+        shell: bash
+        run: |
+          set -euo pipefail
+          repo_root="$PWD"
+          project_dir="$(mktemp -d)"
+          cd "$project_dir"
+          specify init . --integration codex --ignore-agent-tools --force --script sh
+          specify extension add bug
+          for extension in delivery decision ralph review simplify evidence docs-sync; do
+            specify extension add "$repo_root/extensions/$extension" --dev
+          done
+          for workflow in feature-delivery bugfix-delivery lightweight-delivery; do
+            specify workflow add "$repo_root/workflows/$workflow/workflow.yml" --dev
+          done
+          specify bundle validate --path "$repo_root/bundle"
+          specify bundle build --path "$repo_root/bundle" --output "$repo_root/dist"
+
+      - name: Check whitespace
+        run: git diff --check
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: speckit-delivery-dist
+          path: dist/*.zip

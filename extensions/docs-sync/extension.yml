@@ -1,0 +1,29 @@
+schema_version: "1.0"
+
+extension:
+  id: docs-sync
+  name: Documentation Projection Sync
+  version: "0.1.0"
+  description: "Synchronize source documentation with configured generated projections and repair links."
+  category: docs
+  effect: read-write
+  author: Yan Zhiwei
+  repository: https://github.com/YanZhiwei/speckit-delivery
+  homepage: https://github.com/YanZhiwei/speckit-delivery/tree/main/extensions/docs-sync
+  license: MIT
+
+requires:
+  speckit_version: ">=0.16.4"
+
+provides:
+  commands:
+    - name: speckit.docs-sync.run
+      file: commands/speckit.docs-sync.run.md
+      description: "Update documentation sources, manifests, links, and generated projections."
+  config:
+    - name: docs-sync-config.yml
+      template: config-template.yml
+      description: "Documentation source, projection, manifest, and verification settings."
+      required: false
+
+tags: ["documentation", "sync", "generated-files", "links"]

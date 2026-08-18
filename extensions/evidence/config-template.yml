@@ -1,0 +1,9 @@
+commands:
+  build: null
+  lint: null
+  unit: null
+  integration: null
+  docs: null
+  security: null
+ci_owns_exhaustive_matrix: true
+reuse_passing_hooks: true

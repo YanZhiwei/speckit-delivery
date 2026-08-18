@@ -1,0 +1,29 @@
+schema_version: "1.0"
+
+extension:
+  id: ralph
+  name: Ralph Task Orchestrator
+  version: "0.1.0"
+  description: "Execute Spec Kit tasks through dependency-aware agent dispatch with orchestrator-owned completion."
+  category: process
+  effect: read-write
+  author: Yan Zhiwei
+  repository: https://github.com/YanZhiwei/speckit-delivery
+  homepage: https://github.com/YanZhiwei/speckit-delivery/tree/main/extensions/ralph
+  license: MIT
+
+requires:
+  speckit_version: ">=0.16.4"
+
+provides:
+  commands:
+    - name: speckit.ralph.run
+      file: commands/speckit.ralph.run.md
+      description: "Dispatch dependency-ready tasks and verify results before marking completion."
+  config:
+    - name: ralph-config.yml
+      template: config-template.yml
+      description: "Ralph provider, concurrency, retry, and artifact settings."
+      required: false
+
+tags: ["agents", "orchestration", "tasks", "implementation"]
