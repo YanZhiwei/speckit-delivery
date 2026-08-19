@@ -4,7 +4,7 @@ workflow:
   name: "Spec Kit Bugfix Delivery"
   version: "0.1.0"
   author: "Yan Zhiwei"
-  description: "Guided bug assessment, fix, regression validation, review, evidence, and handoff."
+  description: "Guided bug assessment, fix, regression validation, quality, review, evidence, and handoff."
 
 requires:
   speckit_version: ">=0.16.4"
@@ -37,6 +37,11 @@ steps:
     integration: "{{ inputs.integration }}"
     input: { args: "mode=resolve {{ inputs.report }}" }
 
+  - id: quality-brief-before-fix
+    command: speckit.quality.brief
+    integration: "{{ inputs.integration }}"
+    input: { args: "scope=bugfix {{ inputs.report }}" }
+
   - id: fix
     command: speckit.bug.fix
     integration: "{{ inputs.integration }}"
@@ -46,6 +51,11 @@ steps:
     command: speckit.bug.test
     integration: "{{ inputs.integration }}"
     input: { args: "{{ inputs.report }}" }
+
+  - id: quality
+    command: speckit.quality.check
+    integration: "{{ inputs.integration }}"
+    input: { args: "scope=outgoing-diff {{ inputs.report }}" }
 
   - id: simplify
     command: speckit.simplify.scan

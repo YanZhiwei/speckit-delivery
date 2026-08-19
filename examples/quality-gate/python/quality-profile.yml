@@ -1,0 +1,12 @@
+# Paste under `profiles:` and adapt source roots, runner, and test selection.
+- id: python
+  match: ["src/**/*.py", "tests/**/*.py"]
+  discovery_files: ["pyproject.toml", "uv.lock"]
+  commands:
+    format: "uv run ruff format --check {changed_files}"
+    lint: "uv run ruff check {changed_files}"
+    typecheck: "uv run mypy src"
+    test: "uv run pytest {affected_tests}"
+  rules:
+    complexity_max: 10
+    comment_policy: "Explain non-obvious intent; comments never track task status."

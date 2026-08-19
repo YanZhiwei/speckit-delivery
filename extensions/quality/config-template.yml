@@ -1,0 +1,33 @@
+schema_version: "1.0"
+
+# Keep repository-specific commands and paths here; the distributed extension
+# deliberately does not assume a package manager, language, or directory layout.
+policy_sources:
+  architecture: []
+  style: []
+
+# Add one profile per changed-code family. `match` uses repository-relative
+# globs. Commands are run from the repository root and must be executable as
+# written. Omit a command only when that check is genuinely not applicable.
+profiles: []
+# - id: python
+#   match: ["backend/**/*.py"]
+#   discovery_files: ["pyproject.toml", "ruff.toml", "pytest.ini"]
+#   commands:
+#     format: "uv run ruff format --check {changed_files}"
+#     lint: "uv run ruff check {changed_files}"
+#     typecheck: "uv run mypy backend"
+#     test: "uv run pytest {affected_tests}"
+#   rules:
+#     complexity_max: 10
+#     comment_policy: "Explain non-obvious intent; do not use comments as task tracking."
+# - id: typescript
+#   match: ["web/**/*.{ts,tsx}"]
+#   discovery_files: ["package.json", "tsconfig.json"]
+#   commands:
+#     lint: "pnpm eslint {changed_files}"
+#     typecheck: "pnpm typecheck"
+#     test: "pnpm test -- --runInBand"
+
+unprofiled_changed_paths: block
+reuse_passing_hooks: true

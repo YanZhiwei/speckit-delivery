@@ -24,6 +24,18 @@
       "prompt": "Use $sd to add an audit trail. Choose the appropriate delivery lane and explain its next durable artifact.",
       "expected_output": "The short facade loads the canonical speckit-delivery router, performs normal lane discovery rather than assuming Feature, and preserves the router as the sole lifecycle-policy owner.",
       "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "Complete T014, which changes backend Python files in a repository whose quality configuration requires Ruff, Mypy, Pytest, complexity no greater than 10, and a review-owned DRY rule. Mypy is not installed.",
+      "expected_output": "Ralph invokes the Quality Gate, reports the current HEAD and task scope, runs or reuses only same-scope checks, returns blocked because the configured type check cannot run, leaves T014 open, and routes DRY to Simplify/Review rather than claiming lint checked it.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "prompt": "Before editing a Python service file, prepare the model for the repository's complexity limit, comment policy, and architecture boundaries, then verify the resulting task.",
+      "expected_output": "The flow invokes speckit.quality.brief before editing, injects only the matching project profile and policy sources, then invokes speckit.quality.check after editing; the brief is advisory and only the current-HEAD pass verdict can close the task.",
+      "files": []
     }
   ]
 }

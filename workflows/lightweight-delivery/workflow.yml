@@ -21,10 +21,20 @@ inputs:
     default: "auto"
 
 steps:
+  - id: quality-brief-before-implement
+    command: speckit.quality.brief
+    integration: "{{ inputs.integration }}"
+    input: { args: "scope=lightweight {{ inputs.change }}" }
+
   - id: implement
     command: speckit.delivery.lightweight
     integration: "{{ inputs.integration }}"
     input: { args: "{{ inputs.change }}" }
+
+  - id: quality
+    command: speckit.quality.check
+    integration: "{{ inputs.integration }}"
+    input: { args: "scope=outgoing-diff {{ inputs.change }}" }
 
   - id: review
     command: speckit.review.run

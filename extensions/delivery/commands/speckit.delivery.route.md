@@ -26,10 +26,10 @@ integration capability, and verification entry points.
 
 For Feature, run the installed Spec Kit commands in this sequence:
 
-`speckit.specify → speckit.clarify → speckit.decision.context → speckit.plan → speckit.decision.propose → speckit.tasks → speckit.analyze → speckit.ralph.run → speckit.converge → speckit.simplify.scan → speckit.docs-sync.run (when configured) → speckit.review.run → speckit.decision.finalize → speckit.decision.check → speckit.evidence.collect → speckit.delivery.handoff`.
+`speckit.specify → speckit.clarify → speckit.decision.context → speckit.plan → speckit.decision.propose → speckit.tasks → speckit.analyze → speckit.quality.brief → speckit.ralph.run → speckit.quality.check → speckit.converge → speckit.simplify.scan → speckit.docs-sync.run (when configured) → speckit.review.run → speckit.decision.finalize → speckit.decision.check → speckit.evidence.collect → speckit.delivery.handoff`.
 
 Treat `tasks.md` as the only execution queue. When a review or convergence
-finding remains, add or reopen a task and repeat `analyze → ralph → review`.
+finding remains, add or reopen a task and repeat `analyze → ralph → quality → review`. A quality blocker, missing profile, or unavailable configured check is a delivery blocker, not a passing warning.
 Keep an ADR Proposed until the reviewed repository HEAD matches it; Accepted
 ADRs must be self-contained and cannot depend on ignored Spec artifacts.
 

@@ -1,0 +1,32 @@
+schema_version: "1.0"
+
+extension:
+  id: quality
+  name: Project Quality Gate
+  version: "0.1.0"
+  description: "Apply project-local executable quality profiles before work can be closed."
+  category: process
+  effect: read-write
+  author: Yan Zhiwei
+  repository: https://github.com/YanZhiwei/speckit-delivery
+  homepage: https://github.com/YanZhiwei/speckit-delivery/tree/main/extensions/quality
+  license: MIT
+
+requires:
+  speckit_version: ">=0.16.4"
+
+provides:
+  commands:
+    - name: speckit.quality.brief
+      file: commands/speckit.quality.brief.md
+      description: "Render the applicable quality and architecture rules before editing."
+    - name: speckit.quality.check
+      file: commands/speckit.quality.check.md
+      description: "Run the applicable project quality profiles and return a task-closure verdict."
+  config:
+    - name: quality-config.yml
+      template: config-template.yml
+      description: "Project-local quality profiles, policy sources, and executable verification commands."
+      required: false
+
+tags: ["quality", "lint", "complexity", "testing", "governance"]

@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "updated_at": "2026-08-18T00:00:00Z",
+  "updated_at": "2026-08-19T00:00:00Z",
   "catalog_url": "https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.0/catalogs/bundles.json",
   "bundles": {
     "speckit-delivery": {
@@ -8,14 +8,14 @@
       "id": "speckit-delivery",
       "version": "0.1.0",
       "role": "developer",
-      "description": "Evidence-driven SDD with decision memory, Ralph, simplification, review, evidence, and handoff.",
+      "description": "Evidence-driven SDD with decision memory, quality gates, Ralph, simplification, review, evidence, and handoff.",
       "author": "Yan Zhiwei",
       "license": "MIT",
       "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.1.0/speckit-delivery-0.1.0.zip",
       "repository": "https://github.com/YanZhiwei/speckit-delivery",
       "requires": {"speckit_version": ">=0.16.4"},
-      "provides": {"extensions": 8, "presets": 0, "steps": 0, "workflows": 3},
-      "tags": ["sdd", "delivery", "adr", "multi-agent", "review"],
+      "provides": {"extensions": 9, "presets": 0, "steps": 0, "workflows": 3},
+      "tags": ["sdd", "delivery", "adr", "quality", "multi-agent", "review"],
       "verified": false
     }
   }

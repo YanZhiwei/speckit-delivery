@@ -1,6 +1,7 @@
 ---
 name: speckit-delivery
-description: Route and orchestrate a complete Spec Kit delivery across feature, bugfix, and lightweight lanes, including ADR retrieval/finalization, tasks-based Ralph execution, convergence, simplification, review, evidence, and PR handoff. Use when the user asks to run the full SDD lifecycle or wants one entry point instead of invoking individual speckit commands.
+description: 启动 Speckit Delivery 的手动 SDD 路由。
+disable-model-invocation: true
 ---
 
 # Spec Kit Delivery

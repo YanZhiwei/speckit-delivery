@@ -6,7 +6,7 @@
 2. Fork and clone the repository.
 3. Create a focused branch.
 4. Install changed extensions and workflows into a clean temporary Spec Kit project with their `--dev` options.
-5. Run the validation commands documented in `docs/distribution.md`.
+5. Run the validation commands documented in `DISTRIBUTION.md`.
 
 ## Change rules
 

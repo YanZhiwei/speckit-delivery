@@ -1,0 +1,10 @@
+# `scripts/check-gofmt.ps1` is target-owned and must exit non-zero on a diff.
+- id: go-api
+  match: ["services/api/**/*.go"]
+  discovery_files: ["go.mod", ".golangci.yml", "scripts/check-gofmt.ps1"]
+  commands:
+    format: "pwsh -File scripts/check-gofmt.ps1 {changed_files}"
+    lint: "golangci-lint run ./services/api/..."
+    test: "go test ./services/api/..."
+  rules:
+    complexity_max: 10

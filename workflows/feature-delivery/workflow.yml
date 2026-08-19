@@ -4,7 +4,7 @@ workflow:
   name: "Spec Kit Feature Delivery"
   version: "0.1.0"
   author: "Yan Zhiwei"
-  description: "Guided feature delivery with decision memory, analysis, Ralph, convergence, simplification, review, evidence, and handoff."
+  description: "Guided feature delivery with decision memory, quality gates, Ralph, convergence, simplification, review, evidence, and handoff."
 
 requires:
   speckit_version: ">=0.16.4"
@@ -85,10 +85,20 @@ steps:
     options: [approve, reject]
     on_reject: abort
 
+  - id: quality-brief-before-ralph
+    command: speckit.quality.brief
+    integration: "{{ inputs.integration }}"
+    input: { args: "scope=implementation {{ inputs.spec }}" }
+
   - id: ralph
     command: speckit.ralph.run
     integration: "{{ inputs.integration }}"
     input: { args: "{{ inputs.spec }}" }
+
+  - id: quality-after-ralph
+    command: speckit.quality.check
+    integration: "{{ inputs.integration }}"
+    input: { args: "scope=outgoing-diff {{ inputs.spec }}" }
 
   - id: converge-loop
     type: do-while
@@ -109,6 +119,10 @@ steps:
         command: speckit.ralph.run
         integration: "{{ inputs.integration }}"
         input: { args: "Complete dependency-ready tasks appended for {{ inputs.spec }}" }
+      - id: quality-appended
+        command: speckit.quality.check
+        integration: "{{ inputs.integration }}"
+        input: { args: "scope=outgoing-diff {{ inputs.spec }}" }
 
   - id: simplify-scan
     command: speckit.simplify.scan
@@ -131,6 +145,11 @@ steps:
     command: speckit.ralph.run
     integration: "{{ inputs.integration }}"
     input: { args: "Complete accepted simplification tasks for {{ inputs.spec }}" }
+
+  - id: quality-after-simplify
+    command: speckit.quality.check
+    integration: "{{ inputs.integration }}"
+    input: { args: "scope=outgoing-diff {{ inputs.spec }}" }
 
   - id: docs-sync
     type: if

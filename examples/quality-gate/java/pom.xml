@@ -1,0 +1,9 @@
+<!-- Merge the appropriate plugins into the target's existing Maven build. -->
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <build>
+    <plugins>
+      <!-- Configure formatter, Checkstyle, PMD, or SpotBugs here, then make
+           ./mvnw verify the project-owned quality entry point. -->
+    </plugins>
+  </build>
+</project>

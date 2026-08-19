@@ -1,0 +1,8 @@
+# Do not use this profile until `./mvnw verify` runs all named plugins in CI.
+- id: orders-java
+  match: ["services/orders/**/*.java"]
+  discovery_files: ["services/orders/pom.xml", "mvnw"]
+  commands:
+    verify: "./mvnw -pl services/orders verify"
+  rules:
+    complexity_max: 10

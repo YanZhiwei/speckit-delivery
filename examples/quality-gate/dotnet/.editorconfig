@@ -1,0 +1,3 @@
+# Merge into the target .editorconfig. Analyzer choice is project-specific.
+[*.cs]
+dotnet_diagnostic.CA1502.severity = warning

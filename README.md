@@ -1,11 +1,24 @@
 # Spec Kit Delivery
 
-An evidence-driven delivery layer for [GitHub Spec Kit](https://github.com/github/spec-kit). It keeps Spec Kit's specification artifacts as the execution backbone and adds durable architecture decisions, task-based agent orchestration, convergence, simplification review, code review, documentation synchronization, release evidence, and a stable pull-request handoff.
+An evidence-driven delivery layer for [GitHub Spec Kit](https://github.com/github/spec-kit). It keeps Spec Kit's specification artifacts as the execution backbone and adds durable architecture decisions, project-local quality gates, task-based agent orchestration, convergence, simplification review, code review, documentation synchronization, release evidence, and a stable pull-request handoff.
 
 > [!IMPORTANT]
 > This repository is an early distribution scaffold (`0.1.0`). The guided workflows and prompt contracts are usable for evaluation. Provider-specific parallel execution and fully machine-driven semantic branching are intentionally tracked as later milestones.
 
-[简体中文](README.zh-CN.md)
+[English] · [简体中文](README.zh-CN.md)
+
+## At a glance
+
+| Need | Start here |
+| --- | --- |
+| Start a change from an agent host | `$sd <request>` or `/sd <request>` |
+| Install the portable workflow | [Quick start](#quick-start-install-and-initialize-a-project) |
+| Configure language quality gates | [Quality Gate guide](QUALITY-GATE.md) · [Examples](examples/quality-gate/) |
+| Understand ADR, Ralph, and evidence ownership | [Architecture](ARCHITECTURE.md) |
+| Package or release the bundle | [Distribution](DISTRIBUTION.md) |
+
+The portable contract is the `speckit.*` extension command family. `$sd` and
+`/sd` are optional host-native facades over that contract.
 
 ## Why
 
@@ -17,6 +30,8 @@ Core Spec Kit provides an excellent `specify → plan → tasks → implement` p
 - Does the implementation converge on the specification after agents finish?
 - Did the change introduce unused APIs, duplicate state, or speculative machinery?
 - Which checks are credible for the actual outgoing diff?
+- How do local complexity, comments, lint, type, and test rules block a task
+  from closing instead of remaining advisory?
 - What durable explanation remains when feature artifacts are not committed?
 
 Spec Kit Delivery supplies those missing delivery contracts without replacing Spec Kit or an existing project workflow.
@@ -25,7 +40,7 @@ Spec Kit Delivery supplies those missing delivery contracts without replacing Sp
 
 ```text
 context → specify → clarify → plan → proposed ADR → tasks → analyze
-        → Ralph → converge → simplify → docs sync → review
+        → Ralph → quality → converge → simplify → docs sync → review
         → accepted ADR → evidence → PR handoff
 ```
 
@@ -37,7 +52,7 @@ Three lanes keep the process proportional:
 | Bugfix | A reproducible defect with bounded scope | Assess → red test → fix → verify |
 | Lightweight | Mechanical, documentation, or very small behavior-preserving changes | Scope → change → targeted evidence |
 
-## What's included
+## Repository layout
 
 ```text
 speckit-delivery/
@@ -49,23 +64,24 @@ speckit-delivery/
 │   ├── review/
 │   ├── simplify/
 │   ├── evidence/
+│   ├── quality/
 │   ├── docs-sync/
 │   └── delivery/
 ├── workflows/              # Feature, bugfix, and lightweight workflows
 ├── skills/                 # Optional agent-native router and $sd facade
 ├── templates/              # Durable PR handoff template
 ├── docs/                   # Architecture and distribution contracts
+├── examples/                # Copy-and-adapt project quality configurations
 ├── evals/                  # Behavioral evaluation prompts
 └── scripts/                # Reproducible component packaging
 ```
 
-The package is integration-agnostic. Its portable surface is the Spec Kit
-extension command family and workflows; Codex, Claude Code, OpenCode, and a
-generic adapter render those commands in their own native formats. Integrations
-with native delegation can run Ralph concurrently; all others use the same
-dependency-ordered sequential protocol.
+The package is integration-agnostic. Codex, Claude Code, OpenCode, and generic
+adapters can render the same commands in their native formats. Hosts with
+delegation may run Ralph concurrently; other hosts use the same dependency-
+ordered sequential protocol.
 
-## One entry point
+## Agent entry point
 
 Use `$sd <request>` in Codex to start the optional agent-native SDD facade. In
 harnesses that expose skills as slash commands, publish the same facade as
@@ -73,9 +89,9 @@ harnesses that expose skills as slash commands, publish the same facade as
 `speckit.delivery.route` extension command. The extension command—not the
 facade—is the portable integration surface.
 
-For the optional native entry point, copy both directories under `skills/` into
-the same agent skill-discovery root. See [skills/README.md](skills/README.md)
-for the required sibling layout.
+Copy both directories under `skills/` into the same agent skill-discovery root
+for the optional native entry point. See [skills/README.md](skills/README.md)
+for the sibling layout.
 
 ## Requirements
 
@@ -93,9 +109,11 @@ specify check
 
 ## Quick start: install and initialize a project
 
-The following commands run in the **target project**, not in this distribution
-repository. Initialize Spec Kit once, choosing the integration and script type
-that match the target environment. For a PowerShell-based Codex project:
+The commands below run in the **target project**, not this distribution
+checkout.
+
+Initialize Spec Kit once, choosing the integration and script type that match
+the target environment. For a PowerShell-based Codex project:
 
 ```powershell
 cd D:\Repos\Acme\my-project
@@ -103,8 +121,8 @@ specify init . --integration codex --integration-options="--skills" --script ps
 ```
 
 This creates `.specify/` and the integration's command/skill surface. It does
-not replace existing project governance. Do not use `--force` unless replacing
-an existing Spec Kit setup is intentional.
+not replace existing project governance. Use `--force` only when replacing an
+existing Spec Kit setup is intentional.
 
 Choose one default integration per project. These are equivalent initialization
 examples for the primary supported hosts:
@@ -130,12 +148,10 @@ Use the command that `specify init` prints for the installed CLI version if it
 differs from this table. `$sd` is ergonomics for compatible skill hosts, not a
 portability requirement.
 
-For a team that truly needs several hosts in one repository, install each
-additional integration with `specify integration install <key>`, then run
+For several hosts in one repository, install each additional integration with
+`specify integration install <key>`, then use
 `specify integration use <key>` when switching the active default so installed
-extensions are re-rendered for that host. Prefer one default integration;
-Spec Kit may require explicit `--force` for combinations it does not mark
-multi-install safe.
+extensions are re-rendered. Prefer one default integration.
 
 Install this delivery layer from a local checkout by supplying absolute paths
 to the components:
@@ -148,6 +164,7 @@ specify extension add --dev "$delivery\extensions\ralph"
 specify extension add --dev "$delivery\extensions\review"
 specify extension add --dev "$delivery\extensions\simplify"
 specify extension add --dev "$delivery\extensions\evidence"
+specify extension add --dev "$delivery\extensions\quality"
 specify extension add --dev "$delivery\extensions\docs-sync"
 specify extension add --dev "$delivery\extensions\delivery"
 
@@ -159,7 +176,15 @@ specify workflow add --dev "$delivery\workflows\lightweight-delivery\workflow.ym
 Then invoke `speckit.delivery.init` through the selected agent integration. It
 discovers existing instructions, CI checks, ADR locations, documentation
 projections, and whether Spec artifacts are `tracked` or `ephemeral`. Review
-the resulting project-local delivery configuration before relying on it.
+the generated project-local configuration before relying on it.
+
+It also drafts `.specify/extensions/quality/quality-config.yml`. Add one
+profile for each source family and make every configured command executable in
+the target project. The [Quality Gate configuration guide](QUALITY-GATE.md)
+shows how to connect Python, TypeScript, Go, Java, and .NET style tooling,
+complexity limits, tests, and architecture-policy sources to task closure.
+For copy-and-adapt native configuration plus matching profile fragments, see
+[Quality Gate examples](examples/quality-gate/).
 
 For the optional `$sd` entry point, install `skills/sd/` and
 `skills/speckit-delivery/` together into the same agent skill-discovery root;
@@ -206,7 +231,7 @@ specify workflow run feature-delivery --input spec="Describe the change"
 ```
 
 The Feature lane runs `specify → clarify → ADR resolution → plan → proposed
-ADR → tasks → analyze`, then implementation and the verification loop. The
+ADR → tasks → analyze`, then implementation, quality, and the verification loop. The
 Proposed ADR remains editable through implementation and review. Only after
 the reviewed repository HEAD matches the decision does it become Accepted.
 
@@ -228,11 +253,13 @@ sequentially with fresh task focus.
 
 Each worker receives the task's acceptance condition, allowed scope, relevant
 Spec/Plan/ADR excerpts, and expected verification. Workers report results;
-the orchestrator verifies changed paths and evidence, then—and only then—marks
-the task `[X]`. A failed task remains open and blocks dependents. If Spec files
+the orchestrator verifies changed paths, evidence, and a current-HEAD Quality
+Gate verdict, then—and only then—marks the task `[X]`. A failed or blocked task
+remains open and blocks dependents. If Spec files
 are ignored, the excerpts are injected into every cross-worktree packet.
 
-After Ralph, run convergence, simplification, review, and evidence collection.
+After Ralph, run the aggregate Quality Gate, convergence, simplification,
+review, and evidence collection.
 Review findings become new or reopened tasks and re-enter the same
 `analyze → Ralph → review` loop. The final ADR is reconciled against HEAD,
 not against an earlier plan.
@@ -329,6 +356,7 @@ The remote repository and release do not exist until the maintainer explicitly p
 | Code review | `speckit.review.run` |
 | Simplification | `speckit.simplify.scan`, `.verify` |
 | Evidence | `speckit.evidence.collect` |
+| Quality gate | `speckit.quality.brief`, `speckit.quality.check` |
 | Documentation | `speckit.docs-sync.run` |
 | Routing and handoff | `speckit.delivery.route`, `.handoff` |
 
@@ -344,12 +372,13 @@ The project chooses whether `spec.md`, `plan.md`, and `tasks.md` are committed. 
 
 When Spec Kit artifacts are ignored, Ralph must inject the assigned task and relevant artifact excerpts into each worker. Cross-worktree workers must never assume ignored files exist in their worktree.
 
-See [Architecture](docs/architecture.md), [Artifact lifecycle](docs/artifact-lifecycle.md), and [Distribution](docs/distribution.md).
+See [Architecture](ARCHITECTURE.md), [Artifact lifecycle](LIFECYCLE.md), and [Distribution](DISTRIBUTION.md).
 
 ## Design principles
 
 - Requirements before implementation details.
 - Evidence before completion claims.
+- Unknown or unavailable required quality checks block closure; they do not pass by omission.
 - One task queue: `tasks.md` is Ralph's scheduling source.
 - One durable owner for each architectural decision.
 - Review the real base/head diff, not a remembered change set.

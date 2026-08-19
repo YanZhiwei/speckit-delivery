@@ -1,0 +1,11 @@
+# Paste under `profiles:` and replace pnpm/package paths with target facts.
+- id: web-typescript
+  match: ["apps/web/**/*.{ts,tsx}"]
+  discovery_files: ["apps/web/package.json", "apps/web/tsconfig.json", "eslint.config.mjs"]
+  commands:
+    format: "pnpm prettier --check {changed_files}"
+    lint: "pnpm eslint {changed_files}"
+    typecheck: "pnpm --dir apps/web exec tsc --noEmit"
+    test: "pnpm --dir apps/web test -- --runInBand"
+  rules:
+    complexity_max: 10

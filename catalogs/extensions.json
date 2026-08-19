@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "updated_at": "2026-08-18T00:00:00Z",
+  "updated_at": "2026-08-19T00:00:00Z",
   "catalog_url": "https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.0/catalogs/extensions.json",
   "extensions": {
     "delivery": {
@@ -14,7 +14,7 @@
       "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/v0.1.0/extensions/delivery",
       "license": "MIT",
       "requires": {"speckit_version": ">=0.16.4"},
-      "provides": {"commands": 3, "hooks": 0},
+      "provides": {"commands": 4, "hooks": 0},
       "tags": ["sdd", "delivery", "handoff"]
     },
     "decision": {
@@ -86,6 +86,20 @@
       "requires": {"speckit_version": ">=0.16.4"},
       "provides": {"commands": 1, "hooks": 0},
       "tags": ["verification", "testing", "pre-push"]
+    },
+    "quality": {
+      "name": "Project Quality Gate",
+      "id": "quality",
+      "version": "0.1.0",
+      "description": "Apply project-local executable quality profiles before work can be closed.",
+      "author": "Yan Zhiwei",
+      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.1.0/quality-0.1.0.zip",
+      "repository": "https://github.com/YanZhiwei/speckit-delivery",
+      "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/v0.1.0/extensions/quality",
+      "license": "MIT",
+      "requires": {"speckit_version": ">=0.16.4"},
+      "provides": {"commands": 2, "hooks": 0},
+      "tags": ["quality", "lint", "complexity", "testing", "governance"]
     },
     "docs-sync": {
       "name": "Documentation Projection Sync",

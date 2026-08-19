@@ -1,0 +1,6 @@
+<!-- Merge into the target build props; do not replace existing properties. -->
+<Project>
+  <PropertyGroup>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+  </PropertyGroup>
+</Project>

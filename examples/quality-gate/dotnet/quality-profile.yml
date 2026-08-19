@@ -1,0 +1,7 @@
+- id: dotnet
+  match: ["src/**/*.cs", "tests/**/*.cs"]
+  discovery_files: ["Directory.Build.props", ".editorconfig", "MySolution.sln"]
+  commands:
+    format: "dotnet format MySolution.sln --verify-no-changes"
+    build: "dotnet build MySolution.sln --no-restore"
+    test: "dotnet test MySolution.sln --no-build"
