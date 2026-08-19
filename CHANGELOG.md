@@ -10,11 +10,14 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
   discovery, and a current-HEAD task-closure verdict.
 - Pre-edit Quality Brief command for injecting file-scoped rules before model
   editing.
+- Standards Review command with a task-or-batch semantic closure verdict.
+- Delivery Doctor command that detects stale components, missing profiles, and
+  unowned documented rules before workflow execution.
 
 ### Changed
 
-- Ralph and all delivery lanes now require quality verification before task or
-  outgoing-diff closure.
+- Ralph and all delivery lanes now require both mechanical quality and semantic
+  standards verification before task or outgoing-diff closure.
 
 ## [0.1.0] - 2026-08-18
 

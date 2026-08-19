@@ -29,6 +29,9 @@ provides:
     - name: speckit.delivery.lightweight
       file: commands/speckit.delivery.lightweight.md
       description: "Implement a verified small change without creating full feature artifacts."
+    - name: speckit.delivery.doctor
+      file: commands/speckit.delivery.doctor.md
+      description: "Check delivery component installation, policy coverage, and workflow readiness before implementation."
   config:
     - name: delivery-config.yml
       template: config-template.yml

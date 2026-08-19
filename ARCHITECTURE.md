@@ -11,6 +11,7 @@ existing workflow.
 | Extension | One narrow command family and artifact contract | Whole delivery orchestration |
 | Bundle | Pinned component composition | Component implementation or host integration |
 | Quality Gate | Project-local executable checks and closure verdict | DRY or architectural judgment |
+| Standards Review | Task or batch semantic standards verdict | Re-running mechanical quality checks |
 | Ralph | Dependency-ready task dispatch and task completion | Planning or self-authorized task closure |
 
 The system has three control planes:
@@ -36,12 +37,14 @@ cross-feature governance. Accepted ADRs must stand alone without ignored Spec
 files, task identifiers, review rounds, or conversation history.
 
 Ralph schedules only `tasks.md`. It may dispatch independent tasks, but only the
-orchestrator can mark `[X]`, after checking changed paths, evidence, and a
-current-HEAD `QUALITY_VERDICT: pass` for that task scope.
+orchestrator can mark `[X]`, after checking changed paths, evidence, and
+current-HEAD `QUALITY_VERDICT: pass` plus `STANDARDS_VERDICT: pass` for that
+task scope. It stores the task receipt in local `.specify/delivery` state.
 
-Quality checks formatting, lint, types, tests, and configured complexity. DRY,
-ownership, directory boundaries, public-surface growth, and architecture
-consistency remain semantic findings for Simplify, Review, and ADRs.
+Quality checks formatting, lint, types, tests, and configured complexity.
+Standards Review checks DRY, ownership, directory boundaries, public-surface
+growth, comment intent, and architecture consistency. Simplify, Review, and
+ADRs remain the owners of their resulting actions.
 
 `speckit.quality.brief` is the pre-edit advisory layer; `speckit.quality.check`
 is the post-edit closure gate. Host hooks may call the brief, but the workflow

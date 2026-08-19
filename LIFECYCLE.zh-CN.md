@@ -6,10 +6,12 @@
 | Issue | Tracker | 持久 | 问题、范围、验收和结果 |
 | `spec.md` / `plan.md` | Feature | 项目配置 | 行为契约和当前实现方案 |
 | `tasks.md` | Feature/Ralph | 项目配置 | 唯一任务队列和完成状态 |
+| `.specify/delivery/<feature>/task-verdicts.yml` | Ralph | 临时 | Task 的 HEAD、Quality 与 Standards 关闭回执 |
 | Proposed ADR | 架构 | 跟踪 | 编码前的实现基线 |
 | Accepted ADR | 架构 | 跟踪 | 与 HEAD 对齐的自包含事实 |
 | Review 报告 | 交付运行 | 默认临时 | 结构化 Verdict 和问题 |
 | Quality Verdict | Task/Ralph | 默认临时 | HEAD、范围、Profile、检查和结果 |
+| Standards Verdict | Task/Ralph | 默认临时 | HEAD、范围、语义规范判定和阻断项 |
 | Evidence 报告 | 交付运行/PR | 持久摘要 | 命令、结果和环境风险 |
 | PR 正文 | Pull Request | 持久 | 变更、风险、决策和证据 |
 

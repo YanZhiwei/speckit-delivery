@@ -17,6 +17,9 @@ requires:
 
 provides:
   commands:
+    - name: speckit.review.standards
+      file: commands/speckit.review.standards.md
+      description: "Review a task or batch diff against project standards and return a closure verdict."
     - name: speckit.review.run
       file: commands/speckit.review.run.md
       description: "Perform a structured delivery review against a verified base/head scope."

@@ -5,7 +5,8 @@
 | Constitution | Project | Durable | Governs every feature without duplicating ADRs |
 | Issue | Tracker | Durable | Problem, scope, acceptance, outcome |
 | `spec.md` / `plan.md` | Feature | Project-configurable | Behavior contract and current approach |
-| `tasks.md` | Feature/Ralph | Project-configurable | Single queue and completion state |
+| `tasks.md` | Feature/Ralph | Project-configurable | Single execution queue; closure requires current verdict receipts |
+| `.specify/delivery/<feature>/task-verdicts.yml` | Ralph | Ephemeral | Task-level HEAD, Quality, and Standards closure receipts |
 | Proposed ADR | Architecture | Tracked | Implementation baseline before coding |
 | Accepted ADR | Architecture | Tracked | Self-contained truth reconciled with HEAD |
 | Review report | Delivery run | Ephemeral by default | Structured verdict and findings |

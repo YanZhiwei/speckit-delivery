@@ -21,6 +21,11 @@ inputs:
     default: "auto"
 
 steps:
+  - id: delivery-doctor
+    command: speckit.delivery.doctor
+    integration: "{{ inputs.integration }}"
+    input: { args: "lane=bugfix {{ inputs.report }}" }
+
   - id: assess
     command: speckit.bug.assess
     integration: "{{ inputs.integration }}"
@@ -54,6 +59,11 @@ steps:
 
   - id: quality
     command: speckit.quality.check
+    integration: "{{ inputs.integration }}"
+    input: { args: "scope=outgoing-diff {{ inputs.report }}" }
+
+  - id: standards
+    command: speckit.review.standards
     integration: "{{ inputs.integration }}"
     input: { args: "scope=outgoing-diff {{ inputs.report }}" }
 

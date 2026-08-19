@@ -2,9 +2,21 @@ schema_version: "1.0"
 
 # Keep repository-specific commands and paths here; the distributed extension
 # deliberately does not assume a package manager, language, or directory layout.
+# `policy_sources` are also read by speckit.review.standards for semantic rules.
 policy_sources:
   architecture: []
   style: []
+
+# Each named standard must state who decides it and how the decision is
+# evidenced. `quality` is for mechanical checks; `review`, `simplify`, and
+# `adr` are semantic mechanisms. The delivery doctor blocks unowned rules.
+standards: []
+# - id: router-service-boundary
+#   owner: review
+#   mechanism: "speckit.review.standards against Docs/architecture/code-style-fastapi.md"
+# - id: duplication-and-surface-area
+#   owner: simplify
+#   mechanism: "speckit.simplify.scan before final review"
 
 # Add one profile per changed-code family. `match` uses repository-relative
 # globs. Commands are run from the repository root and must be executable as
@@ -15,7 +27,7 @@ profiles: []
 #   discovery_files: ["pyproject.toml", "ruff.toml", "pytest.ini"]
 #   commands:
 #     format: "uv run ruff format --check {changed_files}"
-#     lint: "uv run ruff check {changed_files}"
+#     lint: "uv run ruff check {changed_files}" # Native Ruff config must enable C90 for complexity.
 #     typecheck: "uv run mypy backend"
 #     test: "uv run pytest {affected_tests}"
 #   rules:

@@ -10,6 +10,7 @@ Spec Kit Delivery 是 Spec Kit 之上的分发层，不是 Spec Kit 的 Fork，�
 | Extension | 一个窄命令族及其产物契约 | 整体交付编排 |
 | Bundle | 固定版本的组件组合 | 组件实现和宿主 Integration |
 | Quality Gate | 项目本地可执行检查和关闭判定 | DRY 或架构语义判断 |
+| Standards Review | Task 或批次的语义规范判定 | 重跑机械质量检查 |
 | Ralph | 依赖就绪任务调度和完成确认 | 规划或自行关闭任务 |
 
 系统分成三个控制面：
@@ -35,11 +36,13 @@ ADR 是主题级、长期的记录；Spec 是 Feature 级记录；Constitution �
 独立成立。
 
 Ralph 只把 `tasks.md` 当作调度队列。只有编排器检查变更路径、证据，并确认当前
-HEAD 和任务范围的 `QUALITY_VERDICT: pass` 后，才能标记 `[X]`。
+HEAD 和任务范围的 `QUALITY_VERDICT: pass` 及 `STANDARDS_VERDICT: pass` 后，才能标记 `[X]`。
 
 质量闸门负责格式、lint、类型、测试和已配置的复杂度；DRY、模块归属、目录边界、
 公共 API 和架构一致性仍由 Simplify、Review 与 ADR 负责。
 
-`speckit.quality.brief` 是编辑前的提醒层，`speckit.quality.check` 是编辑后的关闭闸门。
+`speckit.quality.brief` 是编辑前的提醒层，`speckit.quality.check` 是编辑后的机械关闭闸门；
+`speckit.review.standards` 对 DRY、归属、分层方向、公共接口、注释意图和 ADR 影响给出
+语义关闭判定。
 宿主支持 Hook 时可以调用 Brief；即使没有 Hook，Workflow 也会主动调用它，因此跨宿主
 流程仍然有效。

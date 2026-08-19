@@ -13,6 +13,7 @@ An evidence-driven delivery layer for [GitHub Spec Kit](https://github.com/githu
 | --- | --- |
 | Start a change from an agent host | `$sd <request>` or `/sd <request>` |
 | Install the portable workflow | [Quick start](#quick-start-install-and-initialize-a-project) |
+| Rapidly configure an existing project | [Quick SD Configuration](QUICK-CONFIGURATION.md) |
 | Configure language quality gates | [Quality Gate guide](QUALITY-GATE.md) · [Examples](examples/quality-gate/) |
 | Understand ADR, Ralph, and evidence ownership | [Architecture](ARCHITECTURE.md) |
 | Package or release the bundle | [Distribution](DISTRIBUTION.md) |
@@ -39,9 +40,9 @@ Spec Kit Delivery supplies those missing delivery contracts without replacing Sp
 ## Workflow
 
 ```text
-context → specify → clarify → plan → proposed ADR → tasks → analyze
-        → Ralph → quality → converge → simplify → docs sync → review
-        → accepted ADR → evidence → PR handoff
+context → doctor → specify → clarify → plan → proposed ADR → tasks → analyze
+        → quality brief → Ralph → quality + standards → converge → simplify
+        → docs sync → review → accepted ADR → evidence → PR handoff
 ```
 
 Three lanes keep the process proportional:
@@ -258,8 +259,9 @@ Gate verdict, then—and only then—marks the task `[X]`. A failed or blocked t
 remains open and blocks dependents. If Spec files
 are ignored, the excerpts are injected into every cross-worktree packet.
 
-After Ralph, run the aggregate Quality Gate, convergence, simplification,
-review, and evidence collection.
+After Ralph, run the aggregate Quality Gate and Standards Review, then
+convergence, simplification, review, and evidence collection. A task stays open
+unless both verdicts cover its current HEAD and declared scope.
 Review findings become new or reopened tasks and re-enter the same
 `analyze → Ralph → review` loop. The final ADR is reconciled against HEAD,
 not against an earlier plan.
@@ -357,8 +359,9 @@ The remote repository and release do not exist until the maintainer explicitly p
 | Simplification | `speckit.simplify.scan`, `.verify` |
 | Evidence | `speckit.evidence.collect` |
 | Quality gate | `speckit.quality.brief`, `speckit.quality.check` |
+| Standards closure | `speckit.review.standards` |
 | Documentation | `speckit.docs-sync.run` |
-| Routing and handoff | `speckit.delivery.route`, `.handoff` |
+| Routing, doctor, and handoff | `speckit.delivery.doctor`, `.route`, `.handoff` |
 
 ## Durable and ephemeral artifacts
 
@@ -372,7 +375,7 @@ The project chooses whether `spec.md`, `plan.md`, and `tasks.md` are committed. 
 
 When Spec Kit artifacts are ignored, Ralph must inject the assigned task and relevant artifact excerpts into each worker. Cross-worktree workers must never assume ignored files exist in their worktree.
 
-See [Architecture](ARCHITECTURE.md), [Artifact lifecycle](LIFECYCLE.md), and [Distribution](DISTRIBUTION.md).
+See [Quick SD Configuration](QUICK-CONFIGURATION.md), [Architecture](ARCHITECTURE.md), [Artifact lifecycle](LIFECYCLE.md), and [Distribution](DISTRIBUTION.md).
 
 ## Design principles
 
@@ -388,7 +391,7 @@ See [Architecture](ARCHITECTURE.md), [Artifact lifecycle](LIFECYCLE.md), and [Di
 ## Status and roadmap
 
 - `0.1.x`: prompt contracts, guided workflows, catalogs, release packaging, structural validation
-- `0.2.x`: machine-readable workflow state and semantic result gates
+- `0.2.x`: richer machine-readable workflow state and cross-host semantic gates
 - `0.3.x`: provider adapters for parallel Ralph execution
 - `1.0.0`: clean-project installation evidence across supported integrations
 

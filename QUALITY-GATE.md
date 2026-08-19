@@ -17,6 +17,13 @@ source family:
 policy_sources:
   architecture: [Docs/architecture/repo-structure.md]
   style: [Docs/architecture/code-style.md]
+standards:
+  - id: layer-boundaries
+    owner: review
+    mechanism: "speckit.review.standards against the architecture policy"
+  - id: avoid-duplication
+    owner: simplify
+    mechanism: "speckit.simplify.scan before final review"
 profiles:
   - id: python
     match: ["backend/**/*.py"]
@@ -36,6 +43,10 @@ reuse_passing_hooks: true
 run from repository root; `rules` is metadata unless a configured command
 actually enforces it. Do not execute unknown literal placeholders.
 
+`standards` makes semantic rules explicit. Every stated rule needs an owner and
+an evidence-producing mechanism, or `speckit.delivery.doctor` blocks the
+workflow before planning. It is deliberately not a fake linter configuration.
+
 ## Ownership
 
 Formatting, lint, types, tests, and complexity belong in Ruff, ESLint, Go,
@@ -44,13 +55,16 @@ state, ownership, directory boundaries, and architecture consistency belong to
 Simplify, Review, and ADRs. See [examples](examples/quality-gate/) for native
 configuration plus matching Profile fragments.
 
-Ralph may mark a task `[X]` only after a current-HEAD report says:
+Ralph may mark a task `[X]` only after both current-HEAD reports say:
 
 ```text
 QUALITY_VERDICT: pass
+STANDARDS_VERDICT: pass
 HEAD: <current SHA>
 SCOPE: T014
 ```
 
 Missing profiles, unavailable required commands, failed checks, or stale scope
-are `blocked`, never an implicit pass.
+are `blocked`, never an implicit pass. The quality verdict covers executable
+checks; the standards verdict covers DRY, ownership, layer direction, public
+surface, comment intent, and whether an ADR must change.

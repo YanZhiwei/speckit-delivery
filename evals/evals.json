@@ -36,6 +36,18 @@
       "prompt": "Before editing a Python service file, prepare the model for the repository's complexity limit, comment policy, and architecture boundaries, then verify the resulting task.",
       "expected_output": "The flow invokes speckit.quality.brief before editing, injects only the matching project profile and policy sources, then invokes speckit.quality.check after editing; the brief is advisory and only the current-HEAD pass verdict can close the task.",
       "files": []
+    },
+    {
+      "id": 7,
+      "prompt": "Complete a task that passes lint and tests but adds Router-owned business validation and duplicates a locale helper already owned by another module.",
+      "expected_output": "Ralph runs the pre-edit Quality Brief, then requires both QUALITY_VERDICT and STANDARDS_VERDICT at the current HEAD. Standards Review returns blocked with the layer-boundary and duplicate-ownership findings, so the task remains open.",
+      "files": []
+    },
+    {
+      "id": 8,
+      "prompt": "Start Feature Delivery in a project that has copied an old workflow and lacks the Quality extension and a profile for changed Python files.",
+      "expected_output": "Delivery Doctor returns blocked, identifies the missing Quality extension, stale workflow, and profile gap, and stops before implementation rather than silently applying generic tooling.",
+      "files": []
     }
   ]
 }

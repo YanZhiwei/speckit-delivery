@@ -26,6 +26,11 @@ inputs:
     prompt: "Run configured documentation synchronization?"
 
 steps:
+  - id: delivery-doctor
+    command: speckit.delivery.doctor
+    integration: "{{ inputs.integration }}"
+    input: { args: "lane=feature {{ inputs.spec }}" }
+
   - id: decision-discover
     command: speckit.decision.context
     integration: "{{ inputs.integration }}"
@@ -100,6 +105,11 @@ steps:
     integration: "{{ inputs.integration }}"
     input: { args: "scope=outgoing-diff {{ inputs.spec }}" }
 
+  - id: standards-after-ralph
+    command: speckit.review.standards
+    integration: "{{ inputs.integration }}"
+    input: { args: "scope=outgoing-diff {{ inputs.spec }}" }
+
   - id: converge-loop
     type: do-while
     condition: "true"
@@ -121,6 +131,10 @@ steps:
         input: { args: "Complete dependency-ready tasks appended for {{ inputs.spec }}" }
       - id: quality-appended
         command: speckit.quality.check
+        integration: "{{ inputs.integration }}"
+        input: { args: "scope=outgoing-diff {{ inputs.spec }}" }
+      - id: standards-appended
+        command: speckit.review.standards
         integration: "{{ inputs.integration }}"
         input: { args: "scope=outgoing-diff {{ inputs.spec }}" }
 
@@ -148,6 +162,11 @@ steps:
 
   - id: quality-after-simplify
     command: speckit.quality.check
+    integration: "{{ inputs.integration }}"
+    input: { args: "scope=outgoing-diff {{ inputs.spec }}" }
+
+  - id: standards-after-simplify
+    command: speckit.review.standards
     integration: "{{ inputs.integration }}"
     input: { args: "scope=outgoing-diff {{ inputs.spec }}" }
 
