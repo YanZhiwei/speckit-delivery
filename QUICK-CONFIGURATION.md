@@ -12,14 +12,14 @@ ADRs, native tool configuration, and CI remain tracked by the project.
 
 Do not make SD infer these facts:
 
-| Project fact | Example | Where it belongs |
-| --- | --- | --- |
-| Code families | `frontend/**/*.ts(x)`, `backend/**/*.py` | Quality Profile `match` |
-| Native commands | `pnpm lint:ci`, `pnpm typecheck`, `uv … ruff check` | Quality Profile `commands` |
-| Architecture rules | Routers do not contain business rules; dependencies point inward | Architecture docs / ADRs |
-| Complexity rule | Python C901 ≤ 10 | Ruff config, never Markdown alone |
-| Comment rule | Explain non-obvious intent, not implementation history | Style docs + Standards Review |
-| Durable decision location | `docs/architecture/adr/` | Delivery / Decision config |
+| Project fact              | Example                                                          | Where it belongs                  |
+| ------------------------- | ---------------------------------------------------------------- | --------------------------------- |
+| Code families             | `frontend/**/*.ts(x)`, `backend/**/*.py`                         | Quality Profile `match`           |
+| Native commands           | `pnpm lint:ci`, `pnpm typecheck`, `uv … ruff check`              | Quality Profile `commands`        |
+| Architecture rules        | Routers do not contain business rules; dependencies point inward | Architecture docs / ADRs          |
+| Complexity rule           | Python C901 ≤ 10                                                 | Ruff config, never Markdown alone |
+| Comment rule              | Explain non-obvious intent, not implementation history           | Style docs + Standards Review     |
+| Durable decision location | `docs/architecture/adr/`                                         | Delivery / Decision config        |
 
 If a rule has no executable mechanism, record a gap; never configure it as a
 pass. Ruff's `max-complexity = 10`, for example, is inert unless `C90` is also
@@ -41,6 +41,7 @@ docs/
 │   └── code-style-python.md            # Python / FastAPI conventions
 └── architecture/
     ├── boundaries.md                   # ownership, layers, dependency direction
+    ├── testing-policy.md               # test directories, naming, and exceptions
     └── adr/                            # accepted and Proposed decisions
 
 eslint.config.* / tsconfig*.json        # executable TypeScript rules
@@ -49,14 +50,15 @@ pyproject.toml / ruff.toml              # executable Python rules
 .github/workflows/                      # reproducible CI gates
 ```
 
-| Rule | Put it in | Why |
-| --- | --- | --- |
-| Format, lint, types, tests, complexity | Native configuration and CI | Machines must run and fail it |
-| Quality commands and Hook/CI ownership | `docs/engineering/quality.md` | Humans and SD need the evidence level |
-| DRY, responsibilities, comment intent | `docs/engineering/code-style.md` | Cross-language semantic rules |
-| Framework conventions | `docs/engineering/code-style-<language>.md` | Keeps language rules separate |
-| Ownership, layers, dependency direction | `docs/architecture/boundaries.md` | System structure, not formatting |
-| Trade-offs and historical context | `docs/architecture/adr/` | Later Spec / ADR retrieval and citation |
+| Rule                                            | Put it in                                   | Why                                                       |
+| ----------------------------------------------- | ------------------------------------------- | --------------------------------------------------------- |
+| Format, lint, types, tests, complexity          | Native configuration and CI                 | Machines must run and fail it                             |
+| Quality commands and Hook/CI ownership          | `docs/engineering/quality.md`               | Humans and SD need the evidence level                     |
+| DRY, responsibilities, comment intent           | `docs/engineering/code-style.md`            | Cross-language semantic rules                             |
+| Framework conventions                           | `docs/engineering/code-style-<language>.md` | Keeps language rules separate                             |
+| Ownership, layers, dependency direction         | `docs/architecture/boundaries.md`           | System structure, not formatting                          |
+| Test directories, naming, exceptions, migration | `docs/architecture/testing-policy.md`       | State the contract, then enforce it with a narrow checker |
+| Trade-offs and historical context               | `docs/architecture/adr/`                    | Later Spec / ADR retrieval and citation                   |
 
 Keep `AGENT_GUIDE.md` short and link it to these authoritative documents. Do
 not leave mechanical rules only in Markdown: enable them in native tools too.
@@ -109,7 +111,13 @@ Create `.specify/extensions/quality/quality-config.yml`:
 ```yaml
 schema_version: "1.0"
 policy_sources:
-  architecture: [AGENT_GUIDE.md, docs/architecture/boundaries.md, docs/architecture/adr]
+  architecture:
+    [
+      AGENT_GUIDE.md,
+      docs/architecture/boundaries.md,
+      docs/architecture/testing-policy.md,
+      docs/architecture/adr,
+    ]
   style:
     - docs/engineering/code-style.md
     - docs/engineering/code-style-typescript.md
@@ -122,6 +130,9 @@ standards:
   - id: dry-and-module-ownership
     owner: review
     mechanism: "speckit.review.standards against architecture policy"
+  - id: test-layout
+    owner: quality
+    mechanism: "pnpm check:test-layout"
   - id: simplification
     owner: simplify
     mechanism: "speckit.simplify.scan before final review"
@@ -137,7 +148,7 @@ profiles:
       format: "pnpm format:check"
       lint: "pnpm lint:ci"
       typecheck: "pnpm typecheck"
-      test: "pnpm test:frontend"
+      test: "pnpm check:test-layout && pnpm test:frontend"
     rules:
       complexity_max: 10
       comment_policy: "Explain non-obvious intent; do not use history comments as a design record."
@@ -149,6 +160,8 @@ profiles:
       test: "pnpm test:scripts"
 
 unprofiled_changed_paths: block
+# Throwaway prototypes are outside product SD gates; reported, never passed.
+excluded_paths: ["poc/**"]
 reuse_passing_hooks: true
 ```
 
@@ -177,13 +190,14 @@ unprofiled: `unprofiled_changed_paths: block` prevents incorrect closure.
 SD runs project-owned tools by changed scope; it does not implement language
 tools itself.
 
-| Rule | Native mechanism | SD responsibility |
-| --- | --- | --- |
-| Format, lint, types, tests | Prettier / ESLint / TypeScript / Pytest | Run after editing; block failures |
-| Python complexity ≤ 10 | Ruff `select` includes `C90` + `max-complexity = 10` | Run Ruff and report the real result |
-| Comment intent | Project policy; optional custom checker | Brief before editing; Standards Review decides |
-| DRY and directory boundaries | Architecture policy; dependency checker if available | Simplify / Standards Review block |
-| Architecture decisions | ADR | Proposed → reviewed HEAD → Accepted |
+| Rule                         | Native mechanism                                                      | SD responsibility                              |
+| ---------------------------- | --------------------------------------------------------------------- | ---------------------------------------------- |
+| Format, lint, types, tests   | Prettier / ESLint / TypeScript / Pytest                               | Run after editing; block failures              |
+| Python complexity ≤ 10       | Ruff `select` includes `C90` + `max-complexity = 10`                  | Run Ruff and report the real result            |
+| Comment intent               | Project policy; optional custom checker                               | Brief before editing; Standards Review decides |
+| DRY and directory boundaries | Architecture policy; dependency checker if available                  | Simplify / Standards Review block              |
+| Test-directory layout        | A project-owned `check:test-layout` command limited to explicit paths | Brief before editing; failure blocks the task  |
+| Architecture decisions       | ADR                                                                   | Proposed → reviewed HEAD → Accepted            |
 
 Do not use a comment checker to decide DRY or object-oriented design. Those
 need semantic review of the diff, callers, and architectural constraints.

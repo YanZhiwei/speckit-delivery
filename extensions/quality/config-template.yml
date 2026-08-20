@@ -17,6 +17,9 @@ standards: []
 # - id: duplication-and-surface-area
 #   owner: simplify
 #   mechanism: "speckit.simplify.scan before final review"
+# - id: test-layout
+#   owner: quality
+#   mechanism: "pnpm check:test-layout" # Project-owned checker; do not infer one from directory names.
 
 # Add one profile per changed-code family. `match` uses repository-relative
 # globs. Commands are run from the repository root and must be executable as
@@ -42,4 +45,8 @@ profiles: []
 #     test: "pnpm test -- --runInBand"
 
 unprofiled_changed_paths: block
+# Repository-relative globs outside SD's governed product scope. They are
+# reported as excluded, never treated as passing quality results.
+excluded_paths: []
+# - "poc/**"
 reuse_passing_hooks: true

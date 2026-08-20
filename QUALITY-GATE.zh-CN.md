@@ -22,6 +22,9 @@ standards:
   - id: avoid-duplication
     owner: simplify
     mechanism: "speckit.simplify.scan before final review"
+  - id: test-layout
+    owner: quality
+    mechanism: "pnpm check:test-layout"
 profiles:
   - id: python
     match: ["backend/**/*.py"]
@@ -34,6 +37,7 @@ profiles:
     rules:
       complexity_max: 10
 unprofiled_changed_paths: block
+excluded_paths: ["poc/**"] # 不在正式产品治理范围；会报告，但不算通过。
 reuse_passing_hooks: true
 ```
 
@@ -43,11 +47,16 @@ reuse_passing_hooks: true
 `standards` 用来显式登记语义规则。每条规则都必须有 owner 和可产出证据的 mechanism；
 否则 `speckit.delivery.doctor` 会在计划前阻断流程。它不是伪装成 linter 的配置。
 
+`excluded_paths` 只用于明确不在产品治理范围的代码，例如一次性原型。Quality Brief、
+Quality Check 和 Standards Review 会报告排除路径，但不会把它当作已验证。原型成为产品
+代码后，应移出排除路径并为新路径增加 Profile。
+
 ## 规则归属
 
 格式、lint、类型、测试和复杂度应配置在 Ruff、ESLint、Go、Maven/Gradle、.NET 或
-项目现有 CI 中。DRY、重复状态、模块归属、目录边界和架构一致性由 Simplify、Review
-和 ADR 负责。原生配置与 Profile 配对示例见[质量闸门示例](examples/quality-gate/)。
+项目现有 CI 中。DRY、重复状态、模块归属和架构一致性由 Simplify、Review 和 ADR 负责。
+目录边界也是如此，除非项目提供了范围明确、可信的结构 checker；测试目录 checker 就是
+一个合适例子。原生配置与 Profile 配对示例见[质量闸门示例](examples/quality-gate/)。
 
 Ralph 只有收到当前 HEAD 的两类结果，才能把 Task 标记为 `[X]`：
 

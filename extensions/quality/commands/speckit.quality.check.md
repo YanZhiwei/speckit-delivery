@@ -22,6 +22,10 @@ HEAD and changed-path scope exactly match. Expand `{changed_files}` and
 `{affected_tests}` only when their values are known; never execute a literal
 placeholder or invent a package-manager command.
 
+Before matching, remove paths matching `excluded_paths` in the configuration.
+List them in `EXCLUDED_PATHS`; do not execute a profile, report a pass, or raise
+a profile gap for them. Exclusion is scope control, never a quality pass.
+
 Apply the following closure rules:
 
 1. Run every applicable executable command. A failing command is `blocked`.
@@ -35,8 +39,10 @@ Apply the following closure rules:
    as an explicit governance gap, never as a passing check.
 5. Treat DRY, ownership, public-surface, directory-boundary, and architecture
    concerns as semantic findings for `speckit.simplify.scan`,
-   `speckit.review.run`, or the ADR lifecycle. This command checks their
-   configured mechanical policy; it does not silently waive semantic review.
+   `speckit.review.run`, or the ADR lifecycle—unless the project explicitly
+   configures a credible checker for a narrow structural rule such as test
+   layout. This command checks that configured mechanism; it does not silently
+   waive semantic review.
 
 Return a compact, machine-readable report in this exact shape:
 
@@ -45,6 +51,7 @@ QUALITY_VERDICT: pass | blocked
 HEAD: <sha>
 SCOPE: <task-id or outgoing-diff>
 PATHS: <repository-relative paths>
+EXCLUDED_PATHS: <paths or none>
 PROFILES: <matched profile ids>
 CHECKS:
 - <profile/check>: pass | fail | not-applicable | unavailable — <evidence>

@@ -16,6 +16,9 @@ the applicable policy sources configured in
 changed code's owning-module documentation. Do not repeat executable checks
 owned by `speckit.quality.check`.
 
+Exclude paths matching `excluded_paths` in the quality configuration and report
+them as outside the governed scope; do not review them as production work.
+
 Review semantic standards that require judgment: unnecessary duplicate logic,
 ownership and directory boundaries, layer direction, single responsibility,
 public-surface growth, comment intent, and whether the change alters an ADR.
@@ -31,6 +34,7 @@ STANDARDS_VERDICT: pass | blocked
 HEAD: <sha>
 SCOPE: <task-id, batch-id, or outgoing-diff>
 PATHS: <repository-relative paths>
+EXCLUDED_PATHS: <paths or none>
 POLICY_SOURCES: <paths read>
 FINDINGS:
 - <id>: pass | blocked | follow-up — <rule, evidence, impact, remediation>

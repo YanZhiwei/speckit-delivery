@@ -24,6 +24,9 @@ standards:
   - id: avoid-duplication
     owner: simplify
     mechanism: "speckit.simplify.scan before final review"
+  - id: test-layout
+    owner: quality
+    mechanism: "pnpm check:test-layout"
 profiles:
   - id: python
     match: ["backend/**/*.py"]
@@ -36,6 +39,7 @@ profiles:
     rules:
       complexity_max: 10
 unprofiled_changed_paths: block
+excluded_paths: ["poc/**"] # Outside governed product scope; reported, never passed.
 reuse_passing_hooks: true
 ```
 
@@ -47,13 +51,20 @@ actually enforces it. Do not execute unknown literal placeholders.
 an evidence-producing mechanism, or `speckit.delivery.doctor` blocks the
 workflow before planning. It is deliberately not a fake linter configuration.
 
+Use `excluded_paths` only for deliberately out-of-scope code such as throwaway
+prototypes. Quality Brief, Quality Check, and Standards Review report excluded
+paths but do not treat them as verified. When a prototype becomes product code,
+move it out of the excluded path and create a Profile.
+
 ## Ownership
 
 Formatting, lint, types, tests, and complexity belong in Ruff, ESLint, Go,
 Maven/Gradle, .NET, or the project's existing CI configuration. DRY, duplicate
-state, ownership, directory boundaries, and architecture consistency belong to
-Simplify, Review, and ADRs. See [examples](examples/quality-gate/) for native
-configuration plus matching Profile fragments.
+state, ownership, and architecture consistency belong to Simplify, Review, and
+ADRs. Directory boundaries belong there too unless the repository provides a
+narrow, credible structural checker; a test-layout checker is a useful example.
+See [examples](examples/quality-gate/) for native configuration plus matching
+Profile fragments.
 
 Ralph may mark a task `[X]` only after both current-HEAD reports say:
 

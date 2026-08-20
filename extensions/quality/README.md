@@ -14,8 +14,10 @@ contract.
 - Reuse of a passing hook only when HEAD and changed-file scope match exactly.
 
 It does not replace semantic design review. DRY, redundant APIs, unclear
-ownership, and directory or dependency boundaries remain findings for
-Simplify, Review, and (when durable) ADRs.
+ownership, and dependency boundaries remain findings for Simplify, Review, and
+(when durable) ADRs. Directory layout becomes a mechanical gate only when the
+project supplies an explicit checker (for example `pnpm check:test-layout`);
+otherwise it remains a Standards Review finding.
 
 ## Configure a project
 
