@@ -118,6 +118,11 @@ Codex skills 模式会把已安装的 Delivery 扩展渲染成 `speckit-delivery
 是否缺少 Delivery 扩展；应检查实际 skills root 下是否存在
 `speckit-delivery-route` 技能。
 
+这个规则同样适用于其他宿主：Claude Code 的入口是
+`/speckit-delivery-route`，OpenCode 是 `/speckit.delivery.route`，通用适配器
+则执行渲染出的命令文件。不要用 `which speckit*` 这类 PATH 检查判断宿主扩展
+是否已安装。
+
 路由器会选择 Feature、Bugfix 或 Lightweight，不会默认所有需求都走完整 Feature
 流程。也可以直接运行：
 

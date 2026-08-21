@@ -99,6 +99,11 @@ as the `speckit-delivery-route` skill under the active skill roots. Do not use
 `Get-Command speckit*` as the Codex availability check; read the matching skill
 and execute it through the host's surface instead.
 
+The same warning applies elsewhere: Claude Code exposes the Delivery router as
+`/speckit-delivery-route`, OpenCode as `/speckit.delivery.route`, and generic
+adapters as a rendered command file. Do not turn host-native extension
+availability into a PATH check like `which speckit*`.
+
 ## Requirements
 
 - Spec Kit CLI `>=0.16.4`
