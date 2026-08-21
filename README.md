@@ -94,6 +94,11 @@ Copy both directories under `skills/` into the same agent skill-discovery root
 for the optional native entry point. See [skills/README.md](skills/README.md)
 for the sibling layout.
 
+When Codex Skills mode is active, an installed Delivery extension is rendered
+as the `speckit-delivery-route` skill under the active skill roots. Do not use
+`Get-Command speckit*` as the Codex availability check; read the matching skill
+and execute it through the host's surface instead.
+
 ## Requirements
 
 - Spec Kit CLI `>=0.16.4`

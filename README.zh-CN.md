@@ -113,6 +113,11 @@ Feature。
 $sd 为特权配置变更增加审计轨迹。
 ```
 
+Codex skills 模式会把已安装的 Delivery 扩展渲染成 `speckit-delivery-route`
+技能，而不是 shell 可执行命令。不要用 `Get-Command speckit*` 判断 Codex 环境
+是否缺少 Delivery 扩展；应检查实际 skills root 下是否存在
+`speckit-delivery-route` 技能。
+
 路由器会选择 Feature、Bugfix 或 Lightweight，不会默认所有需求都走完整 Feature
 流程。也可以直接运行：
 
