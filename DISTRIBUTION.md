@@ -17,10 +17,11 @@ mutable `main` content.
 ## Local verification
 
 Use a clean temporary Spec Kit project, install every local extension and all
-three workflows, then run:
+three workflows, copy the bundle into that project, then run:
 
 ```bash
-specify bundle validate --path /path/to/speckit-delivery/bundle
+cp -R /path/to/speckit-delivery/bundle /tmp/speckit-bundle-check/bundle
+specify bundle validate --path /tmp/speckit-bundle-check/bundle
 specify bundle build --path /path/to/speckit-delivery/bundle --output ./dist
 python scripts/check_links.py
 ```

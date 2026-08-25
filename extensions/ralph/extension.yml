@@ -19,7 +19,7 @@ provides:
   commands:
     - name: speckit.ralph.run
       file: commands/speckit.ralph.run.md
-      description: "Run one dependency-ready task per iteration, verify it, commit it, and then mark completion."
+      description: "Run one dependency-ready task per iteration, verify it, mark it [X], commit it, and verify the result."
   config:
     - name: ralph-config.yml
       template: config-template.yml

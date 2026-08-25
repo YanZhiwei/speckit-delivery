@@ -41,13 +41,18 @@ jobs:
           cd "$project_dir"
           specify init . --integration codex --ignore-agent-tools --force --script sh
           specify extension add bug
-          for extension in delivery decision ralph review simplify evidence docs-sync; do
+          for extension in delivery decision ralph review simplify evidence quality docs-sync; do
             specify extension add "$repo_root/extensions/$extension" --dev
           done
           for workflow in feature-delivery bugfix-delivery lightweight-delivery; do
             specify workflow add "$repo_root/workflows/$workflow/workflow.yml" --dev
           done
-          specify bundle validate --path "$repo_root/bundle"
+          # bundle validate resolves project-local installed components from the
+          # bundle's parent tree. Validate a copy inside the clean project so it
+          # cannot accidentally bind to an unrelated .specify directory in the
+          # checkout (or miss the temporary project's installed components).
+          cp -R "$repo_root/bundle" "$project_dir/bundle"
+          specify bundle validate --path "$project_dir/bundle"
           specify bundle build --path "$repo_root/bundle" --output "$repo_root/dist"
 
       - name: Check whitespace

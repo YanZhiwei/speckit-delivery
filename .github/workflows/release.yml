@@ -29,13 +29,17 @@ jobs:
           cd "$project_dir"
           specify init . --integration codex --ignore-agent-tools --force --script sh
           specify extension add bug
-          for extension in delivery decision ralph review simplify evidence docs-sync; do
+          for extension in delivery decision ralph review simplify evidence quality docs-sync; do
             specify extension add "$repo_root/extensions/$extension" --dev
           done
           for workflow in feature-delivery bugfix-delivery lightweight-delivery; do
             specify workflow add "$repo_root/workflows/$workflow/workflow.yml" --dev
           done
-          specify bundle validate --path "$repo_root/bundle"
+          # Keep validation rooted in the clean project so the CLI resolves
+          # the components installed above, not an unrelated checkout-local
+          # .specify directory.
+          cp -R "$repo_root/bundle" "$project_dir/bundle"
+          specify bundle validate --path "$project_dir/bundle"
           specify bundle build --path "$repo_root/bundle" --output "$repo_root/dist"
 
       - name: Publish release assets

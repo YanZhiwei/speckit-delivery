@@ -5,10 +5,22 @@ loop. The portable contract is one dependency-ready task per iteration in a
 clean Git worktree. Parallel workers are allowed only when the provider gives
 each worker an isolated worktree and an explicit integration contract.
 
-Before the first edit, resolve the active feature, capture the clean baseline,
-and create or reuse `ralph/<feature-slug>`. Never stash, reset, clean, or stage
-pre-existing user changes. A missing Git repository, dirty baseline, or unsafe
-branch transition is a blocker.
+Before task selection, worker dispatch, quality briefing, or the first edit,
+resolve the active feature, capture the clean baseline, and execute the branch
+gate: create or reuse `ralph/<feature-slug>` (or the configured prefix), then
+verify that it is the active branch. Stating that the branch will be created is
+not execution. Never stash, reset, clean, or stage pre-existing user changes. A
+missing Git repository, dirty baseline, or unsafe branch transition is a
+blocker.
+
+After the branch gate, Ralph emits a concise run-level governance summary
+before task selection. It names the active feature, branch, base `HEAD`,
+applicable Constitution/ADR/quality/standards sources, closure gates, and stop
+conditions. It reports only relevant excerpts and paths rather than dumping all
+policy text. Each iteration then emits a task governance packet containing the
+task acceptance criteria, allowed paths, applicable code style and architecture
+rules, and exact checks. Missing policy or quality-profile sources are blockers;
+Ralph must not silently fall back to generic rules.
 
 For each iteration, parse task identifiers, dependencies, `[P]` markers,
 user-story labels, file targets, and verification instructions. Treat file
@@ -18,17 +30,26 @@ task, including the acceptance condition and relevant Spec/Plan/ADR excerpts.
 
 The worker returns changed paths, commands, results, residual risk, and
 blockers. It does not edit the task checkbox or create the closure commit. The
-orchestrator runs the configured checks and both Quality and Standards verdicts.
-Only after both pass may the orchestrator mark `[X]`, stage the verified task
-paths and declared state files, and create exactly one commit:
+orchestrator runs the task checks and both Quality and Standards verdicts. Before
+the checkbox changes, it verifies acceptance evidence, all declared checks,
+current `QUALITY_VERDICT: pass`, current `STANDARDS_VERDICT: pass`, unchanged
+`HEAD`, allowed changed paths, and availability of required checks and policy
+sources. It reports `RALPH_TASK_GATE: PASS` only when every item passes. Only
+then may the orchestrator mark `[X]` and persist the receipt.
+That state transition is immediately followed by staging the verified task
+paths and declared state files and creating exactly one commit; no next-task
+work or unrelated edit may occur between the checkbox and commit:
 
-```text
-feat(ralph): <task-id> - <task-title>
+```sh
+git add -- <verified-task-path> <task-state-path> [<progress-path>]
+git diff --cached --check
+git commit -m "feat(ralph): <task-id> - <task-title>"
 ```
 
 The orchestrator verifies that `HEAD` advanced, the commit contains the task
-result, and the worktree is clean before recording the commit identity. A
-failed or blocked task remains open and blocks its dependents. Completion is
-valid only when every task has a passing current receipt, the Ralph branch is
-active, the worktree is clean, and the loop emits
+result and task-state transition, and the worktree is clean before recording
+the commit identity; it does not modify tracked task state after that clean
+commit. A failed or blocked task remains open and blocks its dependents.
+Completion is valid only when every task has a passing current receipt, the
+Ralph branch is active, the worktree is clean, and the loop emits
 `<promise>ALL_TASKS_DONE</promise>`.

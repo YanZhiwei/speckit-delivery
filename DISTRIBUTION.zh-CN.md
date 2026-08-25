@@ -15,10 +15,12 @@ Catalog URL 必须指向与发布版本相同的 Tag，发布不能依赖可变�
 
 ## 本地验证
 
-在干净的临时 Spec Kit 项目中安装所有本地 Extension 和三个 Workflow，然后执行：
+在干净的临时 Spec Kit 项目中安装所有本地 Extension 和三个 Workflow，将 Bundle
+复制到该项目后再执行校验；这样 CLI 才会解析临时项目中的已安装组件：
 
 ```bash
-specify bundle validate --path /path/to/speckit-delivery/bundle
+cp -R /path/to/speckit-delivery/bundle /tmp/speckit-bundle-check/bundle
+specify bundle validate --path /tmp/speckit-bundle-check/bundle
 specify bundle build --path /path/to/speckit-delivery/bundle --output ./dist
 python scripts/check_links.py
 ```

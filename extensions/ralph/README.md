@@ -9,15 +9,20 @@ time until the task queue is complete.
 The portable mode is deliberately sequential because each completed task owns
 one Git commit in the shared worktree:
 
-1. Require a clean Git worktree and create or reuse `ralph/<feature-slug>`.
-2. Select exactly one dependency-ready task.
-3. Read the task's Spec/Plan/ADR context and run `speckit.quality.brief`.
-4. Implement the task and run its checks.
-5. Run `speckit.quality.check` and `speckit.review.standards`.
-6. When both verdicts pass, mark `[X]`, write the receipt, and commit the
-   verified task paths with `feat(ralph): <task-id> - <task-title>`.
-7. Verify the new `HEAD` and a clean worktree before starting the next task.
-8. Emit `<promise>ALL_TASKS_DONE</promise>` only when every task is committed
+1. Before task selection or editing, require a clean Git worktree, create or
+   reuse `ralph/<feature-slug>`, and verify that it is the active branch.
+2. Report the applicable governance sources, closure gates, and stop conditions.
+3. Select exactly one dependency-ready task and emit its task governance packet.
+4. Read the task's Spec/Plan/ADR context and run `speckit.quality.brief`.
+5. Implement the task and run its checks.
+6. Run `speckit.quality.check` and `speckit.review.standards`.
+7. Before changing `[ ]` to `[X]`, verify acceptance evidence, current passing
+   verdicts, unchanged `HEAD`, allowed paths, and available required checks.
+8. When the task gate passes, mark `[X]` and write the receipt, then immediately
+   commit the verified task paths with
+   `feat(ralph): <task-id> - <task-title>`.
+9. Verify the new `HEAD` and a clean worktree before starting the next task.
+10. Emit `<promise>ALL_TASKS_DONE</promise>` only when every task is committed
    and has a passing current receipt.
 
 Workers report their results; the orchestrator owns task closure and commits.

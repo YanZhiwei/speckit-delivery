@@ -165,7 +165,7 @@ SCOPE: T014
 | 增加 Redis L2 缓存 | `$sd` | 检索本地缓存 ADR，生成 Proposed ADR，评审后形成自包含 Accepted ADR |
 | 修复重试重复通知 | `$sd` | 先建立红色回归证据，再修复和验证；只有架构决策变化才升级 ADR |
 | 修正文档标题 | `$sd` | 走 Lightweight，只运行文档检查，不创建完整 Spec/Ralph 队列 |
-| 已有 Tasks 继续实现 | `speckit.ralph.run` | 在 `ralph/<feature>` 分支上逐 Task 验证、提交，再由 Ralph 勾选完成 |
+| 已有 Tasks 继续实现 | `speckit.ralph.run` | 先创建或复用并验证 `ralph/<feature>` 分支，报告适用治理/代码风格规则；逐 Task 输出治理包并检测，通过关闭门禁后勾选 `[X]` 并立即提交 |
 
 ## 长期记录与临时文件
 
@@ -182,10 +182,15 @@ SCOPE: T014
 ## 分发与本地开发
 
 仓库同时发布独立 Extension 压缩包、版本固定的 Extension/Workflow Catalog 和
-`speckit-delivery` Bundle。当前 checkout 的结构校验命令：
+`speckit-delivery` Bundle。Bundle 校验应在干净目标项目中进行：CLI 会从 Bundle
+所在目录向上寻找项目根，不能让 checkout 中仅用于缓存的 `.specify` 目录抢占校验上下文。
 
 ```bash
+# 在安装完本地组件的干净目标项目中：
+cp -R /path/to/speckit-delivery/bundle ./bundle
 specify bundle validate --path ./bundle
+
+# 在分发仓库 checkout 中：
 specify bundle build --path ./bundle --output ./dist
 ```
 

@@ -259,9 +259,12 @@ speckit.ralph.run
 
 It reads `tasks.md` as the only execution source, finds one dependency-ready
 `Txxx` task per iteration, and respects file overlap, migrations, public
-contracts, and unresolved decisions as blocking edges. The command creates or
-reuses a clean `ralph/<feature>` branch, runs the Quality and Standards gates,
-commits the verified task, and only then marks `[X]`. It emits
+contracts, and unresolved decisions as blocking edges. Before selecting a
+task, the command creates or reuses and verifies a clean `ralph/<feature>`
+branch, reports the applicable governance and code-style rules, and emits a
+task-specific governance packet. It then runs the task checks plus Quality and
+Standards gates. Only after the pre-checkbox closure gate passes is a task
+marked `[X]`; it is immediately committed with its receipt. It emits
 `<promise>ALL_TASKS_DONE</promise>` only after every task has a current receipt
 and a clean committed worktree.
 
@@ -323,22 +326,29 @@ an ADR, or a Ralph queue for a behavior-preserving typo correction.
 `T014` and `T017` are dependency-ready while `T015` changes the same public
 contract as `T014`.
 
-Run `speckit.ralph.run`. Ralph creates or reuses the feature's
-`ralph/<feature>` branch, selects one ready task, and creates one commit after
-the task's Quality and Standards verdicts pass. Workers return their changes
-and evidence; Ralph alone updates task checkboxes and commits the verified
-scope. If `T014` fails verification or commit validation, it stays open and
-its dependents remain blocked with an explicit reason.
+Run `speckit.ralph.run`. Ralph first creates or reuses and verifies the
+feature's `ralph/<feature>` branch, reports the applicable governance packet,
+then selects one ready task and runs its checks plus Quality and Standards
+gates. A pre-checkbox closure gate verifies acceptance evidence, current
+`HEAD`, allowed paths, and required tools. After it passes, Ralph marks `[X]`
+and immediately creates exactly one commit containing the verified scope and
+task receipt. Workers return their changes and evidence; Ralph alone updates
+task checkboxes and commits. If `T014` fails verification or commit validation,
+it stays open and its dependents remain blocked with an explicit reason.
 
 ## Local development installation
 
 If the current directory is the distribution checkout rather than a target
-project, use the same commands above with the appropriate target paths. The
-absolute-path form avoids accidentally installing the extensions into the
-distribution repository itself.
+project, keep validation rooted in a clean target project. `bundle validate`
+resolves project-local installed components from the bundle's parent tree; a
+checkout-local `.specify` cache must not become the validation context.
 
 ```bash
+# In a clean target project after installing the local components:
+cp -R /path/to/speckit-delivery/bundle ./bundle
 specify bundle validate --path ./bundle
+
+# From the distribution checkout:
 specify bundle build --path ./bundle --output ./dist
 ```
 
