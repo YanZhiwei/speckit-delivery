@@ -35,7 +35,7 @@
       "name": "Ralph Task Orchestrator",
       "id": "ralph",
       "version": "0.1.0",
-      "description": "Execute Spec Kit tasks through dependency-aware agent dispatch with orchestrator-owned completion.",
+      "description": "Execute Spec Kit tasks through a bounded Ralph loop with per-task branch, verification, and Git commit ownership.",
       "author": "Yan Zhiwei",
       "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.1.0/ralph-0.1.0.zip",
       "repository": "https://github.com/YanZhiwei/speckit-delivery",
@@ -43,7 +43,7 @@
       "license": "MIT",
       "requires": {"speckit_version": ">=0.16.4"},
       "provides": {"commands": 1, "hooks": 0},
-      "tags": ["agents", "orchestration", "tasks"]
+      "tags": ["agents", "orchestration", "tasks", "git"]
     },
     "review": {
       "name": "Delivery Code Review",

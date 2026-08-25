@@ -5,8 +5,9 @@ Spec Kit 的 `Spec → Plan → Tasks` 主线，并补充 ADR 决策记忆、项
 任务编排、实现收敛、简化审查、代码评审、文档同步、交付证据和 PR 交接。
 
 > [!IMPORTANT]
-> 当前为 `0.1.0` 初始分发骨架。引导式 Workflow 和命令契约可用于评估；Provider
-> 级并行调度和完全机器化的语义分支属于后续里程碑。
+> 当前为 `0.1.0` 初始分发骨架。引导式 Workflow 和命令契约可用于评估；可移植的
+> Ralph 路径按任务串行并逐 Task 提交 Git，Provider 级并行调度和完全机器化的语义
+> 分支属于后续里程碑。
 
 [English](README.md)
 
@@ -143,7 +144,7 @@ specify workflow run feature-delivery --input spec="描述需要交付的变更"
 
 模型开始编辑前调用 `speckit.quality.brief` 获取目标文件规则；Ralph 关闭 Task 前再调用
 `speckit.quality.check` 与 `speckit.review.standards`。只有两种结果均覆盖当前 HEAD、
-任务变更范围匹配，才能标记 `[X]`：
+任务变更范围匹配，并且对应 Git commit 创建成功，才能标记 `[X]`：
 
 ```text
 QUALITY_VERDICT: pass
@@ -164,7 +165,7 @@ SCOPE: T014
 | 增加 Redis L2 缓存 | `$sd` | 检索本地缓存 ADR，生成 Proposed ADR，评审后形成自包含 Accepted ADR |
 | 修复重试重复通知 | `$sd` | 先建立红色回归证据，再修复和验证；只有架构决策变化才升级 ADR |
 | 修正文档标题 | `$sd` | 走 Lightweight，只运行文档检查，不创建完整 Spec/Ralph 队列 |
-| 已有 Tasks 继续实现 | `speckit.ralph.run` | 只调度依赖就绪任务，Quality 与 Standards 均通过后由 Ralph 勾选完成 |
+| 已有 Tasks 继续实现 | `speckit.ralph.run` | 在 `ralph/<feature>` 分支上逐 Task 验证、提交，再由 Ralph 勾选完成 |
 
 ## 长期记录与临时文件
 

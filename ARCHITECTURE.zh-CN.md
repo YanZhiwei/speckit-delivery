@@ -11,7 +11,7 @@ Spec Kit Delivery 是 Spec Kit 之上的分发层，不是 Spec Kit 的 Fork，�
 | Bundle | 固定版本的组件组合 | 组件实现和宿主 Integration |
 | Quality Gate | 项目本地可执行检查和关闭判定 | DRY 或架构语义判断 |
 | Standards Review | Task 或批次的语义规范判定 | 重跑机械质量检查 |
-| Ralph | 依赖就绪任务调度和完成确认 | 规划或自行关闭任务 |
+| Ralph | 依赖就绪任务执行、Git Task 提交和完成确认 | 规划或自行关闭任务 |
 
 系统分成三个控制面：
 
@@ -35,8 +35,11 @@ ADR 是主题级、长期的记录；Spec 是 Feature 级记录；Constitution �
 治理规则。Accepted ADR 必须脱离被忽略的 Spec 文件、Task ID、Review 轮次和对话记录
 独立成立。
 
-Ralph 只把 `tasks.md` 当作调度队列。只有编排器检查变更路径、证据，并确认当前
-HEAD 和任务范围的 `QUALITY_VERDICT: pass` 及 `STANDARDS_VERDICT: pass` 后，才能标记 `[X]`。
+Ralph 只把 `tasks.md` 当作执行队列。可移植协议是在干净的
+`ralph/<feature>` 分支上每轮执行一个依赖就绪任务。并行执行必须使用隔离
+Worktree 和 Provider 专用集成契约，不能在共享 Worktree 中进行。只有编排器检查
+变更路径、证据，并确认当前 HEAD 和任务范围的 `QUALITY_VERDICT: pass` 及
+`STANDARDS_VERDICT: pass` 后，才能标记 `[X]`；随后创建该 Task 的 Git 提交。
 
 质量闸门负责格式、lint、类型、测试和已配置的复杂度；DRY、模块归属、目录边界、
 公共 API 和架构一致性仍由 Simplify、Review 与 ADR 负责。

@@ -3,7 +3,7 @@
 An evidence-driven delivery layer for [GitHub Spec Kit](https://github.com/github/spec-kit). It keeps Spec Kit's specification artifacts as the execution backbone and adds durable architecture decisions, project-local quality gates, task-based agent orchestration, convergence, simplification review, code review, documentation synchronization, release evidence, and a stable pull-request handoff.
 
 > [!IMPORTANT]
-> This repository is an early distribution scaffold (`0.1.0`). The guided workflows and prompt contracts are usable for evaluation. Provider-specific parallel execution and fully machine-driven semantic branching are intentionally tracked as later milestones.
+> This repository is an early distribution scaffold (`0.1.0`). The guided workflows and prompt contracts are usable for evaluation. The portable Ralph path is sequential with per-task Git commits; provider-specific parallel execution and fully machine-driven semantic branching are later milestones.
 
 [English] · [简体中文](README.zh-CN.md)
 
@@ -78,9 +78,10 @@ speckit-delivery/
 ```
 
 The package is integration-agnostic. Codex, Claude Code, OpenCode, and generic
-adapters can render the same commands in their native formats. Hosts with
-delegation may run Ralph concurrently; other hosts use the same dependency-
-ordered sequential protocol.
+adapters can render the same commands in their native formats. The portable
+Ralph path uses one dependency-ready task per iteration in a clean
+`ralph/<feature>` branch, with one verified Git commit per task. Provider-level
+parallelism requires isolated worktrees and is a later integration contract.
 
 ## Agent entry point
 
@@ -256,11 +257,13 @@ feature's `tasks.md`:
 speckit.ralph.run
 ```
 
-It reads `tasks.md` as the only scheduling source, finds dependency-ready
-`Txxx` tasks, and respects file overlap, migrations, public contracts, and
-unresolved decisions as blocking edges. With native delegation it can dispatch
-independent task packets in parallel; otherwise it performs the same packets
-sequentially with fresh task focus.
+It reads `tasks.md` as the only execution source, finds one dependency-ready
+`Txxx` task per iteration, and respects file overlap, migrations, public
+contracts, and unresolved decisions as blocking edges. The command creates or
+reuses a clean `ralph/<feature>` branch, runs the Quality and Standards gates,
+commits the verified task, and only then marks `[X]`. It emits
+`<promise>ALL_TASKS_DONE</promise>` only after every task has a current receipt
+and a clean committed worktree.
 
 Each worker receives the task's acceptance condition, allowed scope, relevant
 Spec/Plan/ADR excerpts, and expected verification. Workers report results;
@@ -285,12 +288,13 @@ for process-local caching, and Spec files are gitignored.”
 
 Run `$sd` with the request. It routes to **Feature**, retrieves the local-cache
 ADR before planning, and produces a Proposed cache ADR once the plan selects a
-direction. `speckit.tasks` creates the queue; Ralph may independently dispatch
-serialization, cache adapter, invalidation, and test tasks only where their
-files and contracts do not overlap. Because Spec artifacts are ephemeral,
-every worker packet carries the assigned task plus the relevant cache and ADR
-excerpts. After review, finalize a self-contained Accepted ADR that explains
-the Redis and local-cache relationship without citing the ignored Spec files.
+direction. `speckit.tasks` creates the queue; Ralph executes the
+serialization, cache adapter, invalidation, and test tasks one at a time. Each
+iteration carries the assigned task plus the relevant cache and ADR excerpts,
+runs the task gates, and creates its own verified commit. Because Spec
+artifacts are ephemeral, workers must not assume that another worktree contains
+them. After review, finalize a self-contained Accepted ADR that explains the
+Redis and local-cache relationship without citing the ignored Spec files.
 
 ### Bugfix: prevent duplicate retry notifications
 
@@ -319,11 +323,12 @@ an ADR, or a Ralph queue for a behavior-preserving typo correction.
 `T014` and `T017` are dependency-ready while `T015` changes the same public
 contract as `T014`.
 
-Run `speckit.ralph.run`. Ralph can dispatch `T014` and `T017` when their file
-and contract scopes are independent; it holds `T015` until `T014` is verified.
-Workers return their changes and evidence, while Ralph alone updates task
-checkboxes. If `T014` fails verification, it stays open and its dependents
-remain blocked with an explicit reason.
+Run `speckit.ralph.run`. Ralph creates or reuses the feature's
+`ralph/<feature>` branch, selects one ready task, and creates one commit after
+the task's Quality and Standards verdicts pass. Workers return their changes
+and evidence; Ralph alone updates task checkboxes and commits the verified
+scope. If `T014` fails verification or commit validation, it stays open and
+its dependents remain blocked with an explicit reason.
 
 ## Local development installation
 

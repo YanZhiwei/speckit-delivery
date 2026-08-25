@@ -1,7 +1,34 @@
 # Ralph protocol
 
-Parse task identifiers, dependencies, `[P]` markers, user-story labels, file targets, and verification instructions. Dispatch only dependency-ready work. Treat file overlap and shared public contracts as blocking edges even when tasks carry `[P]`.
+Spec Kit is the structured source of truth; Ralph is the bounded execution
+loop. The portable contract is one dependency-ready task per iteration in a
+clean Git worktree. Parallel workers are allowed only when the provider gives
+each worker an isolated worktree and an explicit integration contract.
 
-Give a worker one task or one cohesive red/green/refactor bundle. Include the exact acceptance condition and relevant Spec/Plan/ADR excerpts. Workers return changed paths, commands run, results, residual risk, and commit identity when commits are part of the provider contract.
+Before the first edit, resolve the active feature, capture the clean baseline,
+and create or reuse `ralph/<feature-slug>`. Never stash, reset, clean, or stage
+pre-existing user changes. A missing Git repository, dirty baseline, or unsafe
+branch transition is a blocker.
 
-The orchestrator checks the result and marks `[X]`. A worker never marks its own task complete. Failed tasks block downstream tasks until retried, revised, or explicitly waived by an authorized human.
+For each iteration, parse task identifiers, dependencies, `[P]` markers,
+user-story labels, file targets, and verification instructions. Treat file
+overlap, shared public contracts, migrations, and unresolved design decisions
+as blocking edges even when tasks carry `[P]`. Give the worker exactly one
+task, including the acceptance condition and relevant Spec/Plan/ADR excerpts.
+
+The worker returns changed paths, commands, results, residual risk, and
+blockers. It does not edit the task checkbox or create the closure commit. The
+orchestrator runs the configured checks and both Quality and Standards verdicts.
+Only after both pass may the orchestrator mark `[X]`, stage the verified task
+paths and declared state files, and create exactly one commit:
+
+```text
+feat(ralph): <task-id> - <task-title>
+```
+
+The orchestrator verifies that `HEAD` advanced, the commit contains the task
+result, and the worktree is clean before recording the commit identity. A
+failed or blocked task remains open and blocks its dependents. Completion is
+valid only when every task has a passing current receipt, the Ralph branch is
+active, the worktree is clean, and the loop emits
+`<promise>ALL_TASKS_DONE</promise>`.

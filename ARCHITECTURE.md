@@ -12,7 +12,7 @@ existing workflow.
 | Bundle | Pinned component composition | Component implementation or host integration |
 | Quality Gate | Project-local executable checks and closure verdict | DRY or architectural judgment |
 | Standards Review | Task or batch semantic standards verdict | Re-running mechanical quality checks |
-| Ralph | Dependency-ready task dispatch and task completion | Planning or self-authorized task closure |
+| Ralph | Dependency-ready task execution, Git task commits, and task completion | Planning or self-authorized task closure |
 
 The system has three control planes:
 
@@ -36,10 +36,14 @@ An ADR is thematic and durable; a Spec is feature-scoped; a Constitution is
 cross-feature governance. Accepted ADRs must stand alone without ignored Spec
 files, task identifiers, review rounds, or conversation history.
 
-Ralph schedules only `tasks.md`. It may dispatch independent tasks, but only the
+Ralph consumes only `tasks.md` as its execution queue. The portable contract is
+one dependency-ready task per iteration on a clean `ralph/<feature>` branch.
+Parallel execution requires isolated worktrees and a provider-specific
+integration contract; it is not valid in the shared worktree. Only the
 orchestrator can mark `[X]`, after checking changed paths, evidence, and
 current-HEAD `QUALITY_VERDICT: pass` plus `STANDARDS_VERDICT: pass` for that
-task scope. It stores the task receipt in local `.specify/delivery` state.
+task scope. It then creates the task commit and stores the task receipt in
+local `.specify/delivery` state.
 
 Quality checks formatting, lint, types, tests, and configured complexity.
 Standards Review checks DRY, ownership, directory boundaries, public-surface

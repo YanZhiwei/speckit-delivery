@@ -4,7 +4,7 @@ extension:
   id: ralph
   name: Ralph Task Orchestrator
   version: "0.1.0"
-  description: "Execute Spec Kit tasks through dependency-aware agent dispatch with orchestrator-owned completion."
+  description: "Execute Spec Kit tasks through a bounded Ralph loop with per-task branches, verification, and Git commits."
   category: process
   effect: read-write
   author: Yan Zhiwei
@@ -19,11 +19,11 @@ provides:
   commands:
     - name: speckit.ralph.run
       file: commands/speckit.ralph.run.md
-      description: "Dispatch dependency-ready tasks and verify results before marking completion."
+      description: "Run one dependency-ready task per iteration, verify it, commit it, and then mark completion."
   config:
     - name: ralph-config.yml
       template: config-template.yml
-      description: "Ralph provider, concurrency, retry, and artifact settings."
+      description: "Ralph provider, sequential execution, branch, commit, retry, and artifact settings."
       required: false
 
-tags: ["agents", "orchestration", "tasks", "implementation"]
+tags: ["agents", "orchestration", "tasks", "implementation", "git"]

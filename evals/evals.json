@@ -48,6 +48,12 @@
       "prompt": "Start Feature Delivery in a project that has copied an old workflow and lacks the Quality extension and a profile for changed Python files.",
       "expected_output": "Delivery Doctor returns blocked, identifies the missing Quality extension, stale workflow, and profile gap, and stops before implementation rather than silently applying generic tooling.",
       "files": []
+    },
+    {
+      "id": 9,
+      "prompt": "Run Ralph against an analyzed Spec Kit tasks.md in a clean Git repository.",
+      "expected_output": "Ralph creates or reuses a ralph/<feature> branch, executes exactly one dependency-ready task per iteration, runs the Quality and Standards gates, creates one verified Git commit per completed task before marking [X], leaves blocked tasks open, and emits ALL_TASKS_DONE only when the committed task queue is empty and the worktree is clean.",
+      "files": []
     }
   ]
 }

@@ -18,6 +18,10 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 - Ralph and all delivery lanes now require both mechanical quality and semantic
   standards verification before task or outgoing-diff closure.
+- Ralph now bridges Spec Kit tasks with a sequential per-task loop: it creates
+  or reuses a `ralph/<feature>` branch, requires a verified Git commit before
+  closing each task, and emits a machine-readable completion promise only when
+  the committed task queue is empty.
 
 ## [0.1.0] - 2026-08-18
 

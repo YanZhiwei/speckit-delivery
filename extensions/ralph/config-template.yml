@@ -1,6 +1,12 @@
 provider: auto
-max_parallel: 4
+max_parallel: 1
 max_retries: 2
+max_iterations: 100
 artifact_policy: tracked
 generic_fallback: sequential
+branch_policy: create_or_reuse
+branch_prefix: ralph/
+commit_policy: per_task
+commit_message: "feat(ralph): {task_id} - {task_title}"
+completion_promise: "<promise>ALL_TASKS_DONE</promise>"
 orchestrator_marks_completion: true
