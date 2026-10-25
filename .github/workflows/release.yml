@@ -1,8 +1,17 @@
 name: Release distribution
 
 on:
-  push:
-    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Semantic release version, for example 0.2.0"
+        required: true
+        type: string
+      ref:
+        description: "Branch or commit to release"
+        required: true
+        default: main
+        type: string
 
 permissions:
   contents: write
@@ -12,6 +21,56 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+
+      - name: Resolve release metadata
+        id: release
+        shell: bash
+        env:
+          VERSION_INPUT: ${{ inputs.version }}
+          SOURCE_REF: ${{ inputs.ref }}
+        run: |
+          set -euo pipefail
+          version="${VERSION_INPUT#v}"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "version must be a semantic version such as 0.2.0" >&2
+            exit 1
+          fi
+
+          tag="v$version"
+          source_sha="$(git rev-parse HEAD)"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "source_sha=$source_sha" >> "$GITHUB_OUTPUT"
+          echo "source_ref=$SOURCE_REF" >> "$GITHUB_OUTPUT"
+          echo "Releasing $tag from $SOURCE_REF at $source_sha"
+
+      - name: Check release tag state
+        shell: bash
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+          SOURCE_SHA: ${{ steps.release.outputs.source_sha }}
+        run: |
+          set -euo pipefail
+          tag_sha="$(git ls-remote origin "refs/tags/${TAG}^{}" | awk '{print $1}')"
+          if [[ -z "$tag_sha" ]]; then
+            tag_sha="$(git ls-remote origin "refs/tags/$TAG" | awk '{print $1}')"
+          fi
+
+          if [[ -n "$tag_sha" && "$tag_sha" != "$SOURCE_SHA" ]]; then
+            echo "Tag $TAG already points to $tag_sha, not $SOURCE_SHA" >&2
+            exit 1
+          fi
+
+          if [[ -n "$tag_sha" ]]; then
+            echo "TAG_EXISTS=true" >> "$GITHUB_ENV"
+            echo "Tag $TAG already points to the selected source commit; it will be reused."
+          else
+            echo "TAG_EXISTS=false" >> "$GITHUB_ENV"
+            echo "Tag $TAG does not exist and will be created after validation."
+          fi
 
       - uses: astral-sh/setup-uv@v6
 
@@ -20,10 +79,12 @@ jobs:
 
       - name: Build and validate
         shell: bash
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+          TAG: ${{ steps.release.outputs.tag }}
         run: |
           set -euo pipefail
-          version="${GITHUB_REF_NAME#v}"
-          python scripts/package_components.py --version "$version" --output dist
+          python scripts/package_components.py --version "$VERSION" --output dist
           repo_root="$PWD"
           project_dir="$(mktemp -d)"
           cd "$project_dir"
@@ -42,8 +103,33 @@ jobs:
           specify bundle validate --path "$project_dir/bundle"
           specify bundle build --path "$repo_root/bundle" --output "$repo_root/dist"
 
+          python "$repo_root/scripts/render_release_notes.py" \
+            --version "$VERSION" \
+            --tag "$TAG" \
+            --changelog-en "$repo_root/CHANGELOG.md" \
+            --changelog-zh "$repo_root/CHANGELOG.zh-CN.md" \
+            --output "$repo_root/dist/release-notes.md"
+
+      - name: Create release tag
+        shell: bash
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+          SOURCE_SHA: ${{ steps.release.outputs.source_sha }}
+        run: |
+          set -euo pipefail
+          if [[ "${TAG_EXISTS:-false}" == "true" ]]; then
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" "$SOURCE_SHA" -m "Release $TAG"
+          git push origin "$TAG"
+
       - name: Publish release assets
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
-          generate_release_notes: true
+          tag_name: ${{ steps.release.outputs.tag }}
+          body_path: dist/release-notes.md
+          fail_on_unmatched_files: true
           files: dist/*.zip
