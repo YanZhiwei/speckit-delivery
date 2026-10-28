@@ -50,8 +50,10 @@ jobs:
             exit 1
           fi
           if git ls-remote --exit-code --heads origin "refs/heads/$branch" >/dev/null; then
-            echo "::error::Branch $branch already exists; close/delete it or choose a new version."
-            exit 1
+            echo "Branch $branch already exists; it will be reused and validated."
+            echo "BRANCH_EXISTS=true" >> "$GITHUB_ENV"
+          else
+            echo "BRANCH_EXISTS=false" >> "$GITHUB_ENV"
           fi
           {
             echo "VERSION=$version"
@@ -60,13 +62,37 @@ jobs:
             echo "BASE_REF=$BASE_REF"
           } >> "$GITHUB_ENV"
 
+      - name: Check PR creation permission
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          allowed="$(gh api "repos/$GITHUB_REPOSITORY/actions/permissions/workflow" \
+            --jq '.can_approve_pull_request_reviews')"
+          if [[ "$allowed" != "true" ]]; then
+            echo "::error::Enable Settings -> Actions -> General -> 'Allow GitHub Actions to create and approve pull requests'."
+            exit 1
+          fi
+
       - uses: astral-sh/setup-uv@v6
 
       - name: Install Spec Kit
         run: uv tool install specify-cli==1.2.3
 
       - name: Stamp release metadata
-        run: uv run --with pyyaml python scripts/stamp_release.py --version "$VERSION"
+        run: |
+          set -euo pipefail
+          if [[ "${BRANCH_EXISTS:-false}" == "true" ]]; then
+            git fetch origin "$BRANCH"
+            git switch -c "$BRANCH" --track "origin/$BRANCH"
+            # A reused branch must already be fully stamped; do not silently
+            # rewrite it from a newer base branch.
+            uv run --with pyyaml python scripts/stamp_release.py \
+              --version "$VERSION" --check
+          else
+            uv run --with pyyaml python scripts/stamp_release.py \
+              --version "$VERSION"
+          fi
 
       - name: Validate prepared distribution
         run: |
@@ -84,6 +110,10 @@ jobs:
       - name: Commit release preparation
         run: |
           set -euo pipefail
+          if [[ "${BRANCH_EXISTS:-false}" == "true" ]]; then
+            echo "Reusing $BRANCH; no new commit is needed."
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "$BRANCH"
@@ -97,6 +127,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          existing="$(gh pr list --head "$BRANCH" --state open \
+            --json url --jq '.[0].url // empty')"
+          if [[ -n "$existing" ]]; then
+            echo "Release preparation PR already exists: $existing"
+            exit 0
+          fi
           gh pr create \
             --base "$BASE_REF" \
             --head "$BRANCH" \
