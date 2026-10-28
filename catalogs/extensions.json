@@ -1,119 +1,195 @@
 {
   "schema_version": "1.0",
   "updated_at": "2026-08-19T00:00:00Z",
-  "catalog_url": "https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.0/catalogs/extensions.json",
+  "catalog_url": "https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.1/catalogs/extensions.json",
   "extensions": {
     "delivery": {
       "name": "Spec Kit Delivery Core",
       "id": "delivery",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "Initialize delivery policy and render a durable pull-request handoff from final evidence.",
       "author": "Yan Zhiwei",
-      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.1.0/delivery-0.1.0.zip",
+      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.1.1/delivery-0.1.1.zip",
       "repository": "https://github.com/YanZhiwei/speckit-delivery",
       "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/v0.1.0/extensions/delivery",
       "license": "MIT",
-      "requires": {"speckit_version": ">=0.16.4"},
-      "provides": {"commands": 5, "hooks": 0},
-      "tags": ["sdd", "delivery", "handoff"]
+      "requires": {
+        "speckit_version": ">=0.16.4"
+      },
+      "provides": {
+        "commands": 5,
+        "hooks": 0
+      },
+      "tags": [
+        "sdd",
+        "delivery",
+        "handoff"
+      ]
     },
     "decision": {
       "name": "Decision Memory",
       "id": "decision",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "Retrieve, propose, finalize, and validate durable architecture decisions around Spec Kit delivery.",
       "author": "Yan Zhiwei",
-      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.1.0/decision-0.1.0.zip",
+      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.1.1/decision-0.1.1.zip",
       "repository": "https://github.com/YanZhiwei/speckit-delivery",
       "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/v0.1.0/extensions/decision",
       "license": "MIT",
-      "requires": {"speckit_version": ">=0.16.4"},
-      "provides": {"commands": 4, "hooks": 0},
-      "tags": ["adr", "architecture", "governance", "memory"]
+      "requires": {
+        "speckit_version": ">=0.16.4"
+      },
+      "provides": {
+        "commands": 4,
+        "hooks": 0
+      },
+      "tags": [
+        "adr",
+        "architecture",
+        "governance",
+        "memory"
+      ]
     },
     "ralph": {
       "name": "Ralph Task Orchestrator",
       "id": "ralph",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "Execute Spec Kit tasks through a bounded Ralph loop with per-task branch, verification, and Git commit ownership.",
       "author": "Yan Zhiwei",
-      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.1.0/ralph-0.1.0.zip",
+      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.1.1/ralph-0.1.1.zip",
       "repository": "https://github.com/YanZhiwei/speckit-delivery",
       "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/v0.1.0/extensions/ralph",
       "license": "MIT",
-      "requires": {"speckit_version": ">=0.16.4"},
-      "provides": {"commands": 1, "hooks": 0},
-      "tags": ["agents", "orchestration", "tasks", "git"]
+      "requires": {
+        "speckit_version": ">=0.16.4"
+      },
+      "provides": {
+        "commands": 1,
+        "hooks": 0
+      },
+      "tags": [
+        "agents",
+        "orchestration",
+        "tasks",
+        "git"
+      ]
     },
     "review": {
       "name": "Delivery Code Review",
       "id": "review",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "Review the live outgoing diff against standards, specification, architecture, correctness, and risk.",
       "author": "Yan Zhiwei",
-      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.1.0/review-0.1.0.zip",
+      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.1.1/review-0.1.1.zip",
       "repository": "https://github.com/YanZhiwei/speckit-delivery",
       "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/v0.1.0/extensions/review",
       "license": "MIT",
-      "requires": {"speckit_version": ">=0.16.4"},
-      "provides": {"commands": 2, "hooks": 0},
-      "tags": ["review", "quality", "spec"]
+      "requires": {
+        "speckit_version": ">=0.16.4"
+      },
+      "provides": {
+        "commands": 2,
+        "hooks": 0
+      },
+      "tags": [
+        "review",
+        "quality",
+        "spec"
+      ]
     },
     "simplify": {
       "name": "Evidence-Driven Simplification",
       "id": "simplify",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "Find and verify simplifications using consumer evidence, ownership analysis, and net deletion.",
       "author": "Yan Zhiwei",
-      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.1.0/simplify-0.1.0.zip",
+      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.1.1/simplify-0.1.1.zip",
       "repository": "https://github.com/YanZhiwei/speckit-delivery",
       "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/v0.1.0/extensions/simplify",
       "license": "MIT",
-      "requires": {"speckit_version": ">=0.16.4"},
-      "provides": {"commands": 2, "hooks": 0},
-      "tags": ["simplification", "dead-code", "architecture"]
+      "requires": {
+        "speckit_version": ">=0.16.4"
+      },
+      "provides": {
+        "commands": 2,
+        "hooks": 0
+      },
+      "tags": [
+        "simplification",
+        "dead-code",
+        "architecture"
+      ]
     },
     "evidence": {
       "name": "Diff-Driven Evidence",
       "id": "evidence",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "Select and run the narrowest credible verification for the actual outgoing diff.",
       "author": "Yan Zhiwei",
-      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.1.0/evidence-0.1.0.zip",
+      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.1.1/evidence-0.1.1.zip",
       "repository": "https://github.com/YanZhiwei/speckit-delivery",
       "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/v0.1.0/extensions/evidence",
       "license": "MIT",
-      "requires": {"speckit_version": ">=0.16.4"},
-      "provides": {"commands": 1, "hooks": 0},
-      "tags": ["verification", "testing", "pre-push"]
+      "requires": {
+        "speckit_version": ">=0.16.4"
+      },
+      "provides": {
+        "commands": 1,
+        "hooks": 0
+      },
+      "tags": [
+        "verification",
+        "testing",
+        "pre-push"
+      ]
     },
     "quality": {
       "name": "Project Quality Gate",
       "id": "quality",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "Apply project-local executable quality profiles before work can be closed.",
       "author": "Yan Zhiwei",
-      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.1.0/quality-0.1.0.zip",
+      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.1.1/quality-0.1.1.zip",
       "repository": "https://github.com/YanZhiwei/speckit-delivery",
       "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/v0.1.0/extensions/quality",
       "license": "MIT",
-      "requires": {"speckit_version": ">=0.16.4"},
-      "provides": {"commands": 2, "hooks": 0},
-      "tags": ["quality", "lint", "complexity", "testing", "governance"]
+      "requires": {
+        "speckit_version": ">=0.16.4"
+      },
+      "provides": {
+        "commands": 2,
+        "hooks": 0
+      },
+      "tags": [
+        "quality",
+        "lint",
+        "complexity",
+        "testing",
+        "governance"
+      ]
     },
     "docs-sync": {
       "name": "Documentation Projection Sync",
       "id": "docs-sync",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "Synchronize source documentation with configured generated projections and repair links.",
       "author": "Yan Zhiwei",
-      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.1.0/docs-sync-0.1.0.zip",
+      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.1.1/docs-sync-0.1.1.zip",
       "repository": "https://github.com/YanZhiwei/speckit-delivery",
       "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/v0.1.0/extensions/docs-sync",
       "license": "MIT",
-      "requires": {"speckit_version": ">=0.16.4"},
-      "provides": {"commands": 1, "hooks": 0},
-      "tags": ["documentation", "sync", "generated-files"]
+      "requires": {
+        "speckit_version": ">=0.16.4"
+      },
+      "provides": {
+        "commands": 1,
+        "hooks": 0
+      },
+      "tags": [
+        "documentation",
+        "sync",
+        "generated-files"
+      ]
     }
   }
 }

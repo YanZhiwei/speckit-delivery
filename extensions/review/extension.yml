@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: review
   name: Delivery Code Review
-  version: "0.1.0"
+  version: "0.1.1"
   description: "Review the live outgoing diff against standards, specification, architecture, correctness, and risk."
   category: code
   effect: read-only
