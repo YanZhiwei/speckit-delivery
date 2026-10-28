@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "feature-delivery"
   name: "Spec Kit Feature Delivery"
-  version: "0.1.1"
+  version: "0.1.2"
   author: "Yan Zhiwei"
   description: "Guided feature delivery with decision memory, quality gates, Ralph, convergence, simplification, review, evidence, and handoff."
 

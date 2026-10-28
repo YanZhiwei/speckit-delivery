@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: ralph
   name: Ralph Task Orchestrator
-  version: "0.1.1"
+  version: "0.1.2"
   description: "Execute Spec Kit tasks through a bounded Ralph loop with per-task branches, verification, and Git commits."
   category: process
   effect: read-write
