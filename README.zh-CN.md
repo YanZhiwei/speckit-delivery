@@ -136,6 +136,11 @@ Codex skills 模式会把已安装的 Delivery 扩展渲染成 `speckit-delivery
 则执行渲染出的命令文件。不要用 `which speckit*` 这类 PATH 检查判断宿主扩展
 是否已安装。
 
+`speckit.delivery.context` 是 Feature 规划前和 Bugfix 诊断前的可选上下文步骤：
+项目存在 `.codegraph/` 时报告入口、调用方和受影响测试，不存在时返回带缺口说明的
+部分结果。它不会初始化索引，也不把代码图当作测试或正确性证据；可用
+`code_context: off` 关闭。
+
 路由器会选择 Feature、Bugfix 或 Lightweight，不会默认所有需求都走完整 Feature
 流程。也可以直接运行：
 

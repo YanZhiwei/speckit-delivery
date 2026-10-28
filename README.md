@@ -405,7 +405,13 @@ The remote repository and release do not exist until the maintainer explicitly p
 | Standards closure | `speckit.review.standards` |
 | Documentation | `speckit.docs-sync.run` |
 | Diagrams | `speckit.diagram.render` |
+| Code context | `speckit.delivery.context` |
 | Routing, doctor, and handoff | `speckit.delivery.doctor`, `.route`, `.handoff` |
+
+`speckit.delivery.context` reads the project's local `.codegraph/` index when it
+exists and reports entry points, callers, and affected tests for the change. It
+is optional: without the index it returns a partial brief and names the gaps,
+and it never initializes an index or treats the graph as test evidence.
 
 ## Durable and ephemeral artifacts
 

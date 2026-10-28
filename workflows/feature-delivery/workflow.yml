@@ -57,6 +57,12 @@ steps:
     integration: "{{ inputs.integration }}"
     input: { args: "mode=resolve {{ inputs.spec }}" }
 
+  - id: code-context
+    command: speckit.delivery.context
+    integration: "{{ inputs.integration }}"
+    continue_on_error: true
+    input: { args: "lane=feature {{ inputs.spec }}" }
+
   - id: plan
     command: speckit.plan
     integration: "{{ inputs.integration }}"

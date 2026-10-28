@@ -78,6 +78,18 @@
       "prompt": "A retry bug is 'fixed' by catching the exception and returning a default value, while the reproduction still shows duplicate notifications under load.",
       "expected_output": "Bugfix and Code Review treat the guard as symptom masking, require the reproduced cause and a regression test that fails without the real fix, and do not close the task on the passing guard alone.",
       "files": []
+    },
+    {
+      "id": 14,
+      "prompt": "Plan a change that adds validation to an existing service, in a repository with a fresh .codegraph index and a configured test command.",
+      "expected_output": "speckit.delivery.context runs before speckit.plan, cites entry points, callers, and affected tests from the graph with file locations, records INDEX: fresh and the current HEAD, writes or returns the brief, and the plan uses it without re-reading the whole repository or treating the graph as correctness evidence.",
+      "files": []
+    },
+    {
+      "id": 15,
+      "prompt": "Diagnose a bug in a repository with no .codegraph directory and no codegraph CLI on PATH.",
+      "expected_output": "speckit.delivery.context reports CODE_CONTEXT: partial or unavailable with INDEX: absent, falls back to targeted search of the changed paths, names the unverified relationships in GAPS, never runs codegraph init, and the bugfix workflow continues instead of aborting.",
+      "files": []
     }
   ]
 }

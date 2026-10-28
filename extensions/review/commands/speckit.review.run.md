@@ -31,6 +31,6 @@ Apply these discipline checks to the changed code:
   that only works together with later work, or that cannot be verified at the
   reported HEAD, is a finding.
 
-Prioritize defects over style. Inspect consumers and callers, not only changed functions. A finding contains severity, location, defect, impact, evidence, remediation, and architecture impact.
+Prioritize defects over style. Inspect consumers and callers, not only changed functions. When the project has a fresh `.codegraph/` index, use `codegraph impact` or `codegraph callers` to enumerate consumers and cite the result; report an absent, stale, or incomplete index as a coverage gap instead of assuming the list is complete. A finding contains severity, location, defect, impact, evidence, remediation, and architecture impact.
 
 Return `pass` only when no blocking finding remains. Convert blocking findings to `tasks.md` entries before further implementation; rerun analyze and Ralph rather than allowing review prose to become a second task queue.

@@ -14,6 +14,9 @@
 - 在 `skills/` 增加可选、版本固定的 `archify`（v3.2.0）和
   `fireworks-tech-graph`（v1.2.0）渲染器副本，附带来源、提交和 SHA-256。
 - PR Handoff 模板新增“当前设计/本次改动/影响范围/设计图/AI 使用披露”小节。
+- 新增 `speckit.delivery.context`：规划前或诊断前的可选代码上下文简报。项目存在
+  `.codegraph/` 时报告入口、调用方和受影响测试；不存在时返回带缺口说明的部分结果，
+  且不会初始化索引。
 
 ### 变更
 
@@ -24,6 +27,8 @@
 - Quality Gate 文档说明 CRAP、重复度和变异阈值何时才算真正门禁：必须由项目自有
   wrapper 产生非零退出，只写报告的工具不算。
 - Bundle 现在包含 10 个扩展；Diagram 不改变任何 Workflow 的执行顺序。
+- Feature 与 Bugfix Workflow 分别在 `plan` 和 `assess` 之前执行代码上下文步骤；
+  该步骤不阻塞交付，缺少索引或工具时只降级结果。
 
 ### 修复
 

@@ -32,6 +32,9 @@ provides:
     - name: speckit.delivery.doctor
       file: commands/speckit.delivery.doctor.md
       description: "Check delivery component installation, policy coverage, and workflow readiness before implementation."
+    - name: speckit.delivery.context
+      file: commands/speckit.delivery.context.md
+      description: "Assemble a short, evidence-backed map of the implementation the current change touches."
   config:
     - name: delivery-config.yml
       template: config-template.yml

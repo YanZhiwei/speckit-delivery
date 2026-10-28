@@ -6,6 +6,9 @@ adr_directories: [docs/architecture/decisions]
 max_convergence_rounds: 3
 max_review_fix_rounds: 3
 docs_sync: auto
+# Use the project's local code graph when `.codegraph/` exists. `off` skips the
+# context step; it never blocks delivery.
+code_context: auto
 # Optional project-relative or absolute path. Leave null to use the
 # repository's .github PR template, then this extension's
 # templates/pull-request.md, then the section contract in

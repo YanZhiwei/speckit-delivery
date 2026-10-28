@@ -15,6 +15,10 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
   `fireworks-tech-graph` (v1.2.0), each with provenance, commit, and SHA-256.
 - PR handoff template sections for current design, change map, impact, design
   diagram, and AI assistance disclosure.
+- `speckit.delivery.context`: an optional code-context brief before planning or
+  diagnosis. It uses the project's local `.codegraph/` index when present,
+  reports entry points, callers, and affected tests, and degrades to a partial
+  brief without initializing an index.
 
 ### Changed
 
@@ -28,6 +32,9 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
   non-zero, never by a report-only tool.
 - The Bundle now contains 10 extensions; Diagram does not change the step order
   of any workflow.
+- Feature and Bugfix workflows run the code-context step before `plan` and
+  `assess`. It is non-blocking: a missing index or tool degrades the brief, it
+  does not stop delivery.
 
 ### Fixed
 

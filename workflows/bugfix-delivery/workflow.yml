@@ -26,6 +26,12 @@ steps:
     integration: "{{ inputs.integration }}"
     input: { args: "lane=bugfix {{ inputs.report }}" }
 
+  - id: code-context
+    command: speckit.delivery.context
+    integration: "{{ inputs.integration }}"
+    continue_on_error: true
+    input: { args: "lane=bugfix {{ inputs.report }}" }
+
   - id: assess
     command: speckit.bug.assess
     integration: "{{ inputs.integration }}"
