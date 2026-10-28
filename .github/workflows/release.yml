@@ -41,10 +41,12 @@ jobs:
 
           tag="v$version"
           source_sha="$(git rev-parse HEAD)"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          echo "source_sha=$source_sha" >> "$GITHUB_OUTPUT"
-          echo "source_ref=$SOURCE_REF" >> "$GITHUB_OUTPUT"
+          {
+            echo "version=$version"
+            echo "tag=$tag"
+            echo "source_sha=$source_sha"
+            echo "source_ref=$SOURCE_REF"
+          } >> "$GITHUB_OUTPUT"
           echo "Releasing $tag from $SOURCE_REF at $source_sha"
 
       - name: Check release tag state

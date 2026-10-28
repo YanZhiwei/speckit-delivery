@@ -53,10 +53,12 @@ jobs:
             echo "::error::Branch $branch already exists; close/delete it or choose a new version."
             exit 1
           fi
-          echo "VERSION=$version" >> "$GITHUB_ENV"
-          echo "TAG=$tag" >> "$GITHUB_ENV"
-          echo "BRANCH=$branch" >> "$GITHUB_ENV"
-          echo "BASE_REF=$BASE_REF" >> "$GITHUB_ENV"
+          {
+            echo "VERSION=$version"
+            echo "TAG=$tag"
+            echo "BRANCH=$branch"
+            echo "BASE_REF=$BASE_REF"
+          } >> "$GITHUB_ENV"
 
       - uses: astral-sh/setup-uv@v6
 
