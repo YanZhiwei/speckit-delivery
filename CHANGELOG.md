@@ -30,11 +30,10 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 - Quality Gate documentation explains when CRAP, duplication, and mutation
   thresholds are real gates: only through a project-owned wrapper that exits
   non-zero, never by a report-only tool.
-- The Bundle now contains 10 extensions; Diagram does not change the step order
-  of any workflow.
-- Feature and Bugfix workflows run the code-context step before `plan` and
-  `assess`. It is non-blocking: a missing index or tool degrades the brief, it
-  does not stop delivery.
+- The Bundle now contains 10 extensions. Diagram adds no workflow step.
+- Feature and Bugfix workflows add a non-blocking code-context step before
+  `plan` and `assess`. A missing index or tool degrades the brief; it does not
+  stop delivery. Set `code_context: off` to skip it.
 
 ### Fixed
 

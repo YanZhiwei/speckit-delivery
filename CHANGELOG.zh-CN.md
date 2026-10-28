@@ -26,9 +26,9 @@
   症状、先减后加、可独立验证的单元。
 - Quality Gate 文档说明 CRAP、重复度和变异阈值何时才算真正门禁：必须由项目自有
   wrapper 产生非零退出，只写报告的工具不算。
-- Bundle 现在包含 10 个扩展；Diagram 不改变任何 Workflow 的执行顺序。
-- Feature 与 Bugfix Workflow 分别在 `plan` 和 `assess` 之前执行代码上下文步骤；
-  该步骤不阻塞交付，缺少索引或工具时只降级结果。
+- Bundle 现在包含 10 个扩展；Diagram 本身不增加 Workflow 步骤。
+- Feature 与 Bugfix Workflow 分别在 `plan` 和 `assess` 之前增加非阻塞的代码上下文
+  步骤；缺少索引或工具时只降级结果，不中断交付。可用 `code_context: off` 关闭。
 
 ### 修复
 
