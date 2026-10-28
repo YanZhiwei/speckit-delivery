@@ -4,6 +4,8 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-28
+
 ### Added
 
 - `Prepare release PR` workflow and `stamp_release.py` preflight: stamp all

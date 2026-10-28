@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-28
+
 ### 新增
 
 - 新增 `Prepare release PR` Workflow 和 `stamp_release.py` 发布前置：统一写入组件/Catalog
