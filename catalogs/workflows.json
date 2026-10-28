@@ -12,7 +12,10 @@
       "url": "https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.0/workflows/feature-delivery/workflow.yml",
       "repository": "https://github.com/YanZhiwei/speckit-delivery",
       "license": "MIT",
-      "requires": {"speckit_version": ">=0.16.4"},
+      "requires": {
+        "speckit_version": ">=0.16.4",
+        "integrations": {"any": ["codex", "claude", "copilot", "gemini", "opencode", "generic"]}
+      },
       "tags": ["sdd", "feature", "delivery"]
     },
     "bugfix-delivery": {
@@ -24,7 +27,10 @@
       "url": "https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.0/workflows/bugfix-delivery/workflow.yml",
       "repository": "https://github.com/YanZhiwei/speckit-delivery",
       "license": "MIT",
-      "requires": {"speckit_version": ">=0.16.4"},
+      "requires": {
+        "speckit_version": ">=0.16.4",
+        "integrations": {"any": ["codex", "claude", "copilot", "gemini", "opencode", "generic"]}
+      },
       "tags": ["sdd", "bugfix", "delivery"]
     },
     "lightweight-delivery": {
@@ -36,7 +42,10 @@
       "url": "https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.0/workflows/lightweight-delivery/workflow.yml",
       "repository": "https://github.com/YanZhiwei/speckit-delivery",
       "license": "MIT",
-      "requires": {"speckit_version": ">=0.16.4"},
+      "requires": {
+        "speckit_version": ">=0.16.4",
+        "integrations": {"any": ["codex", "claude", "copilot", "gemini", "opencode", "generic"]}
+      },
       "tags": ["small-change", "lightweight", "delivery"]
     }
   }

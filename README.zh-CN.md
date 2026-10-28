@@ -51,6 +51,17 @@ Spec Kit 已经提供了良好的 `specify → plan → tasks → implement` 主
 | Bugfix | 可复现且范围明确的缺陷 | 评估 → 红测试 → 修复 → 验证 |
 | Lightweight | 文档、机械修改、极小的行为不变变更 | 范围 → 修改 → 定向证据 |
 
+## 环境要求
+
+- 单独安装 Extension 或 Workflow：Spec Kit CLI `>=0.16.4`
+- 使用 Bundle 安装路径：Spec Kit CLI `>=1.2.3`
+- 支持 Spec Kit 的宿主集成、Git，以及目标项目自己的构建和测试工具
+
+> [!NOTE]
+> 已发布的 `v0.1.0` Bundle 早于 Catalog 对齐修复。下一版 Release 之前，请按当前安装
+> 说明逐个安装固定版本 Extension 和 Workflow，或使用已准备的源码修复并配合 Spec Kit
+> `>=1.2.3`；不要把旧 Tag 的 Bundle 安装当成已通过。
+
 ## 快速开始
 
 以下命令在**目标项目**中执行，而不是在本分发仓库中执行。
@@ -178,6 +189,16 @@ SCOPE: T014
 - PR：最终变化、风险和验证证据
 
 最终 ADR 和 PR 不应引用临时 Task ID、Review 轮次或被忽略的 Plan 章节。
+
+## Release 安装
+
+> [!WARNING]
+> 已发布的 `v0.1.0` Bundle 早于 Workflow Catalog 对齐修复，在 Spec Kit 1.2.3 上会失败。
+> Bundle 路径请使用下一版 Release；当前可按 Release 说明逐个安装固定版本
+> Extension/Workflow。不要把下列命令当作 `v0.1.0` Bundle 已验证。
+
+指定版本的 Catalog 和 Bundle 安装命令见根目录 `README.md` 的 Release installation
+一节；Bundle 要求 Spec Kit `>=1.2.3`，单独组件仍支持 `>=0.16.4`。
 
 ## 分发与本地开发
 

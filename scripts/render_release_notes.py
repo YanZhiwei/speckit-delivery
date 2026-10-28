@@ -99,7 +99,7 @@ def main() -> int:
     parser.add_argument("--version", required=True)
     parser.add_argument("--tag", required=True)
     parser.add_argument("--repository", default="YanZhiwei/speckit-delivery")
-    parser.add_argument("--specify-version", default="0.16.4")
+    parser.add_argument("--specify-version", default="1.2.3")
     parser.add_argument(
         "--changelog-en", type=Path, default=Path("CHANGELOG.md")
     )

@@ -35,14 +35,19 @@ Changelog 段落，或该段落为空，Workflow 会在创建 Tag 前阻止发�
 复制到该项目后再执行校验；这样 CLI 才会解析临时项目中的已安装组件：
 
 ```bash
+uv run --with pyyaml python scripts/validate_distribution.py
+uv run --with pyyaml python scripts/test_validate_distribution.py
+python scripts/test_bundle_install.py
 cp -R /path/to/speckit-delivery/bundle /tmp/speckit-bundle-check/bundle
 specify bundle validate --path /tmp/speckit-bundle-check/bundle
 specify bundle build --path /path/to/speckit-delivery/bundle --output ./dist
 python scripts/check_links.py
 ```
 
-发布前还要在第二个干净项目中验证 Catalog 安装。只有 Manifest、Catalog、压缩包根
-布局、README 命令和版本完全一致时，才能认为可发布。
+`test_bundle_install.py` 会从本地 release-shaped Catalog 安装实际构建的 Bundle；它要求
+Spec Kit `>=1.2.3`，也是 Bundle 的最低版本。单独 Extension/Workflow 仍支持 `>=0.16.4`。
+发布前还要在第二个干净项目中验证已发布 Catalog 安装。只有 Manifest、Catalog、
+Workflow requirements、压缩包根布局、README 命令和版本完全一致时，才能认为可发布。
 
 ## README 归属
 

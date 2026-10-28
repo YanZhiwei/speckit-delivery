@@ -14,6 +14,17 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 - Delivery Doctor command that detects stale components, missing profiles, and
   unowned documented rules before workflow execution.
 
+### Fixed
+
+- Workflow catalog `requires` now matches each workflow YAML, so Bundle
+  installation works on Spec Kit 1.2.3 instead of failing before component
+  installation.
+- Bundle installation now requires Spec Kit `>=1.2.3`; individual extensions and
+  workflows retain their `>=0.16.4` floor.
+- Distribution validation now checks catalog URLs, manifest/workflow versions,
+  workflow requirements, bundle component pins, and performs a real Bundle
+  install from local release-shaped catalogs.
+
 ### Changed
 
 - Ralph and all delivery lanes now require both mechanical quality and semantic

@@ -107,10 +107,18 @@ availability into a PATH check like `which speckit*`.
 
 ## Requirements
 
-- Spec Kit CLI `>=0.16.4`
+- Spec Kit CLI `>=0.16.4` for individual extensions and workflows
+- Spec Kit CLI `>=1.2.3` for the Bundle installer path
 - A Spec Kit-supported coding-agent integration
 - Git
 - Project build and test tools selected by the target repository
+
+> [!NOTE]
+> The published `v0.1.0` Bundle predates the catalog alignment fix. Until the next
+> release, install the versioned extensions and workflows individually as shown
+> in the repository history/current install guide, or use the prepared source
+> fix with Spec Kit `>=1.2.3`. Do not claim a successful Bundle install from the
+> old Tag.
 
 Check the CLI before installation:
 
@@ -354,7 +362,14 @@ specify bundle build --path ./bundle --output ./dist
 
 ## Release installation
 
-Releases publish each extension as a root-layout zip, expose pinned catalogs, and publish the bundle artifact. Add the versioned catalogs before installing the bundle:
+> [!WARNING]
+> The published `v0.1.0` Bundle predates the workflow-catalog alignment fix and
+> is known to fail on Spec Kit 1.2.3. Use the next release for the Bundle path,
+> or install the versioned extensions/workflows individually as documented in
+> the release notes. Do not treat the commands below as evidence that `v0.1.0`
+> Bundle installation passed.
+
+Releases publish each extension as a root-layout zip, expose pinned catalogs, and publish the bundle artifact. Add the versioned catalogs before installing the bundle (Bundle requires Spec Kit `>=1.2.3`):
 
 ```bash
 specify extension catalog add \

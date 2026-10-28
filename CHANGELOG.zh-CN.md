@@ -12,6 +12,15 @@
 - 新增返回任务或批次语义闭环 verdict 的 Standards Review 命令。
 - 新增在 Workflow 执行前检查组件过期、Profile 缺失和文档规则未归属情况的 Delivery Doctor 命令。
 
+### 修复
+
+- Workflow Catalog 的 `requires` 现在与 Workflow YAML 一致，Bundle 在 Spec Kit 1.2.3
+  上不会再于组件安装前失败。
+- Bundle 安装最低版本调整为 Spec Kit `>=1.2.3`；单独安装 Extension 和 Workflow 仍为
+  `>=0.16.4`。
+- 分发校验现在检查 Catalog URL、Manifest/Workflow 版本、Workflow requirements、Bundle
+  组件固定版本，并从本地 release-shaped Catalog 执行真实 Bundle 安装。
+
 ### 变更
 
 - 所有交付 Lane 和 Ralph 现在都要求同时通过机械质量检查和语义标准检查，才能关闭任务或 outgoing diff。

@@ -10,14 +10,16 @@ bundle:
   license: "MIT"
 
 requires:
-  speckit_version: ">=0.16.4"
+  # The Bundle installer path is validated against Spec Kit 1.2.3. Individual
+  # extensions and workflows remain installable on older supported CLIs.
+  speckit_version: ">=1.2.3"
   tools: []
   mcp: []
 
 provides:
   extensions:
     - id: "bug"
-      version: "1.0.0"
+      version: "1.0.1"
     - id: "delivery"
       version: "0.1.0"
     - id: "decision"

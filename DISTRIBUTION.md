@@ -39,15 +39,21 @@ Use a clean temporary Spec Kit project, install every local extension and all
 three workflows, copy the bundle into that project, then run:
 
 ```bash
+uv run --with pyyaml python scripts/validate_distribution.py
+uv run --with pyyaml python scripts/test_validate_distribution.py
+python scripts/test_bundle_install.py
 cp -R /path/to/speckit-delivery/bundle /tmp/speckit-bundle-check/bundle
 specify bundle validate --path /tmp/speckit-bundle-check/bundle
 specify bundle build --path /path/to/speckit-delivery/bundle --output ./dist
 python scripts/check_links.py
 ```
 
-Release verification additionally installs from catalogs in a second clean
-project. A release is ready only when manifests, catalogs, packaged roots,
-README commands, and versions agree.
+`test_bundle_install.py` installs the built Bundle through local, release-shaped
+catalogs in a clean project. It requires Spec Kit `>=1.2.3`, which is also the
+Bundle's minimum; individual extensions and workflows remain installable on
+`>=0.16.4`. Release verification additionally installs from published catalogs
+in a second clean project. A release is ready only when catalogs, manifests,
+workflow requirements, packaged roots, README commands, and versions agree.
 
 ## README contract
 

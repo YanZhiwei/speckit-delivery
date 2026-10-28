@@ -17,7 +17,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
 
       - name: Install Spec Kit
-        run: uv tool install specify-cli==0.16.4
+        run: uv tool install specify-cli==1.2.3
 
       - name: Validate JSON catalogs
         run: |
@@ -26,8 +26,15 @@ jobs:
           python -m json.tool catalogs/bundles.json > /dev/null
           python -m json.tool evals/evals.json > /dev/null
 
+      - name: Validate distribution contract
+        run: |
+          uv run --with pyyaml python scripts/validate_distribution.py
+          uv run --with pyyaml python scripts/test_validate_distribution.py
+
       - name: Build extension archives
-        run: python scripts/package_components.py --version 0.1.0 --output dist
+        run: |
+          version="$(uv run --with pyyaml python scripts/validate_distribution.py --print-version)"
+          python scripts/package_components.py --version "$version" --output dist
 
       - name: Check local Markdown links
         run: python scripts/check_links.py
@@ -54,6 +61,9 @@ jobs:
           cp -R "$repo_root/bundle" "$project_dir/bundle"
           specify bundle validate --path "$project_dir/bundle"
           specify bundle build --path "$repo_root/bundle" --output "$repo_root/dist"
+
+      - name: Test Bundle installation from local catalogs
+        run: python scripts/test_bundle_install.py
 
       - name: Check whitespace
         run: git diff --check

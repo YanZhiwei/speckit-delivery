@@ -75,7 +75,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
 
       - name: Install Spec Kit
-        run: uv tool install specify-cli==0.16.4
+        run: uv tool install specify-cli==1.2.3
 
       - name: Build and validate
         shell: bash
@@ -84,6 +84,9 @@ jobs:
           TAG: ${{ steps.release.outputs.tag }}
         run: |
           set -euo pipefail
+          uv run --with pyyaml python scripts/validate_distribution.py --version "$VERSION"
+          uv run --with pyyaml python scripts/test_validate_distribution.py
+          python scripts/test_bundle_install.py --version "$VERSION"
           python scripts/package_components.py --version "$VERSION" --output dist
           repo_root="$PWD"
           project_dir="$(mktemp -d)"
