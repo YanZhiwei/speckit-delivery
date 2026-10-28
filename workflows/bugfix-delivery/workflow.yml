@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "bugfix-delivery"
   name: "Spec Kit Bugfix Delivery"
-  version: "0.1.1"
+  version: "0.1.2"
   author: "Yan Zhiwei"
   description: "Guided bug assessment, fix, regression validation, quality, review, evidence, and handoff."
 
