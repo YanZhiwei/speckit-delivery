@@ -7,6 +7,8 @@
 
 ### 新增
 
+- 新增 `Prepare release PR` Workflow 和 `stamp_release.py` 发布前置：统一写入组件/Catalog
+  版本，完成校验并创建可审查的发布分支，不打 Tag、不发布。
 - 新增带有项目级 Profile、可执行检查发现和当前 HEAD 任务闭环 verdict 的项目质量闸门 Extension。
 - 新增在模型编辑前注入文件级规则的 Quality Brief 命令。
 - 新增返回任务或批次语义闭环 verdict 的 Standards Review 命令。

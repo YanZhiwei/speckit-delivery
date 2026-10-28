@@ -192,6 +192,10 @@ SCOPE: T014
 
 ## Release 安装
 
+维护者通过手动 **Prepare release PR** 统一写入版本和 Catalog URL、完成校验，并创建
+`release/v<version>` PR。合并后再运行 **Release distribution**；发布 Pipeline 不回写
+`main`，也不移动已有 Tag。
+
 > [!WARNING]
 > 已发布的 `v0.1.0` Bundle 早于 Workflow Catalog 对齐修复，在 Spec Kit 1.2.3 上会失败。
 > Bundle 路径请使用下一版 Release；当前可按 Release 说明逐个安装固定版本

@@ -84,6 +84,7 @@ jobs:
           TAG: ${{ steps.release.outputs.tag }}
         run: |
           set -euo pipefail
+          uv run --with pyyaml python scripts/stamp_release.py --version "$VERSION" --check
           uv run --with pyyaml python scripts/validate_distribution.py --version "$VERSION"
           uv run --with pyyaml python scripts/test_validate_distribution.py
           python scripts/test_bundle_install.py --version "$VERSION"

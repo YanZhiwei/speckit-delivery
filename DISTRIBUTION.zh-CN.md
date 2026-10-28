@@ -13,6 +13,22 @@ decision  ralph  review  simplify  evidence  quality  docs-sync  delivery
 
 Catalog URL 必须指向与发布版本相同的 Tag，发布不能依赖可变的 `main` 内容。
 
+## 发布准备 PR
+
+一次发布分为两个独立 Pipeline：
+
+1. 在中英文 Changelog 中增加非空的 `## [<version>]` 段落。
+2. 从 Actions 页面手动运行 **Prepare release PR**，填写目标版本和基线分支。
+3. 该 Workflow 运行 `scripts/stamp_release.py`，统一更新 Extension、Workflow、Bundle
+   和 Catalog 的版本、Tag 与下载 URL；随后执行分发契约测试、本地 Catalog Bundle
+   安装和组件打包，推送 `release/v<version>` 并创建 PR。
+4. 审查并合并 PR。准备 Workflow 不会打 Tag，也不会发布。
+5. 对合并后的提交手动运行 **Release distribution**，使用同一版本。发布 Workflow
+   还会执行 `stamp_release.py --version <version> --check`，未 stamp 的源码不能发布。
+
+不要在发布后回写 `bundles.json`：已经创建的 Tag 不能安全改写，而安装器读取的是该
+Tag 下的 Catalog。版本准备必须在创建 Tag 之前完成。
+
 ## 手动发布 Workflow
 
 GitHub Actions 中的 `Release distribution` Workflow 通过 Actions 页面手动
@@ -35,8 +51,10 @@ Changelog 段落，或该段落为空，Workflow 会在创建 Tag 前阻止发�
 复制到该项目后再执行校验；这样 CLI 才会解析临时项目中的已安装组件：
 
 ```bash
+uv run --with pyyaml python scripts/stamp_release.py --version <version> --check
 uv run --with pyyaml python scripts/validate_distribution.py
 uv run --with pyyaml python scripts/test_validate_distribution.py
+uv run --with pyyaml python scripts/test_stamp_release.py
 python scripts/test_bundle_install.py
 cp -R /path/to/speckit-delivery/bundle /tmp/speckit-bundle-check/bundle
 specify bundle validate --path /tmp/speckit-bundle-check/bundle

@@ -23,6 +23,14 @@ SPEC.loader.exec_module(validator)
 
 
 class DistributionContractTest(unittest.TestCase):
+    def setUp(self) -> None:
+        current = yaml.safe_load(
+            (ROOT / "bundle" / "bundle.yml").read_text(encoding="utf-8")
+        )["bundle"]["version"]
+        # Keep fixture versions different from the checkout so the tests also
+        # run on an already-stamped release-preparation branch.
+        self.target = "9.9.9" if current != "9.9.9" else "9.9.10"
+
     def fixture(self) -> Path:
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
@@ -51,7 +59,7 @@ class DistributionContractTest(unittest.TestCase):
         root = self.fixture()
         bundle_path = root / "bundle" / "bundle.yml"
         bundle = yaml.safe_load(bundle_path.read_text(encoding="utf-8"))
-        bundle["provides"]["workflows"][0]["version"] = "9.9.9"
+        bundle["provides"]["workflows"][0]["version"] = self.target
         bundle_path.write_text(yaml.safe_dump(bundle), encoding="utf-8")
         errors = validator.validate(root)
         self.assertTrue(
@@ -60,7 +68,7 @@ class DistributionContractTest(unittest.TestCase):
 
     def test_release_urls_must_match_expected_version(self) -> None:
         root = self.fixture()
-        errors = validator.validate(root, expected_version="9.9.9")
+        errors = validator.validate(root, expected_version=self.target)
         self.assertTrue(any("catalog_url" in error for error in errors), errors)
 
 

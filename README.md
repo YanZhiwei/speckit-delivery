@@ -362,6 +362,11 @@ specify bundle build --path ./bundle --output ./dist
 
 ## Release installation
 
+Maintainers use the manual **Prepare release PR** workflow to stamp all versions
+and catalog URLs, validate the candidate, and open a reviewed `release/v<version>`
+PR. Merge that PR before running **Release distribution**; the release pipeline
+does not write back to `main` or move an existing tag.
+
 > [!WARNING]
 > The published `v0.1.0` Bundle predates the workflow-catalog alignment fix and
 > is known to fail on Spec Kit 1.2.3. Use the next release for the Bundle path,

@@ -30,6 +30,11 @@ jobs:
         run: |
           uv run --with pyyaml python scripts/validate_distribution.py
           uv run --with pyyaml python scripts/test_validate_distribution.py
+          uv run --with pyyaml python scripts/test_stamp_release.py
+
+      - name: Validate workflow syntax
+        shell: bash
+        run: uvx --from actionlint-py actionlint .github/workflows/*.yml
 
       - name: Build extension archives
         run: |

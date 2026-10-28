@@ -14,6 +14,26 @@ decision  ralph  review  simplify  evidence  quality  docs-sync  delivery
 Catalog URLs must point to the same release tag. A release must not depend on
 mutable `main` content.
 
+## Release preparation PR
+
+A release has two separate pipeline steps:
+
+1. Add non-empty `## [<version>]` sections to both changelogs.
+2. Run the manual **Prepare release PR** workflow with the target version and
+   base branch.
+3. The workflow runs `scripts/stamp_release.py`, which updates all extension,
+   workflow, bundle, and catalog versions plus tag/download URLs. It then runs
+   the distribution contract tests, local-catalog Bundle installation, and
+   component packaging. It pushes `release/v<version>` and opens a PR.
+4. Review and merge the PR. The preparation workflow never tags or publishes.
+5. Run **Release distribution** against the merged commit with the same version.
+   The release workflow also checks `stamp_release.py --version <version> --check`
+   so an unstamped source cannot be published.
+
+Do not write `bundles.json` back after publishing: an already-created Tag cannot
+be changed safely, and the installers read the catalog at that Tag. Preparation
+must happen before the Tag is created.
+
 ## Manual release workflow
 
 The GitHub Actions `Release distribution` workflow is started manually from
@@ -39,8 +59,10 @@ Use a clean temporary Spec Kit project, install every local extension and all
 three workflows, copy the bundle into that project, then run:
 
 ```bash
+uv run --with pyyaml python scripts/stamp_release.py --version <version> --check
 uv run --with pyyaml python scripts/validate_distribution.py
 uv run --with pyyaml python scripts/test_validate_distribution.py
+uv run --with pyyaml python scripts/test_stamp_release.py
 python scripts/test_bundle_install.py
 cp -R /path/to/speckit-delivery/bundle /tmp/speckit-bundle-check/bundle
 specify bundle validate --path /tmp/speckit-bundle-check/bundle

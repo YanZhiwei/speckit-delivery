@@ -6,6 +6,9 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ### Added
 
+- `Prepare release PR` workflow and `stamp_release.py` preflight: stamp all
+  component/catalog versions, validate, and open a reviewed release branch
+  without tagging or publishing.
 - Project Quality Gate extension with project-local profiles, executable check
   discovery, and a current-HEAD task-closure verdict.
 - Pre-edit Quality Brief command for injecting file-scoped rules before model
