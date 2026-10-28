@@ -20,6 +20,12 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 - `speckit.delivery.handoff` now resolves the project path, then the repository
   `.github` template, then the extension default, then its section contract.
+- Code Review and Standards Review now apply four discipline checks: behavior
+  over implementation tests, cause over symptom, subtraction before addition,
+  and independently verifiable units.
+- Quality Gate documentation explains when CRAP, duplication, and mutation
+  thresholds are real gates: only through a project-owned wrapper that exits
+  non-zero, never by a report-only tool.
 - The Bundle now contains 10 extensions; Diagram does not change the step order
   of any workflow.
 

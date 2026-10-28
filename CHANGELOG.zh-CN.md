@@ -19,6 +19,10 @@
 
 - `speckit.delivery.handoff` 明确模板解析顺序：项目配置路径 → 仓库 `.github` 模板 →
   扩展内置模板 → 命令内的小节契约。
+- Code Review 与 Standards Review 增加四项纪律检查：测试行为而非实现、修复根因而非
+  症状、先减后加、可独立验证的单元。
+- Quality Gate 文档说明 CRAP、重复度和变异阈值何时才算真正门禁：必须由项目自有
+  wrapper 产生非零退出，只写报告的工具不算。
 - Bundle 现在包含 10 个扩展；Diagram 不改变任何 Workflow 的执行顺序。
 
 ### 修复

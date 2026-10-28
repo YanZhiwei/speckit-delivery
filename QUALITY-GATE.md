@@ -56,6 +56,36 @@ prototypes. Quality Brief, Quality Check, and Standards Review report excluded
 paths but do not treat them as verified. When a prototype becomes product code,
 move it out of the excluded path and create a Profile.
 
+## Structural thresholds beyond lint
+
+CRAP, duplication similarity, and mutation coverage can be Profile commands,
+but only when the project owns a command that fails the process. A tool that
+prints a table or writes `.metrics/` reports is not a gate by itself: wrap it in
+a small project script that parses the report, compares the configured
+threshold, prints the offending functions, and exits non-zero.
+
+```yaml
+profiles:
+  - id: python
+    match: ["backend/**/*.py"]
+    discovery_files: ["pyproject.toml", "uv.lock"]
+    commands:
+      complexity: "uv run python tools/crap_gate.py --max 10"
+      duplication: "uv run python tools/duplication_gate.py --max 0.8"
+      mutation: "uv run python tools/mutation_gate.py --changed"
+    rules:
+      complexity_max: 10
+      duplication_max: 0.8
+```
+
+- The wrapper owns the tool invocation; this distribution ships none.
+- `rules` stays metadata until a configured command enforces it. Without a
+  wrapper, report the threshold as an explicit gap, never as a pass.
+- Run mutation on the changed scope first. A full-tree first run is expensive
+  and proves less about the outgoing diff.
+- A threshold is project-owned. Do not copy `10` or `0.8` into a project that
+  never agreed to them.
+
 ## Ownership
 
 Formatting, lint, types, tests, and complexity belong in Ruff, ESLint, Go,

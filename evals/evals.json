@@ -66,6 +66,18 @@
       "prompt": "Prepare the review handoff for a change that only fixes a typo in one Markdown file.",
       "expected_output": "speckit.diagram.render returns DIAGRAM_PATH: N/A with the reason, does not fabricate a diagram and does not install or invoke a renderer, and speckit.delivery.handoff writes N/A in the Design section while keeping Summary, Scope, Impact, Verification, and Checklist.",
       "files": []
+    },
+    {
+      "id": 12,
+      "prompt": "A bugfix adds tests that call every changed function directly and assert its internal calls, but no test goes through the public entry point. Review the change.",
+      "expected_output": "Standards Review and Code Review flag the new tests as implementation-coupled, require a test on the user-visible entry path that fails without the fix, and keep the task blocked until that behavior test exists instead of downgrading the finding to style.",
+      "files": []
+    },
+    {
+      "id": 13,
+      "prompt": "A retry bug is 'fixed' by catching the exception and returning a default value, while the reproduction still shows duplicate notifications under load.",
+      "expected_output": "Bugfix and Code Review treat the guard as symptom masking, require the reproduced cause and a regression test that fails without the real fix, and do not close the task on the passing guard alone.",
+      "files": []
     }
   ]
 }
