@@ -6,7 +6,7 @@
 YAML；Bundle 在 Catalog 引用全部解析后构建。
 
 ```text
-decision  ralph  review  simplify  evidence  quality  docs-sync  delivery
+decision  ralph  review  simplify  evidence  quality  docs-sync  diagram  delivery
                          + feature / bugfix / lightweight Workflow
                          + speckit-delivery Bundle
 ```

@@ -51,6 +51,31 @@ reuse_passing_hooks: true
 Quality Check 和 Standards Review 会报告排除路径，但不会把它当作已验证。原型成为产品
 代码后，应移出排除路径并为新路径增加 Profile。
 
+## 超出 lint 的结构阈值
+
+CRAP、重复度相似度和变异覆盖可以作为 Profile 命令，但前提是项目拥有一个会让进程
+失败的命令。只打印表格或写 `.metrics/` 报告的工具本身不是门禁：需要用项目内的小脚本
+解析报告、比较配置阈值、打印违规函数并以非零退出。
+
+```yaml
+profiles:
+  - id: python
+    match: ["backend/**/*.py"]
+    discovery_files: ["pyproject.toml", "uv.lock"]
+    commands:
+      complexity: "uv run python tools/crap_gate.py --max 10"
+      duplication: "uv run python tools/duplication_gate.py --max 0.8"
+      mutation: "uv run python tools/mutation_gate.py --changed"
+    rules:
+      complexity_max: 10
+      duplication_max: 0.8
+```
+
+- 工具调用由 wrapper 拥有；本分发仓库不附带任何 wrapper。
+- 没有可失败命令时，`rules` 只是元数据。此时应明确报告治理缺口，不能算作通过。
+- 变异测试先跑改动范围；首次全树运行既慢，对 outgoing diff 的证明力也更弱。
+- 阈值属于项目决定。不要把一个从未同意 `10` 或 `0.8` 的项目直接套用这组数字。
+
 ## 规则归属
 
 格式、lint、类型、测试和复杂度应配置在 Ruff、ESLint、Go、Maven/Gradle、.NET 或

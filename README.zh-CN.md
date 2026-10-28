@@ -58,9 +58,9 @@ Spec Kit 已经提供了良好的 `specify → plan → tasks → implement` 主
 - 支持 Spec Kit 的宿主集成、Git，以及目标项目自己的构建和测试工具
 
 > [!NOTE]
-> 已发布的 `v0.1.0` Bundle 早于 Catalog 对齐修复。下一版 Release 之前，请按当前安装
-> 说明逐个安装固定版本 Extension 和 Workflow，或使用已准备的源码修复并配合 Spec Kit
-> `>=1.2.3`；不要把旧 Tag 的 Bundle 安装当成已通过。
+> `v0.1.1` 已修复 Workflow Catalog 对齐问题，Bundle 在 Spec Kit `>=1.2.3` 上可用；
+> `v0.1.2` 增加 Diagram 扩展。请安装与所需组件匹配的固定版本 Catalog，不要把不同
+> Tag 的组件混装。
 
 ## 快速开始
 
@@ -97,6 +97,7 @@ specify extension add --dev "$delivery\extensions\simplify"
 specify extension add --dev "$delivery\extensions\evidence"
 specify extension add --dev "$delivery\extensions\quality"
 specify extension add --dev "$delivery\extensions\docs-sync"
+specify extension add --dev "$delivery\extensions\diagram"
 specify extension add --dev "$delivery\extensions\delivery"
 
 specify workflow add --dev "$delivery\workflows\feature-delivery\workflow.yml"
@@ -134,6 +135,11 @@ Codex skills 模式会把已安装的 Delivery 扩展渲染成 `speckit-delivery
 `/speckit-delivery-route`，OpenCode 是 `/speckit.delivery.route`，通用适配器
 则执行渲染出的命令文件。不要用 `which speckit*` 这类 PATH 检查判断宿主扩展
 是否已安装。
+
+`speckit.delivery.context` 是 Feature 规划前和 Bugfix 诊断前的可选上下文步骤：
+项目存在 `.codegraph/` 时报告入口、调用方和受影响测试，不存在时返回带缺口说明的
+部分结果。它不会初始化索引，也不把代码图当作测试或正确性证据；可用
+`code_context: off` 关闭。
 
 路由器会选择 Feature、Bugfix 或 Lightweight，不会默认所有需求都走完整 Feature
 流程。也可以直接运行：
@@ -196,10 +202,9 @@ SCOPE: T014
 `release/v<version>` PR。合并后再运行 **Release distribution**；发布 Pipeline 不回写
 `main`，也不移动已有 Tag。
 
-> [!WARNING]
-> 已发布的 `v0.1.0` Bundle 早于 Workflow Catalog 对齐修复，在 Spec Kit 1.2.3 上会失败。
-> Bundle 路径请使用下一版 Release；当前可按 Release 说明逐个安装固定版本
-> Extension/Workflow。不要把下列命令当作 `v0.1.0` Bundle 已验证。
+> [!NOTE]
+> 下列版本指向 `v0.1.2`（新增 Diagram 扩展）。该 Tag 发布前请使用 `v0.1.1` Catalog，
+> 两者差异只有 Diagram 扩展。
 
 指定版本的 Catalog 和 Bundle 安装命令见根目录 `README.md` 的 Release installation
 一节；Bundle 要求 Spec Kit `>=1.2.3`，单独组件仍支持 `>=0.16.4`。

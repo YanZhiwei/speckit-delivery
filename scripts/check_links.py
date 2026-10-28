@@ -10,6 +10,15 @@ from urllib.parse import unquote
 
 LINK = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
 SKIP_PREFIXES = ("http://", "https://", "mailto:", "#")
+# Unmodified third-party skill copies keep their upstream relative links,
+# including placeholders and references to demo assets this repository does not
+# vendor. Their provenance and exclusions are recorded in each SOURCE.md.
+THIRD_PARTY_SKILL_DIRS = {"skills/archify", "skills/fireworks-tech-graph"}
+
+
+def is_third_party_skill(markdown: Path, root: Path) -> bool:
+    relative = markdown.relative_to(root).as_posix()
+    return any(relative.startswith(f"{prefix}/") for prefix in THIRD_PARTY_SKILL_DIRS)
 
 
 def main() -> int:
@@ -17,6 +26,8 @@ def main() -> int:
     failures: list[str] = []
     for markdown in sorted(root.rglob("*.md")):
         if any(part in {".git", "dist", "build"} for part in markdown.parts):
+            continue
+        if is_third_party_skill(markdown, root):
             continue
         text = markdown.read_text(encoding="utf-8")
         for raw_target in LINK.findall(text):

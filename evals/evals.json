@@ -54,6 +54,42 @@
       "prompt": "Run Ralph against an analyzed Spec Kit tasks.md in a clean Git repository.",
       "expected_output": "Ralph first creates or reuses and verifies a ralph/<feature> branch, emits a run-level governance summary, executes exactly one dependency-ready task per iteration, emits a task governance packet with applicable code style and checks, runs the task checks plus Quality and Standards gates, requires a passing pre-checkbox closure gate covering acceptance evidence, current HEAD, allowed paths, and required tools, then marks [X] and immediately creates one verified Git commit containing the task and receipt. It leaves blocked tasks open and emits ALL_TASKS_DONE only when the committed task queue is empty and the worktree is clean.",
       "files": []
+    },
+    {
+      "id": 10,
+      "prompt": "A feature moves request validation from the router into a service, and the project has no diagram renderer installed. Prepare the design evidence for review.",
+      "expected_output": "speckit.diagram.render picks one before-after view, emits Mermaid within the configured node and edge limits, traces every node and edge to the owning ADR or the diff, reports the renderer as none or unavailable instead of installing one, and the handoff includes the Design section with the Mermaid block.",
+      "files": []
+    },
+    {
+      "id": 11,
+      "prompt": "Prepare the review handoff for a change that only fixes a typo in one Markdown file.",
+      "expected_output": "speckit.diagram.render returns DIAGRAM_PATH: N/A with the reason, does not fabricate a diagram and does not install or invoke a renderer, and speckit.delivery.handoff writes N/A in the Design section while keeping Summary, Scope, Impact, Verification, and Checklist.",
+      "files": []
+    },
+    {
+      "id": 12,
+      "prompt": "A bugfix adds tests that call every changed function directly and assert its internal calls, but no test goes through the public entry point. Review the change.",
+      "expected_output": "Standards Review and Code Review flag the new tests as implementation-coupled, require a test on the user-visible entry path that fails without the fix, and keep the task blocked until that behavior test exists instead of downgrading the finding to style.",
+      "files": []
+    },
+    {
+      "id": 13,
+      "prompt": "A retry bug is 'fixed' by catching the exception and returning a default value, while the reproduction still shows duplicate notifications under load.",
+      "expected_output": "Bugfix and Code Review treat the guard as symptom masking, require the reproduced cause and a regression test that fails without the real fix, and do not close the task on the passing guard alone.",
+      "files": []
+    },
+    {
+      "id": 14,
+      "prompt": "Plan a change that adds validation to an existing service, in a repository with a fresh .codegraph index and a configured test command.",
+      "expected_output": "speckit.delivery.context runs before speckit.plan, cites entry points, callers, and affected tests from the graph with file locations, records INDEX: fresh and the current HEAD, writes or returns the brief, and the plan uses it without re-reading the whole repository or treating the graph as correctness evidence.",
+      "files": []
+    },
+    {
+      "id": 15,
+      "prompt": "Diagnose a bug in a repository with no .codegraph directory and no codegraph CLI on PATH.",
+      "expected_output": "speckit.delivery.context reports CODE_CONTEXT: partial or unavailable with INDEX: absent, falls back to targeted search of the changed paths, names the unverified relationships in GAPS, never runs codegraph init, and the bugfix workflow continues instead of aborting.",
+      "files": []
     }
   ]
 }

@@ -5,6 +5,36 @@
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-28
+
+### 新增
+
+- 新增 Delivery Diagrams 扩展与 `speckit.diagram.render`：默认输出 Mermaid，仅在
+  项目已安装渲染器时生成 SVG/PNG/HTML，并可返回 `N/A` 而不编造图。
+- 在 `skills/` 增加可选、版本固定的 `archify`（v3.2.0）和
+  `fireworks-tech-graph`（v1.2.0）渲染器副本，附带来源、提交和 SHA-256。
+- PR Handoff 模板新增“当前设计/本次改动/影响范围/设计图/AI 使用披露”小节。
+- 新增 `speckit.delivery.context`：规划前或诊断前的可选代码上下文简报。项目存在
+  `.codegraph/` 时报告入口、调用方和受影响测试；不存在时返回带缺口说明的部分结果，
+  且不会初始化索引。
+
+### 变更
+
+- `speckit.delivery.handoff` 明确模板解析顺序：项目配置路径 → 仓库 `.github` 模板 →
+  扩展内置模板 → 命令内的小节契约。
+- Code Review 与 Standards Review 增加四项纪律检查：测试行为而非实现、修复根因而非
+  症状、先减后加、可独立验证的单元。
+- Quality Gate 文档说明 CRAP、重复度和变异阈值何时才算真正门禁：必须由项目自有
+  wrapper 产生非零退出，只写报告的工具不算。
+- Bundle 现在包含 10 个扩展；Diagram 本身不增加 Workflow 步骤。
+- Feature 与 Bugfix Workflow 分别在 `plan` 和 `assess` 之前增加非阻塞的代码上下文
+  步骤；缺少索引或工具时只降级结果，不中断交付。可用 `code_context: off` 关闭。
+
+### 修复
+
+- 修复 `pull_request_template` 默认指向不存在的根 `templates/` 路径；模板随
+  delivery 扩展分发，默认值改为 `null` 并回退到 `.github` 模板。
+
 ## [0.1.1] - 2026-10-28
 
 ### 新增

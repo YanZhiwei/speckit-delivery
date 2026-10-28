@@ -67,10 +67,10 @@ speckit-delivery/
 │   ├── evidence/
 │   ├── quality/
 │   ├── docs-sync/
+│   ├── diagram/
 │   └── delivery/
 ├── workflows/              # Feature, bugfix, and lightweight workflows
-├── skills/                 # Optional agent-native router and $sd facade
-├── templates/              # Durable PR handoff template
+├── skills/                 # Optional router facades and diagram renderers
 ├── docs/                   # Architecture and distribution contracts
 ├── examples/                # Copy-and-adapt project quality configurations
 ├── evals/                  # Behavioral evaluation prompts
@@ -114,11 +114,10 @@ availability into a PATH check like `which speckit*`.
 - Project build and test tools selected by the target repository
 
 > [!NOTE]
-> The published `v0.1.0` Bundle predates the catalog alignment fix. Until the next
-> release, install the versioned extensions and workflows individually as shown
-> in the repository history/current install guide, or use the prepared source
-> fix with Spec Kit `>=1.2.3`. Do not claim a successful Bundle install from the
-> old Tag.
+> Release `v0.1.1` fixed the workflow-catalog alignment, so the Bundle installer
+> works on Spec Kit `>=1.2.3`. Release `v0.1.2` adds the Diagram extension.
+> Install the versioned catalogs that match the commands you need; do not mix
+> component versions across tags.
 
 Check the CLI before installation:
 
@@ -186,6 +185,7 @@ specify extension add --dev "$delivery\extensions\simplify"
 specify extension add --dev "$delivery\extensions\evidence"
 specify extension add --dev "$delivery\extensions\quality"
 specify extension add --dev "$delivery\extensions\docs-sync"
+specify extension add --dev "$delivery\extensions\diagram"
 specify extension add --dev "$delivery\extensions\delivery"
 
 specify workflow add --dev "$delivery\workflows\feature-delivery\workflow.yml"
@@ -367,26 +367,24 @@ and catalog URLs, validate the candidate, and open a reviewed `release/v<version
 PR. Merge that PR before running **Release distribution**; the release pipeline
 does not write back to `main` or move an existing tag.
 
-> [!WARNING]
-> The published `v0.1.0` Bundle predates the workflow-catalog alignment fix and
-> is known to fail on Spec Kit 1.2.3. Use the next release for the Bundle path,
-> or install the versioned extensions/workflows individually as documented in
-> the release notes. Do not treat the commands below as evidence that `v0.1.0`
-> Bundle installation passed.
+> [!NOTE]
+> The commands below pin `v0.1.2`, the release that adds the Diagram extension.
+> Until that tag is published, use the `v0.1.1` catalogs; the Diagram extension
+> is the only difference.
 
 Releases publish each extension as a root-layout zip, expose pinned catalogs, and publish the bundle artifact. Add the versioned catalogs before installing the bundle (Bundle requires Spec Kit `>=1.2.3`):
 
 ```bash
 specify extension catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.0/catalogs/extensions.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.2/catalogs/extensions.json \
   --name speckit-delivery --install-allowed
 
 specify workflow catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.0/catalogs/workflows.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.2/catalogs/workflows.json \
   --name speckit-delivery
 
 specify bundle catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.0/catalogs/bundles.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.2/catalogs/bundles.json \
   --id speckit-delivery --policy install-allowed
 
 specify bundle install speckit-delivery
@@ -406,7 +404,14 @@ The remote repository and release do not exist until the maintainer explicitly p
 | Quality gate | `speckit.quality.brief`, `speckit.quality.check` |
 | Standards closure | `speckit.review.standards` |
 | Documentation | `speckit.docs-sync.run` |
+| Diagrams | `speckit.diagram.render` |
+| Code context | `speckit.delivery.context` |
 | Routing, doctor, and handoff | `speckit.delivery.doctor`, `.route`, `.handoff` |
+
+`speckit.delivery.context` reads the project's local `.codegraph/` index when it
+exists and reports entry points, callers, and affected tests for the change. It
+is optional: without the index it returns a partial brief and names the gaps,
+and it never initializes an index or treats the graph as test evidence.
 
 ## Durable and ephemeral artifacts
 
