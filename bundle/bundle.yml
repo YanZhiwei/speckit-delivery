@@ -36,6 +36,8 @@ provides:
       version: "0.1.1"
     - id: "docs-sync"
       version: "0.1.1"
+    - id: "diagram"
+      version: "0.1.1"
   workflows:
     - id: "feature-delivery"
       version: "0.1.1"

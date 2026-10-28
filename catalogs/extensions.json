@@ -190,6 +190,30 @@
         "sync",
         "generated-files"
       ]
+    },
+    "diagram": {
+      "name": "Delivery Diagrams",
+      "id": "diagram",
+      "version": "0.1.1",
+      "description": "Turn a reviewed change into an evidence-backed diagram, Mermaid by default and a rendered asset only through an installed renderer.",
+      "author": "Yan Zhiwei",
+      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.1.1/diagram-0.1.1.zip",
+      "repository": "https://github.com/YanZhiwei/speckit-delivery",
+      "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/main/extensions/diagram",
+      "license": "MIT",
+      "requires": {
+        "speckit_version": ">=0.16.4"
+      },
+      "provides": {
+        "commands": 1,
+        "hooks": 0
+      },
+      "tags": [
+        "diagram",
+        "architecture",
+        "visualization",
+        "handoff"
+      ]
     }
   }
 }

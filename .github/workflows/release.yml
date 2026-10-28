@@ -96,7 +96,7 @@ jobs:
           cd "$project_dir"
           specify init . --integration codex --ignore-agent-tools --force --script sh
           specify extension add bug
-          for extension in delivery decision ralph review simplify evidence quality docs-sync; do
+          for extension in delivery decision ralph review simplify evidence quality docs-sync diagram; do
             specify extension add "$repo_root/extensions/$extension" --dev
           done
           for workflow in feature-delivery bugfix-delivery lightweight-delivery; do

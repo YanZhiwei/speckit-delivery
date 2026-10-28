@@ -6,7 +6,7 @@ Each extension is a root-layout zip containing `extension.yml`; workflows are
 versioned YAML; the bundle is built after catalog references resolve.
 
 ```text
-decision  ralph  review  simplify  evidence  quality  docs-sync  delivery
+decision  ralph  review  simplify  evidence  quality  docs-sync  diagram  delivery
                          + feature / bugfix / lightweight workflows
                          + speckit-delivery bundle
 ```

@@ -13,6 +13,7 @@ existing workflow.
 | Quality Gate | Project-local executable checks and closure verdict | DRY or architectural judgment |
 | Standards Review | Task or batch semantic standards verdict | Re-running mechanical quality checks |
 | Ralph | Dependency-ready task execution, Git task commits, and task completion | Planning or self-authorized task closure |
+| Diagram | One evidence-backed view per change, in Mermaid by default | Test evidence, review judgment, or installer behavior |
 
 The system has three control planes:
 

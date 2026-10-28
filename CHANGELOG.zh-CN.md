@@ -5,6 +5,27 @@
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-28
+
+### 新增
+
+- 新增 Delivery Diagrams 扩展与 `speckit.diagram.render`：默认输出 Mermaid，仅在
+  项目已安装渲染器时生成 SVG/PNG/HTML，并可返回 `N/A` 而不编造图。
+- 在 `skills/` 增加可选、版本固定的 `archify`（v3.2.0）和
+  `fireworks-tech-graph`（v1.2.0）渲染器副本，附带来源、提交和 SHA-256。
+- PR Handoff 模板新增“当前设计/本次改动/影响范围/设计图/AI 使用披露”小节。
+
+### 变更
+
+- `speckit.delivery.handoff` 明确模板解析顺序：项目配置路径 → 仓库 `.github` 模板 →
+  扩展内置模板 → 命令内的小节契约。
+- Bundle 现在包含 10 个扩展；Diagram 不改变任何 Workflow 的执行顺序。
+
+### 修复
+
+- 修复 `pull_request_template` 默认指向不存在的根 `templates/` 路径；模板随
+  delivery 扩展分发，默认值改为 `null` 并回退到 `.github` 模板。
+
 ## [0.1.1] - 2026-10-28
 
 ### 新增

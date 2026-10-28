@@ -12,6 +12,7 @@ Spec Kit Delivery 是 Spec Kit 之上的分发层，不是 Spec Kit 的 Fork，�
 | Quality Gate | 项目本地可执行检查和关闭判定 | DRY 或架构语义判断 |
 | Standards Review | Task 或批次的语义规范判定 | 重跑机械质量检查 |
 | Ralph | 依赖就绪任务执行、Git Task 提交和完成确认 | 规划或自行关闭任务 |
+| Diagram | 每次变更一张有证据的视图，默认 Mermaid | 测试证据、评审判断或安装器行为 |
 
 系统分成三个控制面：
 

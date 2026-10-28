@@ -54,6 +54,18 @@
       "prompt": "Run Ralph against an analyzed Spec Kit tasks.md in a clean Git repository.",
       "expected_output": "Ralph first creates or reuses and verifies a ralph/<feature> branch, emits a run-level governance summary, executes exactly one dependency-ready task per iteration, emits a task governance packet with applicable code style and checks, runs the task checks plus Quality and Standards gates, requires a passing pre-checkbox closure gate covering acceptance evidence, current HEAD, allowed paths, and required tools, then marks [X] and immediately creates one verified Git commit containing the task and receipt. It leaves blocked tasks open and emits ALL_TASKS_DONE only when the committed task queue is empty and the worktree is clean.",
       "files": []
+    },
+    {
+      "id": 10,
+      "prompt": "A feature moves request validation from the router into a service, and the project has no diagram renderer installed. Prepare the design evidence for review.",
+      "expected_output": "speckit.diagram.render picks one before-after view, emits Mermaid within the configured node and edge limits, traces every node and edge to the owning ADR or the diff, reports the renderer as none or unavailable instead of installing one, and the handoff includes the Design section with the Mermaid block.",
+      "files": []
+    },
+    {
+      "id": 11,
+      "prompt": "Prepare the review handoff for a change that only fixes a typo in one Markdown file.",
+      "expected_output": "speckit.diagram.render returns DIAGRAM_PATH: N/A with the reason, does not fabricate a diagram and does not install or invoke a renderer, and speckit.delivery.handoff writes N/A in the Design section while keeping Summary, Scope, Impact, Verification, and Checklist.",
+      "files": []
     }
   ]
 }
