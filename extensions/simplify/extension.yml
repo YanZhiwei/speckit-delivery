@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: simplify
   name: Evidence-Driven Simplification
-  version: "0.1.0"
+  version: "0.1.1"
   description: "Find and verify simplifications using consumer evidence, ownership analysis, and net deletion."
   category: code
   effect: read-write
