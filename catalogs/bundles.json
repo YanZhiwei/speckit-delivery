@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
-  "updated_at": "2026-08-19T00:00:00Z",
-  "catalog_url": "https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.4/catalogs/bundles.json",
+  "updated_at": "2026-10-30T00:00:00Z",
+  "catalog_url": "https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.2.0/catalogs/bundles.json",
   "bundles": {
     "speckit-delivery": {
       "name": "Spec Kit Delivery",
       "id": "speckit-delivery",
-      "version": "0.1.4",
+      "version": "0.2.0",
       "role": "developer",
-      "description": "Evidence-driven SDD with decision memory, quality gates, Ralph, simplification, review, evidence, and handoff.",
+      "description": "Evidence-driven SDD with decision memory, slice planning and merge policy, quality gates, Ralph, simplification, review, evidence, and handoff.",
       "author": "Yan Zhiwei",
       "license": "MIT",
-      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.1.4/speckit-delivery-0.1.4.zip",
+      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.2.0/speckit-delivery-0.2.0.zip",
       "repository": "https://github.com/YanZhiwei/speckit-delivery",
       "requires": {
         "speckit_version": ">=1.2.3"

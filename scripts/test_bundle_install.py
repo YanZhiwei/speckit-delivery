@@ -36,10 +36,12 @@ def check_delivery_install(
             "commands/speckit.delivery.route.md",
             "commands/speckit.delivery.doctor.md",
             "commands/speckit.delivery.explore.md",
+            "commands/speckit.delivery.slice.md",
             "commands/speckit.delivery.review-fix.md",
             "commands/speckit.delivery.handoff.md",
             "commands/speckit.delivery.context.md",
             "templates/exploration.md",
+            "templates/slices.md",
             "templates/bugfix-review-repair.md",
             "templates/pull-request.md",
         ),
@@ -60,6 +62,7 @@ def check_delivery_install(
 
     for name, marker in (
         ("speckit.delivery.explore", "EXPLORATION_VERDICT"),
+        ("speckit.delivery.slice", "SLICE_PLAN_VERDICT"),
         ("speckit.review.run", "REVIEW_VERDICT"),
         ("speckit.delivery.review-fix", "REVIEW_FIX_STATUS"),
         ("speckit.ralph.run", "REVIEW_VERDICT=pass"),

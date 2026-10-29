@@ -17,6 +17,17 @@ test locations/commands, risks, and scope differences before tasks. See the
 approval, and artifact policy. A material scope change reopens approval; if the
 lane is wrong, stop this workflow and carry evidence to the correct lane.
 
+After task generation, `speckit.delivery.slice` binds the real task IDs to
+reviewable slices and derives the merge mode. Its gate reviews task coverage,
+trunk-safety evidence, diff budgets, flags, merge method, and rollback before
+analysis/Ralph. `tasks.md` remains the only execution queue; `slices.md` is
+boundary metadata and cannot add, remove, or reorder tasks. Ralph stops at each
+slice boundary for the declared prefix/flag/checkpoint verification. A failed
+prefix check reopens slice planning instead of continuing the stack. Render each
+verified layer with `speckit.delivery.handoff slice=<id>`; the workflow's final
+handoff uses `mode=auto` for the release slice or integration rollup. Creating,
+pushing, or merging a PR still requires separate authorization.
+
 Version `0.1.x` uses explicit human gates and three safe no-op convergence
 iterations because command-step prose is not a machine-readable semantic result.
 Later versions will use a state protocol and custom result gate.

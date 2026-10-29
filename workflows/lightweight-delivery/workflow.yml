@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "lightweight-delivery"
   name: "Spec Kit Lightweight Delivery"
-  version: "0.1.4"
+  version: "0.2.0"
   author: "Yan Zhiwei"
   description: "Proportional delivery for mechanical, documentation-only, or behavior-preserving changes."
 

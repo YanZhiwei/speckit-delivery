@@ -71,6 +71,8 @@ def _check_exploration_workflow(
             ("decision-propose", "speckit.decision.propose"),
             ("plan-gate", "gate"),
             ("tasks", "speckit.tasks"),
+            ("slice", "speckit.delivery.slice"),
+            ("slice-gate", "gate"),
         ],
         "bugfix-delivery": [
             ("delivery-doctor", "speckit.delivery.doctor"),
@@ -181,7 +183,7 @@ def _check_review_workflow(
         command = step.get("command", "")
         if command in {
             "speckit.delivery.doctor", "speckit.delivery.explore",
-            "speckit.ralph.run", "speckit.review.run",
+            "speckit.delivery.slice", "speckit.ralph.run", "speckit.review.run",
             "speckit.delivery.review-fix", "speckit.delivery.handoff",
         }:
             if "delivery_run={{ inputs.delivery_run }}" not in str(step.get("input", {}).get("args", "")):
@@ -221,6 +223,72 @@ def _check_review_workflow(
         for _, step in by_id.get("decision-context", []):
             if "assessment=.specify/bugs/{{ inputs.bug_slug }}/assessment.md" not in str(step.get("input", {}).get("args", "")):
                 errors.append(f"{label}: coordinator must verify the exact assessment reference")
+
+
+def _check_slice_workflow(
+    workflow_id: str, workflow: dict[str, Any], errors: list[str]
+) -> None:
+    """Verify the feature slice gate and its downstream consumers are present."""
+    if workflow_id != "feature-delivery":
+        return
+    label = f"workflows/{workflow_id}/workflow.yml"
+    steps = _list(workflow.get("steps"), f"{label}:steps", errors)
+    by_id: dict[str, list[tuple[int, dict[str, Any]]]] = {}
+    for index, step in enumerate(steps):
+        if isinstance(step, dict):
+            by_id.setdefault(str(step.get("id")), []).append((index, step))
+
+    ordered = ("tasks", "slice", "slice-gate", "analyze", "ralph")
+    positions: dict[str, int] = {}
+    for step_id in ordered:
+        matches = by_id.get(step_id, [])
+        if len(matches) != 1:
+            errors.append(f"{label}: expected exactly one {step_id} slice step")
+            continue
+        index, step = matches[0]
+        positions[step_id] = index
+        if step_id in {"slice", "slice-gate", "ralph"} and step.get("continue_on_error"):
+            errors.append(f"{label}: {step_id} cannot continue on error")
+        if step_id == "slice" and step.get("command") != "speckit.delivery.slice":
+            errors.append(f"{label}: slice must invoke speckit.delivery.slice")
+        if step_id == "slice-gate":
+            expected_file = ".specify/delivery/{{ inputs.delivery_run }}/slices.md"
+            if step.get("show_file") != expected_file:
+                errors.append(f"{label}: slice-gate must display {expected_file}")
+            if (
+                step.get("type") != "gate"
+                or step.get("options") != ["approve", "reject"]
+                or step.get("on_reject") != "abort"
+            ):
+                errors.append(f"{label}: slice-gate must abort on rejection")
+
+    if len(positions) == len(ordered):
+        order = [positions[step_id] for step_id in ordered]
+        if order != sorted(order):
+            errors.append(f"{label}: slice planning violates tasks/gate/analysis order")
+
+    args_by_id = {
+        step_id: str(matches[0][1].get("input", {}).get("args", ""))
+        for step_id, matches in by_id.items()
+        if matches and isinstance(matches[0][1], dict)
+    }
+    slice_args = args_by_id.get("slice", "")
+    for needle in (
+        "delivery_run={{ inputs.delivery_run }}",
+        "slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md",
+        "design_approval={{ steps.plan-gate.output.choice }}",
+    ):
+        if needle not in slice_args:
+            errors.append(f"{label}: slice must pass {needle}")
+    for step_id in ("analyze", "ralph", "review-final", "review-close", "handoff"):
+        args = args_by_id.get(step_id, "")
+        if "slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md" not in args:
+            errors.append(f"{label}: {step_id} must consume the exact slices path")
+    for step_id in ("analyze", "ralph"):
+        if "slice_approval={{ steps.slice-gate.output.choice }}" not in args_by_id.get(step_id, ""):
+            errors.append(f"{label}: {step_id} must forward the actual slice-gate choice")
+    if "mode=auto" not in args_by_id.get("handoff", ""):
+        errors.append(f"{label}: handoff must resolve slice versus rollup mode")
 
 
 def validate(root: Path, expected_version: str | None = None) -> list[str]:
@@ -318,12 +386,18 @@ def validate(root: Path, expected_version: str | None = None) -> list[str]:
         if type(catalog_provides.get("commands")) is not int or catalog_provides["commands"] != len(commands):
             errors.append(f"catalogs/extensions.json:{extension_id}: command count differs from manifest")
         if extension_id == "delivery":
-            for required in ("speckit.delivery.explore", "speckit.delivery.review-fix"):
+            for required in (
+                "speckit.delivery.explore",
+                "speckit.delivery.review-fix",
+                "speckit.delivery.slice",
+            ):
                 if required not in command_names:
                     errors.append(f"{manifest_path}: missing {required} command")
             template = manifest_path.parent / "templates" / "exploration.md"
             if not template.is_file():
                 errors.append(f"{manifest_path}: missing templates/exploration.md")
+            if not (manifest_path.parent / "templates" / "slices.md").is_file():
+                errors.append(f"{manifest_path}: missing templates/slices.md")
             if not (manifest_path.parent / "templates" / "bugfix-review-repair.md").is_file():
                 errors.append(f"{manifest_path}: missing templates/bugfix-review-repair.md")
             doctor = manifest_path.parent / "commands" / "speckit.delivery.doctor.md"
@@ -368,6 +442,7 @@ def validate(root: Path, expected_version: str | None = None) -> list[str]:
         workflow = _load_yaml(workflow_path)
         _check_exploration_workflow(workflow_id, workflow, errors)
         _check_review_workflow(workflow_id, workflow, errors)
+        _check_slice_workflow(workflow_id, workflow, errors)
         definition = _mapping(
             workflow.get("workflow"), f"{workflow_path}:workflow", errors
         )

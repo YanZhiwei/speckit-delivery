@@ -1,8 +1,9 @@
 # Spec Kit Delivery Core
 
 Creates project-local delivery configuration, checks installed components,
-investigates and scopes a request, routes delivery, and renders a final PR handoff.
-Distributed defaults do not assume a language, framework, ADR path, or check.
+investigates and scopes a request, plans reviewable slices and merge policy,
+routes delivery, and renders slice or rollup PR handoffs. Distributed defaults do
+not assume a language, framework, ADR path, stack provider, or check.
 
 ## Commands and installation
 
@@ -13,6 +14,7 @@ Invoke commands through the active host, not as shell executables:
 - `speckit.delivery.init`: discover and draft project-local policy.
 - `speckit.delivery.doctor`: detect missing/stale components, profiles, and rule owners.
 - `speckit.delivery.explore`: investigate code, history, and references; show candidate scope.
+- `speckit.delivery.slice`: plan reviewable slices, classify trunk safety, and select the merge mode.
 - `speckit.delivery.context`: optionally assemble an implementation-context brief.
 - `speckit.delivery.route`: orchestrate the selected lane and user approvals.
 - `speckit.delivery.lightweight`: perform a bounded mechanical change.
@@ -20,8 +22,9 @@ Invoke commands through the active host, not as shell executables:
 - `speckit.delivery.handoff`: render an evidence-backed PR body locally.
 
 The `$sd` facade remains thin. The router owns lane transitions and approval;
-Explore owns investigation, not implementation or Bug assessment. Core Spec Kit
-continues to own spec, plan, and tasks; Decision owns ADRs.
+Explore owns investigation, not implementation or Bug assessment; Slice owns
+review/merge boundaries and policy, not execution. Core Spec Kit continues to own
+spec, plan, and tasks; Decision owns ADRs.
 
 ## Evidence-first exploration
 
@@ -61,6 +64,39 @@ with the same evidence.
 Lightweight states relevant paths and runs targeted checks without full
 exploration, external research, or two approval rounds. In `0.1.x`, gates are
 guided human checkpoints, not automatic proof of semantic readiness.
+
+## Delivery slices and merge policy
+
+After plan approval and task generation, `speckit.delivery.slice` binds the real
+task IDs to independently reviewable slices and writes
+`.specify/delivery/<run>/slices.md`. It does not create a second queue:
+`tasks.md` remains Ralph's only execution source, and `slices.md` may not add,
+remove, or reorder tasks.
+
+Each slice is classified as `standalone`, `flagged`, `integration-only`, or
+`unknown`, with executable evidence. The merge mode is derived, not chosen by
+preference:
+
+- all slices standalone/flagged and linear → `stacked`;
+- any integration-only slice → `integration`;
+- insufficient evidence or a policy conflict → `needs_decision`.
+
+The slice gate approves boundaries, order, classification, merge method, and
+accepted risks. Ralph stops at each slice boundary and verifies the declaration:
+a standalone slice gets a target-branch prefix build/test, a flagged slice gets
+flag-off and flag-on evidence, and an integration-only slice gets its declared
+checkpoint. A failed check returns to slice planning for reclassification.
+
+`speckit.delivery.handoff` renders either one slice PR body or the final rollup.
+Use `handoff slice=<id>` at each verified boundary to render that layer's PR
+body; the workflow's final handoff uses `mode=auto` for the release slice or
+rollup. Publishing and merging remain separately authorized. Stacked deliveries
+merge each layer with the configured slice method; an integration delivery
+squash-merges slices into the integration branch and merges the final rollup with
+a merge commit. Never squash the final rollup, never rebase a shared integration
+branch, and never merge the target into a stack branch. See the
+[slice command](commands/speckit.delivery.slice.md) and
+[plan template](templates/slices.md).
 
 ## Review closure
 

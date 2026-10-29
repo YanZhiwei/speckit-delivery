@@ -7,3 +7,9 @@ Choose Bugfix when there is an observable defect, a bounded root-cause investiga
 Choose Lightweight when the outcome is mechanical, documentation-only, or behavior-preserving with a narrow credible verification command.
 
 When uncertain between lanes, choose the more explicit lane until scope evidence justifies a downgrade.
+
+Slicing is not a lane. Feature uses `speckit.delivery.slice` after tasks to choose
+review/merge boundaries. A Bugfix whose remediation needs multiple dependent,
+contract-changing PRs is promoted to Feature rather than forcing a second queue
+or an ad-hoc branch chain; a small Bugfix or Lightweight change stays one PR. A
+bug label does not by itself justify the full slice ceremony.

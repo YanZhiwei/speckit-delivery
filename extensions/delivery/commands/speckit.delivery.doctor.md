@@ -33,11 +33,28 @@ assessment/scope gate. The existing Feature plan gate must require presentation
 of the finalized tree, responsibilities, interfaces, and tests. Report an old
 installation missing these contracts as stale; do not modify it silently.
 
-Also verify Review ships `.specify/extensions/review/templates/reviewer.md` and
+Also verify Delivery ships `speckit.delivery.slice` and
+`templates/slices.md`, and that the Feature workflow places a `slice` plan and
+`slice-gate` after plan approval/task generation and before analysis/Ralph. The
+slice step must receive the canonical `delivery_run`, the approved design choice,
+and the exact `slices.md` path; Ralph, final Review, and Handoff must consume that
+path. A Feature workflow that still goes from tasks directly to analysis/Ralph
+without slice planning is stale for large changes.
+
+Validate `pr_slicing`, `slice_warn_files`, `slice_warn_lines`,
+`slice_requires_approval`, `stack_provider`, and `merge_policy`. Reject an
+unknown slicing mode, non-positive budgets, `integration` with `final: squash`,
+a shared integration branch configured for rebase sync, or a stacked mode that
+cannot name a provider or documented manual fallback. If `slice_requires_approval`
+is true, require a recorded `SLICE_APPROVAL: approved` before Ralph. Verify
+`slices.md` is presented as boundary metadata, not as a second execution queue;
+`tasks.md` must remain the only source of task selection and ordering.
+
+Verify Review ships `.specify/extensions/review/templates/reviewer.md` and
 supports task/final scopes, six dimension verdicts, independence/coverage, and
-content-bound findings; Delivery
-ships `speckit.delivery.review-fix`; Ralph requires REVIEW_VERDICT before closing
-a task. All three lane workflows need bounded review/repair slots, a final review,
+content-bound findings; Delivery ships `speckit.delivery.review-fix`; Ralph
+requires `REVIEW_VERDICT` before closing a task. All three lane workflows need
+bounded review/repair slots, a final review,
 and an aborting review gate before delivery. Verify configured repair bounds are
 positive integers and explain the portable three-slot ceiling. A stale two-verdict
 Ralph or report-less review path is a blocker, not compatibility by assumption.
@@ -69,6 +86,9 @@ WORKFLOWS:
 - <workflow>: ready | stale | missing — <evidence>
 POLICY_COVERAGE:
 - <rule/profile>: covered | gap — <owner and mechanism>
+SLICE_POLICY:
+- mode: <off|auto|stacked|integration>; provider: <verified|manual|missing>
+- gate: <present|missing>; merge: <slice/final/sync>
 BLOCKERS:
 - <id or none>: <remediation>
 ```

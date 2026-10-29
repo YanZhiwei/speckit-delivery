@@ -95,6 +95,44 @@ class DistributionContractTest(unittest.TestCase):
                 errors = validator.validate(root)
                 self.assertTrue(any("missing" in error and "explor" in error for error in errors), errors)
 
+    def test_slice_command_and_template_must_ship(self) -> None:
+        for relative in (
+            "extensions/delivery/commands/speckit.delivery.slice.md",
+            "extensions/delivery/templates/slices.md",
+        ):
+            with self.subTest(relative=relative):
+                root = self.fixture()
+                (root / relative).unlink()
+                errors = validator.validate(root)
+                self.assertTrue(any("slice" in error for error in errors), errors)
+
+    def test_slice_gate_and_downstream_path_cannot_be_removed(self) -> None:
+        for mutation in ("remove_gate", "drop_ralph_path", "drop_approval"):
+            with self.subTest(mutation=mutation):
+                root = self.fixture()
+                path = root / "workflows/feature-delivery/workflow.yml"
+                workflow = yaml.safe_load(path.read_text(encoding="utf-8"))
+                if mutation == "remove_gate":
+                    workflow["steps"] = [
+                        step for step in workflow["steps"]
+                        if step.get("id") != "slice-gate"
+                    ]
+                else:
+                    ralph = next(
+                        step for step in workflow["steps"] if step.get("id") == "ralph"
+                    )
+                    needle = (
+                        "slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md"
+                        if mutation == "drop_ralph_path"
+                        else "slice_approval={{ steps.slice-gate.output.choice }}"
+                    )
+                    ralph["input"]["args"] = str(ralph["input"]["args"]).replace(
+                        needle, ""
+                    )
+                path.write_text(yaml.safe_dump(workflow), encoding="utf-8")
+                errors = validator.validate(root)
+                self.assertTrue(any("slice" in error for error in errors), errors)
+
     def test_feature_scope_gate_cannot_follow_specify(self) -> None:
         root = self.fixture()
         path = root / "workflows/feature-delivery/workflow.yml"

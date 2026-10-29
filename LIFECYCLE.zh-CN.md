@@ -7,7 +7,9 @@
 | `.specify/delivery/<feature-or-run>/exploration.md` | Delivery | 遵循 `artifact_policy` | 代码／历史／开源参考证据、现状和候选目录树、真实范围确认及限制 |
 | `spec.md` / `plan.md` | Feature | 项目配置 | 行为契约和当前实现方案 |
 | `tasks.md` | Feature/Ralph | 项目配置 | 唯一任务队列和完成状态 |
+| `.specify/delivery/<run>/slices.md` | Delivery Slice | 遵循 `artifact_policy` | 已确认的 Slice 边界、trunk-safe 证据、合并策略和回滚；绝不是第二执行队列 |
 | `.specify/delivery/<feature>/task-verdicts.yml` | Ralph | 临时 | Task 快照、Quality／Standards／Review 回执及已验证提交关联 |
+| `.specify/delivery/<feature>/slice-verdicts.yml` | Ralph | 临时 | Slice base/head、Task 范围、prefix／flag／checkpoint 证据和合并方式判定 |
 | Proposed ADR | 架构 | 跟踪 | 编码前的实现基线 |
 | Accepted ADR | 架构 | 跟踪 | 与 HEAD 对齐的自包含事实 |
 | 实际交付 Run 下的 `reviews/<scope>/review.yml` | 编排器 | 遵循 `artifact_policy` | 快照、六维判定、独立性、覆盖和稳定问题 ID |
@@ -16,6 +18,10 @@
 | Standards Verdict | Task/Ralph | 默认临时 | HEAD、范围、语义规范判定和阻断项 |
 | Evidence 报告 | 交付运行/PR | 持久摘要 | 命令、结果和环境风险 |
 | PR 正文 | Pull Request | 持久 | 变更、风险、决策和证据 |
+
+`slices.md` 是评审和合并边界计划。它绑定 `tasks.md` 的真实 Task ID，但不得增删或重排
+Task。Slice 回执只证明一个边界的检查，不能替代 Task 回执或最终集成 Review。范围、设计、
+Task 映射、prefix check 或合并策略变化后，必须刷新或废弃旧 Slice 计划。
 
 ## Spec 临时模式
 
