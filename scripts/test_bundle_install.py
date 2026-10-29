@@ -75,6 +75,31 @@ def check_delivery_install(
         ):
             raise RuntimeError(f"{integration} command missing/stale: {name}")
 
+    # Doctor checks a resource owned by Review. The renderer rewrites bare
+    # extension-relative paths to the owning extension, so verify the rendered
+    # result names Review and resolves to the installed template.
+    if integration == "codex":
+        doctor_commands = list(
+            project.glob(".agents/skills/speckit-delivery-doctor/SKILL.md")
+        )
+    else:
+        doctor_commands = list(
+            project.glob(".opencode/**/speckit.delivery.doctor.md")
+        )
+    if not doctor_commands:
+        raise RuntimeError(f"{integration} command missing: speckit.delivery.doctor")
+    reviewer_template = project / ".specify/extensions/review/templates/reviewer.md"
+    reviewer_path = ".specify/extensions/review/templates/reviewer.md"
+    wrong_path = ".specify/extensions/delivery/templates/reviewer.md"
+    if not reviewer_template.is_file():
+        raise RuntimeError("installed review templates/reviewer.md is missing")
+    for command in doctor_commands:
+        text = command.read_text(encoding="utf-8")
+        if reviewer_path not in text or wrong_path in text:
+            raise RuntimeError(
+                f"{integration} Doctor has a stale Reviewer path: {command}"
+            )
+
     installed_workflows = project / ".specify" / "workflows"
     candidates = [
         *installed_workflows.rglob("*.yml"),

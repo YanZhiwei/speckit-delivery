@@ -179,6 +179,22 @@ class DistributionContractTest(unittest.TestCase):
                     step = next(step for step in workflow["steps"] if step["id"] == step_id)
                     self.assertIn("exploration", step["input"]["args"])
 
+    def test_doctor_reviewer_reference_must_name_review_extension(self) -> None:
+        root = self.fixture()
+        path = root / "extensions/delivery/commands/speckit.delivery.doctor.md"
+        text = path.read_text(encoding="utf-8")
+        path.write_text(
+            text.replace(
+                ".specify/extensions/review/templates/reviewer.md",
+                "`templates/reviewer.md`",
+            ).replace("``", "`"),
+            encoding="utf-8",
+        )
+        errors = validator.validate(root)
+        self.assertTrue(
+            any("extension-relative Reviewer path" in error for error in errors), errors
+        )
+
     def test_reviewer_template_must_ship(self) -> None:
         root = self.fixture()
         (root / "extensions/review/templates/reviewer.md").unlink()

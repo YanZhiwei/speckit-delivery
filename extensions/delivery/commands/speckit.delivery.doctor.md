@@ -33,8 +33,9 @@ assessment/scope gate. The existing Feature plan gate must require presentation
 of the finalized tree, responsibilities, interfaces, and tests. Report an old
 installation missing these contracts as stale; do not modify it silently.
 
-Also verify Review ships `templates/reviewer.md` and supports task/final scopes,
-six dimension verdicts, independence/coverage, and content-bound findings; Delivery
+Also verify Review ships `.specify/extensions/review/templates/reviewer.md` and
+supports task/final scopes, six dimension verdicts, independence/coverage, and
+content-bound findings; Delivery
 ships `speckit.delivery.review-fix`; Ralph requires REVIEW_VERDICT before closing
 a task. All three lane workflows need bounded review/repair slots, a final review,
 and an aborting review gate before delivery. Verify configured repair bounds are

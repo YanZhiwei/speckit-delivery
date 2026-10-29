@@ -4,6 +4,40 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-10-29
+
+Doctor path correction for the shared Reviewer contract.
+
+### Fixed
+
+- Doctor now names Review's installed
+  `.specify/extensions/review/templates/reviewer.md` instead of an
+  extension-relative `templates/reviewer.md`. The host rewrites bare relative
+  references against the command's own extension, so `0.1.3` produced a
+  nonexistent Delivery path and a false readiness blocker even though Review
+  shipped and installed the template correctly.
+- Distribution validation now rejects a Doctor Reviewer reference that relies on
+  implicit Delivery ownership, and clean Bundle installation checks assert the
+  rendered Doctor names Review for both OpenCode and Codex Skills.
+
+### Upgrade notes
+
+- Upgrade the Bundle, or refresh Delivery and Review together, then rerun
+  `speckit.delivery.doctor` through the active host. Existing installations can
+  be identified by the wrong `.specify/extensions/delivery/templates/reviewer.md`
+  path in the generated Doctor command.
+- No command surface, configuration format, review dimension, snapshot, repair
+  budget, or runtime dependency changed. Minimum CLI requirements remain Spec Kit
+  `>=0.16.4` for individual components and `>=1.2.3` for Bundle installation.
+
+### Verification and limitations
+
+- Repository validation and the mutation fixture cover the corrected reference;
+  clean OpenCode and Codex Skills Bundle installations verify the rendered
+  command and installed Review template.
+- A missing local quality tool remains an environment blocker, not a Doctor path
+  defect. This patch does not install, skip, or relax project quality checks.
+
 ## [0.1.3] - 2026-10-29
 
 Evidence-first exploration and independent review, from scope approval through
