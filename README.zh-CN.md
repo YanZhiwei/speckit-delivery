@@ -252,8 +252,8 @@ Quality 的复用依据是**原始执行时**的检查输入／配置身份；HE
 `main`，也不移动已有 Tag。
 
 > [!NOTE]
-> 安装命令指向准备中的 `v0.1.3`。发布前请使用已发布的 `v0.1.2` Catalog；旧版不包含本轮
-> 新增的取证与快照绑定 Review 契约。不要混用不同 Tag 的组件。
+> 安装命令指向准备中的 `v0.1.4`。发布前请使用已发布的 `v0.1.3` Catalog；该版本包含本次
+> 修正的 Doctor Reviewer 路径缺陷。不要混用不同 Tag 的组件。
 
 指定版本的 Catalog 和 Bundle 安装命令见根目录 `README.md` 的 Release installation
 一节；Bundle 要求 Spec Kit `>=1.2.3`，单独组件仍支持 `>=0.16.4`。

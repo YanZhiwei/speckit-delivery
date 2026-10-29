@@ -419,23 +419,23 @@ PR. Merge that PR before running **Release distribution**; the release pipeline
 does not write back to `main` or move an existing tag.
 
 > [!NOTE]
-> The commands below target the prepared `v0.1.3` release. Until it is published,
-> use the released `v0.1.2` catalogs, which do not include the new exploration and
-> snapshot-bound review contracts. Do not mix components from different tags.
+> The commands below target the prepared `v0.1.4` release. Until it is published,
+> use the released `v0.1.3` catalogs, which contain the Doctor Reviewer path
+> defect corrected here. Do not mix components from different tags.
 
 Releases publish each extension as a root-layout zip, expose pinned catalogs, and publish the bundle artifact. Add the versioned catalogs before installing the bundle (Bundle requires Spec Kit `>=1.2.3`):
 
 ```bash
 specify extension catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.3/catalogs/extensions.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.4/catalogs/extensions.json \
   --name speckit-delivery --install-allowed
 
 specify workflow catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.3/catalogs/workflows.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.4/catalogs/workflows.json \
   --name speckit-delivery
 
 specify bundle catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.3/catalogs/bundles.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.4/catalogs/bundles.json \
   --id speckit-delivery --policy install-allowed
 
 specify bundle install speckit-delivery

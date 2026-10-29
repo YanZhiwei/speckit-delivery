@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: delivery
   name: Spec Kit Delivery Core
-  version: "0.1.3"
+  version: "0.1.4"
   description: "Explore and scope delivery work, initialize local policy, and render a durable pull-request handoff from final evidence."
   category: process
   effect: read-write
