@@ -36,6 +36,34 @@
 - 没有原生 Stacked PR 能力时设置 `stack_provider: manual`，不要声称支持原生
   Provider 或仓库并不存在的 Merge Queue。
 
+## [0.1.4] - 2026-10-29
+
+修正 Doctor 对共享 Reviewer 契约的路径引用。
+
+### 修复
+
+- Doctor 现在显式引用 Review 已安装的
+  `.specify/extensions/review/templates/reviewer.md`，不再使用扩展相对路径
+  `templates/reviewer.md`。宿主会按命令所属扩展重写裸相对引用，因此 `0.1.3` 生成了
+  不存在的 Delivery 路径，即使 Review 已正确打包并安装模板，也会产生错误的就绪阻塞。
+- 分发校验现在拒绝依赖隐式 Delivery 归属的 Doctor Reviewer 引用；干净 Bundle 安装检查
+  会在 OpenCode 与 Codex Skills 两种宿主上断言渲染后的 Doctor 指向 Review。
+
+### 升级说明
+
+- 升级 Bundle，或同时刷新 Delivery 与 Review，然后通过当前宿主重新运行
+  `speckit.delivery.doctor`。已有安装可通过生成命令中的错误路径
+  `.specify/extensions/delivery/templates/reviewer.md` 识别。
+- 命令面、配置格式、Review 六维、快照、修复预算和运行时依赖均未改变。最低 CLI 要求
+  仍为：单独组件 Spec Kit `>=0.16.4`，Bundle 安装 `>=1.2.3`。
+
+### 验证与限制
+
+- 仓库校验及变异夹具覆盖修正后的引用；OpenCode 与 Codex Skills 的干净 Bundle 安装会核对
+  渲染命令和已安装 Review 模板。
+- 缺少本地质量工具仍是环境阻塞，不是 Doctor 路径缺陷。本补丁不安装、不跳过、也不放宽
+  项目质量检查。
+
 ## [0.1.3] - 2026-10-29
 
 取证优先的需求探索与独立评审：从范围确认，到有界修复复审和快照核对后的交接。

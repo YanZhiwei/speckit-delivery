@@ -427,8 +427,9 @@ does not write back to `main` or move an existing tag.
 
 > [!NOTE]
 > The commands below target the prepared `v0.2.0` release. Until it is published,
-> use the released `v0.1.3` catalogs, which do not include delivery slicing and
-> merge policy. Do not mix components from different tags.
+> use the released `v0.1.4` catalogs, which contain the Doctor Reviewer path
+> correction but not delivery slicing and merge policy. Do not mix components
+> from different tags.
 
 Releases publish each extension as a root-layout zip, expose pinned catalogs, and publish the bundle artifact. Add the versioned catalogs before installing the bundle (Bundle requires Spec Kit `>=1.2.3`):
 

@@ -50,10 +50,11 @@ is true, require a recorded `SLICE_APPROVAL: approved` before Ralph. Verify
 `slices.md` is presented as boundary metadata, not as a second execution queue;
 `tasks.md` must remain the only source of task selection and ordering.
 
-Verify Review ships `templates/reviewer.md` and supports task/final scopes,
-six dimension verdicts, independence/coverage, and content-bound findings; Delivery
-ships `speckit.delivery.review-fix`; Ralph requires REVIEW_VERDICT before closing
-a task. All three lane workflows need bounded review/repair slots, a final review,
+Verify Review ships `.specify/extensions/review/templates/reviewer.md` and
+supports task/final scopes, six dimension verdicts, independence/coverage, and
+content-bound findings; Delivery ships `speckit.delivery.review-fix`; Ralph
+requires `REVIEW_VERDICT` before closing a task. All three lane workflows need
+bounded review/repair slots, a final review,
 and an aborting review gate before delivery. Verify configured repair bounds are
 positive integers and explain the portable three-slot ceiling. A stale two-verdict
 Ralph or report-less review path is a blocker, not compatibility by assumption.

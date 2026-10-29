@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+import re
 from typing import Any
 
 import yaml
@@ -399,6 +400,22 @@ def validate(root: Path, expected_version: str | None = None) -> list[str]:
                 errors.append(f"{manifest_path}: missing templates/slices.md")
             if not (manifest_path.parent / "templates" / "bugfix-review-repair.md").is_file():
                 errors.append(f"{manifest_path}: missing templates/bugfix-review-repair.md")
+            doctor = manifest_path.parent / "commands" / "speckit.delivery.doctor.md"
+            if doctor.is_file():
+                doctor_text = doctor.read_text(encoding="utf-8")
+                if (
+                    ".specify/extensions/review/templates/reviewer.md"
+                    not in doctor_text
+                ):
+                    errors.append(
+                        f"{doctor}: Doctor must reference Review's installed "
+                        "templates/reviewer.md path"
+                    )
+                if re.search(r"`(?:\./)?templates/reviewer\.md`", doctor_text):
+                    errors.append(
+                        f"{doctor}: Doctor must not use an extension-relative "
+                        "Reviewer path that the host rewrites to Delivery"
+                    )
         if extension_id == "review":
             template = manifest_path.parent / "templates" / "reviewer.md"
             if not template.is_file():
