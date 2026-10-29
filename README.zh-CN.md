@@ -31,6 +31,7 @@ Spec Kit 已经提供了良好的 `specify → plan → tasks → implement` 主
 交付还需要回答：
 
 - 当前工作受哪些既有 ADR 约束？新 ADR 何时从 Proposed 变为 Accepted？
+- 功能是否已经存在，关联 Issue／PR／Commit 如何解释当前实现，这次具体改哪些文件？
 - 多 Agent 如何只基于 `tasks.md` 安全调度，并由编排器确认完成？
 - 实现是否真正收敛到 Spec，是否引入了重复状态、无消费者 API 或投机性扩展？
 - 当前 outgoing diff 需要哪些可信验证？复杂度、注释、lint、类型和测试规则如何
@@ -40,16 +41,38 @@ Spec Kit 已经提供了良好的 `specify → plan → tasks → implement` 主
 ## 主流程与变更 Lane
 
 ```text
-上下文 → doctor → specify → clarify → plan → Proposed ADR → tasks → analyze
-      → quality brief → Ralph → quality + standards → converge → simplify
-      → docs sync → review → Accepted ADR → evidence → PR handoff
+doctor → 既有决策发现 → 代码／历史／GitHub 参考取证
+       → 展示现状＋候选改动目录树 → 范围确认 → specify → clarify
+       → ADR 解析 → plan → Proposed ADR → 确定版目录／设计确认
+       → tasks → analyze → quality brief → Ralph → quality + standards
+        → converge → simplify → docs sync → 有界 review/fix → 最终 Review Gate
+        → Accepted ADR → Review 时效核对 → evidence → 快照核对后 PR handoff
 ```
 
 | Lane | 适用范围 | 主要路径 |
 | --- | --- | --- |
 | Feature | 新功能、跨模块修改、架构变化 | 完整 SDD 流程 |
-| Bugfix | 可复现且范围明确的缺陷 | 评估 → 红测试 → 修复 → 验证 |
+| Bugfix | 预计有界的缺陷报告 | 结构取证 → 评估／红色证据 → 修复范围确认 → 修复 → 验证 |
 | Lightweight | 文档、机械修改、极小的行为不变变更 | 范围 → 修改 → 定向证据 |
+
+### 先看结构与证据，再确定需求和设计
+
+`speckit.delivery.explore` 区分已有能力、全新能力与缺陷调查，先读取代码／测试／ADR，
+追踪当前项目相关 Issue、PR、Commit 的实际变更、评审理由和后续修正。全新能力与新机制／
+架构选择默认检索 GitHub 成熟实现，记录参考版本或固定 SHA、代码路径、关联 PR／Commit、
+采用和不采用的部分；已理解的小范围扩展可以说明原因后跳过外部检索。
+
+Spec 前必须在对话中展示**现状目录树和候选改动目录树**，标注职责、预计新增／修改、复用、
+不改、待确认和测试位置，并给出最小方案、替代方案、风险与未知项。确认范围后才进入 Spec；
+Plan 完成后在原有 Gate 展示确定版文件、接口和测试方案，再确认详细设计。Bug 根因诊断和复现
+仍由官方 `bug.assess` 负责，有界修复不强制完整 Feature Spec；Lightweight 不增加完整调研和
+两轮确认。复杂关系可配 Mermaid／SVG 技术图，但不能替代目录树，也不使用 AI 文生图。
+
+CodeGraph 有可用索引时优先使用；否则明确降级为源码／测试调查，不静默建索引。网络、
+GitHub 凭据或参考缺失要说明限制；影响范围判断的关键证据缺口阻断推进，非关键限制由用户明确
+接受。正式位置确定后，取证包保存到 `.specify/delivery/<feature-or-run>/exploration.md`，遵循
+`artifact_policy`；此前显式保留上下文，不虚构 Feature 路径。后续 Spec／Plan／Tasks 必须消费
+已确认的证据；重大范围扩大需要重新确认。详见 [Delivery 契约](extensions/delivery/README.md)。
 
 ## 环境要求
 
@@ -139,10 +162,20 @@ Codex skills 模式会把已安装的 Delivery 扩展渲染成 `speckit-delivery
 流程。也可以直接运行：
 
 ```bash
-specify workflow run feature-delivery --input spec="描述需要交付的变更"
+specify workflow run feature-delivery --input delivery_run=audit-trail-01 --input spec="描述需要交付的变更"
 ```
 
 ## 质量闸门如何生效
+
+直接 Workflow 必须传入唯一安全 `delivery_run` 标识，恢复沿用同一值。Explore 在进程退出前
+保存 `.specify/delivery/<delivery_run>/exploration.md`，后续命令接收确切路径和实际 Gate
+选择，再记录所批准的范围／快照；Feature／Bug 标识确定后也不搬移该记录。只有同会话
+Router 可暂存上下文；临时模式的直接 Workflow 仍需本地忽略文件。Bugfix 复审修复采用
+版本化续修记录，保留官方原始 fix/test 报告，不绕过自动覆盖保护。
+
+直接 Bugfix 还需单独指定规范化 `bug_slug`；官方 Assess 仅写自己的 Bug 评估，编排器核对
+并保存身份映射。续修必须执行适用的强制前后置 fix/test Hook，显式传递当前轮报告；不兼容、
+缺失或失败的必需 Hook 阻断完成，不能复用原始旧报告冒充本轮上下文。
 
 质量规则的归属保持清晰：
 
@@ -154,12 +187,14 @@ specify workflow run feature-delivery --input spec="描述需要交付的变更"
 | 目录和依赖边界 | 架构文档、依赖规则、ADR | 检查约束，重大变化进入 ADR |
 
 模型开始编辑前调用 `speckit.quality.brief` 获取目标文件规则；Ralph 关闭 Task 前再调用
-`speckit.quality.check` 与 `speckit.review.standards`。只有两种结果均覆盖当前 HEAD、
-任务变更范围匹配，并且对应 Git commit 创建成功，才能标记 `[X]`：
+`speckit.quality.check`、`speckit.review.standards` 与独立
+`speckit.review.run scope=task task=<id>`。三种结果均覆盖当前代码和需求快照、
+任务变更范围匹配后才能标记 `[X]`，并立即创建和验证对应 Git commit：
 
 ```text
 QUALITY_VERDICT: pass
 STANDARDS_VERDICT: pass
+REVIEW_VERDICT: pass
 HEAD: <当前 SHA>
 SCOPE: T014
 ```
@@ -168,6 +203,20 @@ SCOPE: T014
 “未验证”当作通过。详细字段、语言配置和关联方式见
 [质量闸门配置指南](QUALITY-GATE.zh-CN.md)；可复制的原生配置与 Profile 对照见
 [质量闸门示例](examples/quality-gate/)。
+
+Review 独立覆盖**需求符合性、代码质量、架构与设计规范、运行正确性、安全与兼容性、
+测试有效性**。它复用有效检查而不重复跑整套测试；既定 Plan 不能掩盖有证据的设计缺陷。
+Reviewer 只读，Delivery 负责已核实修复和独立复审；Feature 保持 `tasks.md` 唯一队列，
+Bugfix／Lightweight 不强制完整 Feature 文档。
+
+三条 Workflow 最多三次安全修复槽位，取配置上限较小值；完整当前 pass 后 no-op，
+跨恢复／新 HEAD 不重置预算。稳定问题 ID 不能因本轮遗漏而关闭，修复者不能自批。
+报告绑定实际内容及需求指纹，包含未提交和相关未跟踪文件；覆盖／证据／独立性不足是
+incomplete，不能通过 Gate。ADR 等后置变化需复审，handoff 再核对快照。这仍是引导式
+契约而非自动语义引擎，详见 [Reviewer 契约](extensions/review/templates/reviewer.md)。
+
+Quality 的复用依据是**原始执行时**的检查输入／配置身份；HEAD／路径相同不足以复用 Hook。
+身份缺失或内容不同需重跑受影响检查，不能给旧结果补当前哈希冒充新证据。
 
 ## 典型使用场景
 

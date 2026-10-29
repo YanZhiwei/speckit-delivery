@@ -64,6 +64,7 @@ uv run --with pyyaml python scripts/validate_distribution.py
 uv run --with pyyaml python scripts/test_validate_distribution.py
 uv run --with pyyaml python scripts/test_stamp_release.py
 python scripts/test_bundle_install.py
+python scripts/test_bundle_install.py --integration codex
 cp -R /path/to/speckit-delivery/bundle /tmp/speckit-bundle-check/bundle
 specify bundle validate --path /tmp/speckit-bundle-check/bundle
 specify bundle build --path /path/to/speckit-delivery/bundle --output ./dist
@@ -76,6 +77,18 @@ Bundle's minimum; individual extensions and workflows remain installable on
 `>=0.16.4`. Release verification additionally installs from published catalogs
 in a second clean project. A release is ready only when catalogs, manifests,
 workflow requirements, packaged roots, README commands, and versions agree.
+
+The local Bundle test also checks that Explore/Review templates, review-fix,
+and Ralph resources survive packaging/installation, the active host renders the commands, and all
+three installed workflows match source. Its default host is OpenCode; the Codex
+variant verifies Skills-mode rendering. Structural checks do not prove semantic
+research quality or user approval; behavioral prompts live in `evals/evals.json`.
+
+`scripts/test_workflow_handoff.py` additionally probes the real Spec Kit
+Command/Gate boundary with fake host consumers and a temporary shared disk
+packet: fresh contexts, actual gate choices, and missing-packet failures.
+Run it in a Python environment containing `specify_cli` and PyYAML (verified
+against Spec Kit 1.2.3). It is not live model execution or end-to-end delivery.
 
 ## README contract
 

@@ -4,13 +4,13 @@
     {
       "id": 1,
       "prompt": "Add a Redis-backed L2 cache to an application that already has an ADR for process-local caching. The Spec files are gitignored. Run the complete delivery workflow and preserve the final architectural reasoning.",
-      "expected_output": "Routes to Feature, retrieves the local-cache ADR, keeps decisions proposed through implementation, uses tasks as the Ralph queue, finalizes a self-contained ADR after review, and does not cite ignored Spec artifacts in durable records.",
+      "expected_output": "Routes provisionally to Feature, retrieves the local-cache ADR, explores actual cache code/history and GitHub reference designs for the new mechanism, shows current/candidate directory trees and obtains scope approval before specify. The plan checkpoint shows final files/interfaces/tests. Keeps decisions proposed through implementation, uses tasks as the Ralph queue, finalizes a self-contained ADR after review, and does not cite ignored Spec artifacts in durable records.",
       "files": []
     },
     {
       "id": 2,
       "prompt": "Users intermittently receive duplicate notifications after retry. Diagnose and fix it test-first, but avoid creating unnecessary design documents.",
-      "expected_output": "Routes to Bugfix, establishes reproduction/red evidence, diagnoses ownership or retry semantics, escalates only if an architecture decision changes, and records regression evidence.",
+      "expected_output": "Routes provisionally to Bugfix, explores relevant code/directory structure and Issue/PR/commit history, then passes the packet to official bug.assess for reproduction/red evidence and diagnosis. Shows both trees, fault path and bounded repair/test scope before assessment approval; no full Feature spec or duplicated diagnosis. Escalates for new capability or material architecture/durable-contract decisions, not file count, and records regression evidence.",
       "files": []
     },
     {
@@ -34,13 +34,13 @@
     {
       "id": 6,
       "prompt": "Before editing a Python service file, prepare the model for the repository's complexity limit, comment policy, and architecture boundaries, then verify the resulting task.",
-      "expected_output": "The flow invokes speckit.quality.brief before editing, injects only the matching project profile and policy sources, then invokes speckit.quality.check after editing; the brief is advisory and only the current-HEAD pass verdict can close the task.",
+      "expected_output": "The flow invokes speckit.quality.brief before editing, injects only the matching project profile and policy sources, then invokes speckit.quality.check after editing. The brief is advisory; task closure needs Quality, Standards, and independent six-dimensional Review passes for the same current code/requirements snapshot.",
       "files": []
     },
     {
       "id": 7,
       "prompt": "Complete a task that passes lint and tests but adds Router-owned business validation and duplicates a locale helper already owned by another module.",
-      "expected_output": "Ralph runs the pre-edit Quality Brief, then requires both QUALITY_VERDICT and STANDARDS_VERDICT at the current HEAD. Standards Review returns blocked with the layer-boundary and duplicate-ownership findings, so the task remains open.",
+      "expected_output": "Ralph runs the pre-edit Quality Brief, then requires QUALITY_VERDICT, STANDARDS_VERDICT, and independent REVIEW_VERDICT for the current code/requirements snapshot. Standards Review returns blocked with the layer-boundary and duplicate-ownership findings, so the task remains open; valid receipts are reused, not duplicated mechanical suites.",
       "files": []
     },
     {
@@ -52,8 +52,101 @@
     {
       "id": 9,
       "prompt": "Run Ralph against an analyzed Spec Kit tasks.md in a clean Git repository.",
-      "expected_output": "Ralph first creates or reuses and verifies a ralph/<feature> branch, emits a run-level governance summary, executes exactly one dependency-ready task per iteration, emits a task governance packet with applicable code style and checks, runs the task checks plus Quality and Standards gates, requires a passing pre-checkbox closure gate covering acceptance evidence, current HEAD, allowed paths, and required tools, then marks [X] and immediately creates one verified Git commit containing the task and receipt. It leaves blocked tasks open and emits ALL_TASKS_DONE only when the committed task queue is empty and the worktree is clean.",
+      "expected_output": "Ralph first creates or reuses and verifies a ralph/<feature> branch, emits a run-level governance summary, executes exactly one dependency-ready task per iteration, emits a task governance packet with applicable code style and checks, runs task checks plus Quality, Standards, and independent six-dimensional task Review, requires a passing pre-checkbox gate covering acceptance, current content/requirements including uncommitted/untracked files, allowed paths, and required tools, then marks [X] and immediately creates one verified task commit. Associates the pre-commit receipt only after content equivalence verification. Leaves blocked/incomplete tasks open, preserves repair budgets and finding IDs across resume, never recursively calls Ralph for task repairs, and emits ALL_TASKS_DONE only when the committed queue is empty and the worktree clean. Final Review still owns integration coverage.",
       "files": []
+    },
+    {
+      "id": 10,
+      "prompt": "Use $sd to add a display for model reasoning. First inspect whether the chat UI already renders reasoning events; the custom-model route may drop thinking capability. Explain the directories before writing a spec.",
+      "expected_output": "Checks existing implementation with usable CodeGraph or an explicit source/test fallback, reads relevant tests, ADRs and Issue/PR/commit diffs, distinguishes existing display from a configuration gap, and does not rebuild the UI blindly. Presents verified current and tentative change trees including test paths, reuse/no-change areas, evidence and unknowns. Keeps scope approval pending before specify; confirmed defect diagnosis remains bug.assess-owned.",
+      "files": [],
+      "expectations": [
+        "Shows verified current and candidate directory trees including test paths and reuse/no-change markers",
+        "Does not rebuild existing reasoning UI or infer model capability from its name",
+        "Uses history/ADR evidence and preserves assessment-owned diagnosis and user scope approval"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "Use $sd to add a brand-new durable background job subsystem. The repository has no job queue implementation. Compare mature GitHub approaches and show how the code would fit before specifying it.",
+      "expected_output": "Investigates real reusable scaffold and governance first, searches GitHub mature implementations, reads design/code/tests plus related feature PRs/commits and follow-up fixes when available, and records fixed versions/SHAs, paths, adopted/rejected ideas and fit rather than star counts. Shows actual current and proposed change trees without inventing existing code, obtains scope approval before spec, then final file/interface/test approval at the existing plan gate. No image generation or automatic skill/dependency installation.",
+      "files": [],
+      "expectations": [
+        "Reads actual GitHub reference design/code/tests and associated PR/commit evolution when available",
+        "Records versions or fixed SHAs, read paths, adopted/rejected ideas and project fit",
+        "Separates actual scaffold from proposed new files and requests scope then detailed plan approval"
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "Plan a new subsystem with $sd. CodeGraph has no index, network access is unavailable, and no feature directory exists yet. Can you proceed without fabricating reference evidence or a spec path?",
+      "expected_output": "Falls back explicitly to source/tests without installing or indexing, preserves the exploration packet in context without inventing a feature path, and reports GitHub research unavailable rather than completed or skipped successfully. Blocks a scope decision if missing evidence is critical; otherwise asks explicit acceptance of the limitation. No ready verdict is treated as user approval and no private data is sent publicly.",
+      "files": [],
+      "expectations": [
+        "Reports unavailable research without fabricated reference or feature paths",
+        "Falls back to source/tests without silent CodeGraph installation or indexing",
+        "Blocks on decision-critical gaps and distinguishes a ready verdict from actual user approval"
+      ]
+    },
+    {
+      "id": 13,
+      "prompt": "Users report missing reasoning output after yesterday's PR, but there are no logs and you cannot reproduce it. The nearby commit changes four modules. Use $sd to investigate without guessing a root cause.",
+      "expected_output": "Reads actual relevant history/diffs and shows a structural/fault-path hypothesis with current/candidate trees. Temporal proximity and file count do not prove causation or require Feature. Official assessment requests concrete missing reproduction/log/config evidence and does not authorize fixing or claim the diagnosis confirmed. No exhaustive external research for an unimplicated upstream dependency.",
+      "files": [],
+      "expectations": [
+        "Does not treat a recent PR/commit or four changed modules as proof of cause or reason alone to escalate",
+        "Shows the fault-path hypothesis and uncertain repair tree rather than claiming a confirmed root cause",
+        "Requests specific reproduction/log/configuration evidence through assessment before fixing without a full Feature spec"
+      ]
+    },
+    {
+      "id": 14,
+      "prompt": "The exploration scope was approved. While planning, you discover a database migration and a public API change outside that scope. Continue $sd, but don't silently enlarge the task list.",
+      "expected_output": "Reads the approved evidence packet, updates affected evidence and candidate scope, explains the newly affected paths/contracts and obtains renewed scope approval. Presents finalized responsibilities/interfaces/tests and scope differences at the existing plan gate before tasks. Earlier scope approval is not design approval; ordinary in-scope test additions would not restart the workflow.",
+      "files": [],
+      "expectations": [
+        "Stops material scope expansion for renewed approval instead of silently appending tasks",
+        "Shows finalized file responsibilities, interfaces, tests and scope differences at the existing plan gate",
+        "Does not confuse earlier scope approval with detailed design approval"
+      ]
+    },
+    {
+      "id": 15,
+      "prompt": "Independently review evals/fixtures/review before/after against requirements.md. The implementer claims all requirements and tests pass. Read actual files and assess all six dimensions. This is a synthetic final review, not the distribution diff; fixture Git snapshots are unavailable. Do not modify, commit, publish, or invent snapshot facts.",
+      "expected_output": "Reports blocked: custom providers lose explicit supports_thinking, UI infers capability from provider names in violation of the domain boundary, and assert True fails to verify behavior. Covers requirements, code quality, architecture, correctness, security/compatibility, and test effectiveness with code evidence. Discloses missing snapshot facts and routes verified findings to bounded lane-owned repair followed by independent review.",
+      "files": ["evals/fixtures/review/requirements.md", "evals/fixtures/review/before/route.py", "evals/fixtures/review/after/route.py", "evals/fixtures/review/after/form.py", "evals/fixtures/review/after/test_route.py"],
+      "expectations": [
+        "Identifies custom-provider loss of explicit supports_thinking and its triggering input/path",
+        "Identifies forbidden provider-name inference in UI and cites the fixture's layer/capability rules",
+        "Identifies assert True as ineffective verification, not evidence that the feature works",
+        "Reports all six review dimension verdicts with code evidence and no fabricated Git/snapshot facts",
+        "Does not approve the change, rewrite code, or accept implementer claims as proof"
+      ]
+    },
+    {
+      "id": 16,
+      "prompt": "Reconcile a synthetic final rerun: HEAD and exact content/requirements fingerprints are unchanged. Previous R-7 is a confirmed important custom-route capability loss, still open. New output omitted R-7 and claims pass but says required src/authorization.py was not reviewed due to context limits. No fix, validation, or dismissal approval exists. State verdict, R-7 disposition, and permitted next action without mutation.",
+      "expected_output": "Rejects pass: R-7 stays open and blocking, while coverage is incomplete. Same-snapshot omission is not repair evidence. Requests explicit finding reconciliation and missing-scope review, not speculative fixes or repeated full suites.",
+      "files": [],
+      "expectations": [
+        "Preserves R-7 as unresolved rather than marking it fixed or resolved from omission",
+        "Rejects a final pass because required coverage is incomplete",
+        "Distinguishes same-HEAD/same-snapshot nondeterministic omission from actual repair evidence",
+        "Requests finding verification and missing-scope review without speculative code changes or repeated full suites"
+      ]
+    },
+    {
+      "id": 17,
+      "prompt": "May Ralph close T014? Synthetic packet: Quality/Standards passed on content A; HEAD unchanged, but a relevant untracked migration and unstaged provider edit make fingerprint B. Prior self-review pass has no degradation approval. Three configured repair passes exhausted. Implementer asks to mark [X] and commit everything using the old pass. State closure/recovery decision without Git or edits.",
+      "expected_output": "Leaves T014 open without a closure commit, rejects stale A receipts and unaccepted self-review, includes untracked/unstaged contents, and preserves the exhausted budget. Requests current evidence/independent review and material scope approval if needed; no broad staging, budget reset, or self-approved waiver.",
+      "files": [],
+      "expectations": [
+        "Rejects reuse of the old review/check receipts because worktree content changed despite same HEAD",
+        "Includes relevant untracked migration and unstaged provider contents in the review scope",
+        "Reports unaccepted self-review as an independence gap rather than independent approval",
+        "Leaves T014 open without a closure commit and does not reset/exceed the repair budget",
+        "Requests refreshed evidence/review and any material scope approval instead of silently waiving blockers or broad-staging"
+      ]
     }
   ]
 }

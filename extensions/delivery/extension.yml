@@ -4,7 +4,7 @@ extension:
   id: delivery
   name: Spec Kit Delivery Core
   version: "0.1.1"
-  description: "Route delivery work, initialize local policy, and render a durable pull-request handoff from final evidence."
+  description: "Explore and scope delivery work, initialize local policy, and render a durable pull-request handoff from final evidence."
   category: process
   effect: read-write
   author: Yan Zhiwei
@@ -20,6 +20,12 @@ provides:
     - name: speckit.delivery.route
       file: commands/speckit.delivery.route.md
       description: "Choose and orchestrate the Feature, Bugfix, or Lightweight delivery lane."
+    - name: speckit.delivery.explore
+      file: commands/speckit.delivery.explore.md
+      description: "Investigate code, history, and open-source references; present current and candidate directory trees for scope review."
+    - name: speckit.delivery.review-fix
+      file: commands/speckit.delivery.review-fix.md
+      description: "Coordinate one bounded repair pass from verified findings, preserving lane ownership and requiring re-review."
     - name: speckit.delivery.init
       file: commands/speckit.delivery.init.md
       description: "Discover project governance and create a project-local delivery configuration."

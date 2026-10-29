@@ -1,20 +1,59 @@
 ---
-description: "Review a verified base/head diff against standards, specification, architecture, correctness, and risk"
+description: "Independently review task or outgoing changes across six dimensions, with snapshot-bound findings and coverage"
 ---
 
 # Delivery Review
 
-Resolve and record the live base, head, merge-base, outgoing commits, and changed files. Revalidate scope if the branch changes during review. Read applicable agent instructions, Constitution, Spec, Plan, accepted/proposed ADRs, and tests.
+## Input
 
-Review these axes:
+```text
+$ARGUMENTS
+```
 
-1. Standards and project governance.
-2. Spec behavior and acceptance conditions.
-3. Architecture and ADR consistency.
-4. Correctness, ownership, lifecycle, concurrency, and failure paths.
-5. Security, data boundaries, and compatibility.
-6. Test strength on the real entry path.
+Read the installed `.specify/extensions/review/templates/reviewer.md` (or
+`templates/reviewer.md` under the resolved extension root). It is the single
+reviewer contract for input preparation, six-dimensional analysis, findings,
+coverage, snapshot identity, and the structured report. Do not replace it with
+an implementer's self-review or a checklist of test successes.
 
-Prioritize defects over style. Inspect consumers and callers, not only changed functions. A finding contains severity, location, defect, impact, evidence, remediation, and architecture impact.
+1. Resolve the lane and scope. `scope=task task=<id>` is a focused task review;
+   `scope=outgoing-diff` is the final integrated review. Default to outgoing-diff
+   only when the actual base and complete change set are known, never HEAD~1 by
+   assumption. Include committed, staged, unstaged, and relevant untracked files.
+   `delivery_run=<id>` identifies the canonical `.specify/delivery/<id>/` run,
+   using Delivery Explore's safe-id validation. The coordinator reads/writes its
+   scope report and repair checkpoint there across processes; do not silently
+   switch to a Feature path or forget previous findings when resuming.
+2. The coordinator prepares the template's evidence packet, including approved
+   requirements/design/exploration, applicable governance/ADRs, real diff and
+   caller context, verification evidence, and previous finding state. A Bugfix
+   uses its assessment; Lightweight uses its bounded request, not a forced Spec.
+3. Prefer a fresh reviewer context independent of the implementer. Pass the
+   packet and source paths, not the entire implementation conversation or
+   instructions to suppress particular defects. A task needs one scoped reviewer,
+   not a fan-out of nested reviewers. Final review remains broad across tasks.
+   If independent execution is unavailable, report `independence: self-review`;
+   it is incomplete unless the user explicitly accepted that degradation for
+   this scope. Do not silently equate self-review with independent review.
+4. The reviewer reads and returns the structured report from the template.
+   Review is read-only: do not edit source, task state, index, branches, commits,
+   or tracker resources. Do not dispatch additional reviewers from the reviewer.
+   Reuse valid Quality/Standards evidence for exactly the same code and scope;
+   independently judge all six dimensions instead of skipping quality/design.
+5. The coordinator checks the report, records it, and presents findings and
+   per-dimension verdicts to the user. Keep one current report and stable finding
+   IDs at `.specify/delivery/<feature-or-run>/reviews/<scope>/review.yml` when an
+   actual run location exists, honoring artifact policy; otherwise preserve it
+   explicitly in context. Exclude only declared review/receipt bookkeeping from
+   the reviewed-content fingerprint, not source/tests/spec/policy changes.
+6. Reconcile every earlier unresolved finding explicitly. Missing from this
+   output does not mean resolved. A changed HEAD, worktree content, requirements,
+   or relevant caller invalidates reuse; same-HEAD reruns can still review new
+   uncommitted contents. A malformed report, missing axis, coverage gap, stale
+   snapshot, or required evidence/independence gap cannot return pass.
 
-Return `pass` only when no blocking finding remains. Convert blocking findings to `tasks.md` entries before further implementation; rerun analyze and Ralph rather than allowing review prose to become a second task queue.
+Return `REVIEW_VERDICT: pass | blocked | incomplete` using the template's
+aggregation rules. Read-only review never fixes or closes a task. The coordinator
+routes confirmed findings through `speckit.delivery.review-fix` and re-review;
+Feature execution still has exactly one queue, `tasks.md`. A final review does
+not pass merely because all individual tasks or mechanical checks passed.

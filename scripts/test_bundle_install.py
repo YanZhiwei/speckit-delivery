@@ -15,6 +15,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -24,6 +25,68 @@ TAG_URL = re.compile(
 ASSET_URL = re.compile(
     r"https://github\.com/YanZhiwei/speckit-delivery/releases/download/v[^/]+/"
 )
+
+
+def check_delivery_install(
+    project: Path, dist: Path, version: str, integration: str
+) -> None:
+    """Verify resources and prompt contents survive packaging and rendering."""
+    resources = {
+        "delivery": (
+            "commands/speckit.delivery.route.md",
+            "commands/speckit.delivery.doctor.md",
+            "commands/speckit.delivery.explore.md",
+            "commands/speckit.delivery.review-fix.md",
+            "commands/speckit.delivery.handoff.md",
+            "templates/exploration.md",
+            "templates/bugfix-review-repair.md",
+        ),
+        "review": ("commands/speckit.review.run.md", "commands/speckit.review.standards.md", "templates/reviewer.md"),
+        "quality": ("commands/speckit.quality.check.md", "config-template.yml"),
+        "evidence": ("commands/speckit.evidence.collect.md",),
+        "ralph": ("commands/speckit.ralph.run.md",),
+    }
+    for extension_id, relatives in resources.items():
+        with zipfile.ZipFile(dist / f"{extension_id}-{version}.zip") as archive:
+            for relative in relatives:
+                expected = (ROOT / "extensions" / extension_id / relative).read_bytes()
+                if archive.read(relative) != expected:
+                    raise RuntimeError(f"packaged {extension_id} resource differs: {relative}")
+                installed = project / ".specify" / "extensions" / extension_id / relative
+                if not installed.is_file() or installed.read_bytes() != expected:
+                    raise RuntimeError(f"installed {extension_id} resource missing/stale: {relative}")
+
+    for name, marker in (
+        ("speckit.delivery.explore", "EXPLORATION_VERDICT"),
+        ("speckit.review.run", "REVIEW_VERDICT"),
+        ("speckit.delivery.review-fix", "REVIEW_FIX_STATUS"),
+        ("speckit.ralph.run", "REVIEW_VERDICT=pass"),
+        ("speckit.quality.check", "CHECK_RECEIPTS:"),
+        ("speckit.review.standards", "POLICY_FINGERPRINT:"),
+    ):
+        if integration == "codex":
+            rendered = list(project.glob(f".agents/skills/{name.replace('.', '-')}/SKILL.md"))
+        else:
+            rendered = list(project.glob(f".opencode/**/{name}.md"))
+        if not rendered or not any(
+            marker in path.read_text(encoding="utf-8") for path in rendered
+        ):
+            raise RuntimeError(f"{integration} command missing/stale: {name}")
+
+    installed_workflows = project / ".specify" / "workflows"
+    candidates = [
+        *installed_workflows.rglob("*.yml"),
+        *installed_workflows.rglob("*.yaml"),
+    ]
+    for workflow_id in ("feature-delivery", "bugfix-delivery", "lightweight-delivery"):
+        expected = (ROOT / "workflows" / workflow_id / "workflow.yml").read_text(
+            encoding="utf-8"
+        )
+        # The CLI chooses installed filenames; compare newline-normalized
+        # source contents rather than coupling this check to a naming convention.
+        if not any(path.read_text(encoding="utf-8") == expected for path in candidates):
+            raise RuntimeError(f"installed workflow missing/stale: {workflow_id}")
+    print("Explore/Review/Ralph resources, rendering, and all workflows verified.", flush=True)
 
 
 def run(command: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
@@ -52,6 +115,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--specify", default=shutil.which("specify"))
     parser.add_argument("--version", default=None)
+    parser.add_argument("--integration", choices=["opencode", "codex"], default="opencode")
     args = parser.parse_args()
     if not args.specify:
         print("specify CLI is not on PATH")
@@ -89,6 +153,10 @@ def main() -> int:
         (serve / "catalogs").mkdir(parents=True)
         shutil.copytree(dist, serve / "release-assets")
         shutil.copytree(ROOT / "workflows", serve / "workflows")
+        # Serve the LF form used by GitHub's release sources. A Windows checkout
+        # can have CRLF; the CLI writes fetched text using platform newlines.
+        for workflow in (serve / "workflows").rglob("*.yml"):
+            workflow.write_bytes(workflow.read_text(encoding="utf-8").encode("utf-8"))
         for name in ("extensions.json", "workflows.json", "bundles.json"):
             text = (ROOT / "catalogs" / name).read_text(encoding="utf-8")
             text = TAG_URL.sub("http://127.0.0.1:__PORT__", text)
@@ -115,18 +183,21 @@ def main() -> int:
         project = temporary / "project"
         project.mkdir()
         base = f"http://127.0.0.1:{port}"
+        initialize = [
+            args.specify,
+            "init",
+            ".",
+            "--integration",
+            args.integration,
+            "--script",
+            "ps" if os.name == "nt" else "sh",
+            "--ignore-agent-tools",
+            "--non-interactive",
+        ]
+        if args.integration == "codex":
+            initialize.append("--integration-options=--skills")
         commands = [
-            [
-                args.specify,
-                "init",
-                ".",
-                "--integration",
-                "opencode",
-                "--script",
-                "ps" if os.name == "nt" else "sh",
-                "--ignore-agent-tools",
-                "--non-interactive",
-            ],
+            initialize,
             [
                 args.specify,
                 "extension",
@@ -166,9 +237,10 @@ def main() -> int:
         text = json.dumps(data, ensure_ascii=False)
         if "speckit-delivery" not in text or version not in text:
             raise RuntimeError("Bundle installation record is missing the expected id/version")
+        check_delivery_install(project, dist, version, args.integration)
         print("Bundle install from local catalogs passed.", flush=True)
         return 0
-    except (OSError, RuntimeError, ValueError, json.JSONDecodeError) as exc:
+    except (OSError, RuntimeError, ValueError, KeyError, zipfile.BadZipFile) as exc:
         print(f"Bundle installation test failed: {exc}")
         return 1
     finally:

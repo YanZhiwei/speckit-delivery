@@ -56,6 +56,7 @@ uv run --with pyyaml python scripts/validate_distribution.py
 uv run --with pyyaml python scripts/test_validate_distribution.py
 uv run --with pyyaml python scripts/test_stamp_release.py
 python scripts/test_bundle_install.py
+python scripts/test_bundle_install.py --integration codex
 cp -R /path/to/speckit-delivery/bundle /tmp/speckit-bundle-check/bundle
 specify bundle validate --path /tmp/speckit-bundle-check/bundle
 specify bundle build --path /path/to/speckit-delivery/bundle --output ./dist
@@ -66,6 +67,15 @@ python scripts/check_links.py
 Spec Kit `>=1.2.3`，也是 Bundle 的最低版本。单独 Extension/Workflow 仍支持 `>=0.16.4`。
 发布前还要在第二个干净项目中验证已发布 Catalog 安装。只有 Manifest、Catalog、
 Workflow requirements、压缩包根布局、README 命令和版本完全一致时，才能认为可发布。
+
+本地 Bundle 测试还检查 Explore／Review 模板、review-fix 与 Ralph 资源是否完整打包／安装、
+宿主是否渲染命令，以及
+三个已安装 Workflow 是否与源码一致。默认验证 OpenCode，Codex 变体验证 Skills 模式。
+结构检查不能证明调研质量或用户实际批准；行为验收案例位于 `evals/evals.json`。
+
+`scripts/test_workflow_handoff.py` 使用真实 Spec Kit Command／Gate 边界、假宿主消费者和
+临时磁盘包，验证新上下文、真实 Gate 选择和缺包失败。在已安装 `specify_cli` 与 PyYAML
+的 Python 环境运行（已验证 Spec Kit 1.2.3）；它不是实际模型调用或端到端交付。
 
 ## README 归属
 

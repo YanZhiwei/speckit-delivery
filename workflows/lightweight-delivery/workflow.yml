@@ -12,6 +12,10 @@ requires:
     any: ["codex", "claude", "copilot", "gemini", "opencode", "generic"]
 
 inputs:
+  delivery_run:
+    type: string
+    required: true
+    prompt: "Unique delivery run id (safe single path segment; reuse on resume)"
   change:
     type: string
     required: true
@@ -24,7 +28,7 @@ steps:
   - id: delivery-doctor
     command: speckit.delivery.doctor
     integration: "{{ inputs.integration }}"
-    input: { args: "lane=lightweight {{ inputs.change }}" }
+    input: { args: "lane=lightweight delivery_run={{ inputs.delivery_run }} {{ inputs.change }}" }
 
   - id: quality-brief-before-implement
     command: speckit.quality.brief
@@ -46,17 +50,37 @@ steps:
     integration: "{{ inputs.integration }}"
     input: { args: "scope=outgoing-diff {{ inputs.change }}" }
 
-  - id: review
+  - id: review-loop
+    type: do-while
+    condition: "true"
+    max_iterations: 3
+    steps:
+      - id: review
+        command: speckit.review.run
+        integration: "{{ inputs.integration }}"
+        input: { args: "delivery_run={{ inputs.delivery_run }} lane=lightweight scope=outgoing-diff {{ inputs.change }} Review the bounded request across six dimensions, explain non-applicable surfaces, and reuse only a complete current pass. No full Feature spec or broad audit." }
+      - id: review-fix
+        command: speckit.delivery.review-fix
+        integration: "{{ inputs.integration }}"
+        input: { args: "delivery_run={{ inputs.delivery_run }} lane=lightweight scope=outgoing-diff repair_slots=3 {{ inputs.change }} One mechanical repair pass only; pass is no-op. Preserve attempts; stop at cap, missing evidence, or behavior/architecture expansion." }
+
+  - id: review-final
     command: speckit.review.run
     integration: "{{ inputs.integration }}"
-    input: { args: "lane=lightweight {{ inputs.change }}" }
+    input: { args: "delivery_run={{ inputs.delivery_run }} lane=lightweight scope=outgoing-diff {{ inputs.change }} Re-review the final repaired contents or reuse a complete current pass; no extra repairs. Present six verdicts and coverage proportionally." }
+
+  - id: review-gate
+    type: gate
+    message: "Confirm complete current snapshot-bound REVIEW_VERDICT: pass, required coverage and finding closure, with actual independent review or explicitly accepted degradation. Blocked/incomplete cannot be approved as pass. This closure check does not require Feature planning artifacts."
+    options: [approve, reject]
+    on_reject: abort
 
   - id: evidence
     command: speckit.evidence.collect
     integration: "{{ inputs.integration }}"
-    input: { args: "lane=lightweight {{ inputs.change }}" }
+    input: { args: "delivery_run={{ inputs.delivery_run }} lane=lightweight {{ inputs.change }}" }
 
   - id: handoff
     command: speckit.delivery.handoff
     integration: "{{ inputs.integration }}"
-    input: { args: "lane=lightweight {{ inputs.change }}" }
+    input: { args: "delivery_run={{ inputs.delivery_run }} lane=lightweight {{ inputs.change }}" }

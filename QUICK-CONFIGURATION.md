@@ -87,7 +87,7 @@ specify workflow add --dev "$delivery\workflows\lightweight-delivery\workflow.ym
 
 When upgrading, add `--force` for changed extensions. Verify with `specify
 extension list` and `specify workflow list`; at minimum, see `quality` (2
-commands), `delivery` (5), and `review` (2).
+commands), `delivery` (7), and `review` (2).
 
 ## 2. Initialize project governance
 
@@ -205,7 +205,7 @@ Conversely, do not rely only on review to find type errors or complexity issues.
 
 ## 5. Configure Hooks: fast feedback, not closure gates
 
-Hooks provide early feedback. Ralph's Quality + Standards verdicts remain the
+Hooks provide early feedback. Ralph's Quality + Standards + independent Review verdicts remain the
 task-closure condition.
 
 ### Node / Husky example
@@ -225,7 +225,8 @@ task-closure condition.
 Keep `pre-commit` fast and changed-scope only. `pre-push` may run repository
 type checks and tests. Commands must match or be stricter than their Quality
 Profile. If a Hook is bypassed, Quality Check still runs or verifies a receipt
-for the exact current HEAD.
+for the exact current checked contents and configuration, not HEAD alone. A
+HEAD/path-only hook receipt is rerun rather than restamped with a new hash.
 
 ### Python / pre-commit example
 
@@ -260,8 +261,8 @@ Validate one real small change in this order:
 2. speckit.delivery.doctor
 3. speckit.quality.brief for a small real change
 4. Run every command in its Profile
-5. speckit.quality.check + speckit.review.standards
-6. Confirm Ralph closes a Task only after both verdicts pass
+5. speckit.quality.check + speckit.review.standards + speckit.review.run scope=task
+6. Confirm Ralph closes a Task only after all three current-snapshot verdicts pass
 ```
 
 Start daily work with `$sd <request>` or `/sd <request>`. Feature work passes

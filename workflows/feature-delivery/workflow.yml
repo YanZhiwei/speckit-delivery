@@ -4,7 +4,7 @@ workflow:
   name: "Spec Kit Feature Delivery"
   version: "0.1.1"
   author: "Yan Zhiwei"
-  description: "Guided feature delivery with decision memory, quality gates, Ralph, convergence, simplification, review, evidence, and handoff."
+  description: "Evidence-first feature delivery with code/history/reference exploration, scope and design approval, quality, review, and handoff."
 
 requires:
   speckit_version: ">=0.16.4"
@@ -12,6 +12,10 @@ requires:
     any: ["codex", "claude", "copilot", "gemini", "opencode", "generic"]
 
 inputs:
+  delivery_run:
+    type: string
+    required: true
+    prompt: "Unique delivery run id (safe single path segment; reuse on resume)"
   spec:
     type: string
     required: true
@@ -29,22 +33,48 @@ steps:
   - id: delivery-doctor
     command: speckit.delivery.doctor
     integration: "{{ inputs.integration }}"
-    input: { args: "lane=feature {{ inputs.spec }}" }
+    input: { args: "lane=feature delivery_run={{ inputs.delivery_run }} {{ inputs.spec }}" }
 
   - id: decision-discover
     command: speckit.decision.context
     integration: "{{ inputs.integration }}"
     input: { args: "mode=discover {{ inputs.spec }}" }
 
+  - id: explore
+    command: speckit.delivery.explore
+    integration: "{{ inputs.integration }}"
+    input: { args: "lane=feature delivery_run={{ inputs.delivery_run }} {{ inputs.spec }} Persist .specify/delivery/{{ inputs.delivery_run }}/exploration.md before returning; no context-only workflow handoff." }
+
+  - id: scope-gate
+    show_file: ".specify/delivery/{{ inputs.delivery_run }}/exploration.md"
+    type: gate
+    message: "Review the current and candidate directory trees, code/history/GitHub evidence, alternatives, exclusions, risks, and unknowns in the conversation. Approve only when exploration is ready, the Feature lane is appropriate, and any non-critical evidence limitations are explicitly accepted; record scope approval in the packet or preserved context. Reject/stop on critical gaps or a lane change, carrying evidence to the appropriate lane."
+    options: [approve, reject]
+    on_reject: abort
+
   - id: specify
     command: speckit.specify
     integration: "{{ inputs.integration }}"
-    input: { args: "{{ inputs.spec }}" }
+    input:
+      args: >-
+        {{ inputs.spec }}
+        delivery_run={{ inputs.delivery_run }}
+        exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
+        scope_approval={{ steps.scope-gate.output.choice }}
+        Read this exact persisted exploration packet. Record the actual supplied
+        scope-gate choice, approved scope/snapshot, and accepted limitations there
+        before specifying; missing packet/approval or changed scope/snapshot stops
+        progression. Do not infer approval from ready. Consume its
+        including source/history/reference evidence, boundaries, and unknowns.
+        Keep this canonical run path when the feature location becomes known;
+        record that location in the packet. Honor artifact_policy.
+        Specify behavior and acceptance, not locked file design;
+        stop and renew scope approval for material expansion or a lane change.
 
   - id: clarify
     command: speckit.clarify
     integration: "{{ inputs.integration }}"
-    input: { args: "{{ inputs.spec }}" }
+    input: { args: "delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md {{ inputs.spec }} Use the approved exploration and spec; preserve evidence-backed scope and surface material changes for renewed approval." }
 
   - id: clarify-gate
     type: gate
@@ -55,12 +85,24 @@ steps:
   - id: decision-resolve
     command: speckit.decision.context
     integration: "{{ inputs.integration }}"
-    input: { args: "mode=resolve {{ inputs.spec }}" }
+    input: { args: "mode=resolve delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md {{ inputs.spec }} Read the approved exploration and clarified spec; surface any scope-changing ADR conflict before planning." }
 
   - id: plan
     command: speckit.plan
     integration: "{{ inputs.integration }}"
-    input: { args: "{{ inputs.spec }}" }
+    input:
+      args: >-
+        {{ inputs.spec }}
+        delivery_run={{ inputs.delivery_run }}
+        exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
+        Consume this exact approved exploration packet, clarified spec, and
+        resolved decision context. Follow the Plan checkpoint format in the
+        installed delivery/templates/exploration.md. Keep exact design in plan.md
+        and present the finalized change tree, file responsibilities, interfaces
+        and data flow, test paths and commands, compatibility/migration/security
+        risks, and differences from approved scope in the conversation.
+        Stop for renewed scope approval on material expansion; scope approval
+        alone is not design approval. Do not implement.
 
   - id: decision-propose
     command: speckit.decision.propose
@@ -69,14 +111,14 @@ steps:
 
   - id: plan-gate
     type: gate
-    message: "Review the plan and Proposed ADR baseline before task generation."
+    message: "Approve the shown finalized directory tree, file responsibilities, interfaces, tests/commands, risks, and Proposed ADR baseline before task generation. Record design approval against this plan; material scope changes require renewed scope approval, not inference from the earlier candidate tree."
     options: [approve, reject]
     on_reject: abort
 
   - id: tasks
     command: speckit.tasks
     integration: "{{ inputs.integration }}"
-    input: { args: "{{ inputs.spec }}" }
+    input: { args: "delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md design_approval={{ steps.plan-gate.output.choice }} {{ inputs.spec }} Read the approved exploration, spec, plan, and ADR baseline; record the supplied plan-gate choice against the unchanged shown design, or stop if missing/stale. Derive tasks with exact change/test paths from the approved design, not just the original request. Material expansion returns to scope/design approval." }
 
   - id: analyze
     command: speckit.analyze
@@ -98,7 +140,7 @@ steps:
   - id: ralph
     command: speckit.ralph.run
     integration: "{{ inputs.integration }}"
-    input: { args: "{{ inputs.spec }}" }
+    input: { args: "delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md {{ inputs.spec }}" }
 
   - id: quality-after-ralph
     command: speckit.quality.check
@@ -128,7 +170,7 @@ steps:
       - id: ralph-appended
         command: speckit.ralph.run
         integration: "{{ inputs.integration }}"
-        input: { args: "Complete dependency-ready tasks appended for {{ inputs.spec }}" }
+        input: { args: "delivery_run={{ inputs.delivery_run }} Complete dependency-ready tasks appended for {{ inputs.spec }}" }
       - id: quality-appended
         command: speckit.quality.check
         integration: "{{ inputs.integration }}"
@@ -158,7 +200,7 @@ steps:
   - id: simplify-tasks-run
     command: speckit.ralph.run
     integration: "{{ inputs.integration }}"
-    input: { args: "Complete accepted simplification tasks for {{ inputs.spec }}" }
+    input: { args: "delivery_run={{ inputs.delivery_run }} Complete accepted simplification tasks for {{ inputs.spec }}" }
 
   - id: quality-after-simplify
     command: speckit.quality.check
@@ -179,14 +221,29 @@ steps:
         integration: "{{ inputs.integration }}"
         input: { args: "{{ inputs.spec }}" }
 
-  - id: review
+  # Safe no-op slots after a current pass; semantic verdicts are checked at the gate.
+  - id: review-loop
+    type: do-while
+    condition: "true"
+    max_iterations: 3
+    steps:
+      - id: review
+        command: speckit.review.run
+        integration: "{{ inputs.integration }}"
+        input: { args: "delivery_run={{ inputs.delivery_run }} lane=feature scope=outgoing-diff {{ inputs.spec }} Reuse only a complete current snapshot-bound pass; otherwise independently review all six dimensions and account for previous findings." }
+      - id: review-fix
+        command: speckit.delivery.review-fix
+        integration: "{{ inputs.integration }}"
+        input: { args: "delivery_run={{ inputs.delivery_run }} lane=feature scope=outgoing-diff repair_slots=3 {{ inputs.spec }} One repair pass only; current pass is no-op. Preserve attempts and task queue ownership; stop source edits on cap, stale report, missing evidence, or scope change." }
+
+  - id: review-final
     command: speckit.review.run
     integration: "{{ inputs.integration }}"
-    input: { args: "{{ inputs.spec }}" }
+    input: { args: "delivery_run={{ inputs.delivery_run }} lane=feature scope=outgoing-diff {{ inputs.spec }} Verify after the last repair slot or reuse a still-current complete pass; do not add another repair round. Present all six verdicts, coverage, and unresolved finding IDs." }
 
   - id: review-gate
     type: gate
-    message: "Approve only when blocking review findings have been converted to tasks and resolved."
+    message: "Approve only a complete current snapshot-bound REVIEW_VERDICT: pass across all six dimensions, with actual independence or explicitly accepted self-review degradation, full required coverage, and every prior blocker verified resolved/dismissed. No user gate, repair no-op, test pass, or round limit overrides blocked/incomplete. Otherwise stop with open findings and recovery instructions."
     options: [approve, reject]
     on_reject: abort
 
@@ -205,6 +262,11 @@ steps:
     integration: "{{ inputs.integration }}"
     input: { args: "{{ inputs.spec }}" }
 
+  - id: review-close
+    command: speckit.review.run
+    integration: "{{ inputs.integration }}"
+    input: { args: "delivery_run={{ inputs.delivery_run }} lane=feature scope=outgoing-diff {{ inputs.spec }} Reuse the final pass only if contents and requirements still match after ADR/finalization checks; otherwise refresh review. Do not reset repair attempts or hide ADR changes. A stale/blocked/incomplete result stops evidence and handoff." }
+
   - id: evidence
     command: speckit.evidence.collect
     integration: "{{ inputs.integration }}"
@@ -213,4 +275,4 @@ steps:
   - id: handoff
     command: speckit.delivery.handoff
     integration: "{{ inputs.integration }}"
-    input: { args: "lane=feature {{ inputs.spec }}" }
+    input: { args: "delivery_run={{ inputs.delivery_run }} lane=feature {{ inputs.spec }}" }

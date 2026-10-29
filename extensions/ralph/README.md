@@ -15,18 +15,28 @@ one Git commit in the shared worktree:
 3. Select exactly one dependency-ready task and emit its task governance packet.
 4. Read the task's Spec/Plan/ADR context and run `speckit.quality.brief`.
 5. Implement the task and run its checks.
-6. Run `speckit.quality.check` and `speckit.review.standards`.
-7. Before changing `[ ]` to `[X]`, verify acceptance evidence, current passing
-   verdicts, unchanged `HEAD`, allowed paths, and available required checks.
+6. Run `speckit.quality.check`, `speckit.review.standards`, and independent
+   `speckit.review.run scope=task task=<id>` across six dimensions.
+7. Before changing `[ ]` to `[X]`, verify acceptance evidence, all three current
+   passing verdicts, unchanged code/requirements snapshot (not HEAD alone), allowed
+   paths, and available required checks.
 8. When the task gate passes, mark `[X]` and write the receipt, then immediately
    commit the verified task paths with
    `feat(ralph): <task-id> - <task-title>`.
 9. Verify the new `HEAD` and a clean worktree before starting the next task.
 10. Emit `<promise>ALL_TASKS_DONE</promise>` only when every task is committed
-   and has a passing current receipt.
+   and has a passing snapshot-bound receipt associated with its verified commit.
 
 Workers report their results; the orchestrator owns task closure and commits.
 It never stashes, resets, cleans, or stages unrelated pre-existing changes.
+
+Confirmed review findings return through `delivery.review-fix` to the same open
+task, without recursive Ralph. Repairs use Delivery's configured budget and keep
+attempts/IDs across resume. Only the independent reviewer verifies resolution;
+missing evidence, unaccepted self-review, incomplete coverage, or exhausted
+unresolved blockers keep the task open. Pre-commit review is associated with the
+resulting commit only after content equivalence is checked; final integrated
+Review still follows Ralph. See the [Reviewer contract](../review/templates/reviewer.md).
 
 Parallel execution is not the default. It requires isolated worktrees and a
 provider-specific integration contract; otherwise it can mix task changes and

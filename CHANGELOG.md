@@ -4,6 +4,103 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-10-29
+
+Evidence-first exploration and independent review, from scope approval through
+bounded repair and snapshot-checked handoff.
+
+### Added
+
+- Shared Reviewer template for task and integrated outgoing-diff review across
+  requirements, code quality, architecture/design standards, correctness,
+  security/compatibility, and test effectiveness. Reports include independence,
+  content/requirements fingerprints, coverage, and stable finding IDs/states.
+- `speckit.delivery.review-fix` and bounded lane-owned repair/re-review slots,
+  final review gates, and post-finalization freshness checks.
+- Synthetic planted-defect, omitted-finding, and stale-task-closure evaluations;
+  distribution/clean-install checks for Review, repair, and Ralph resources.
+- `speckit.delivery.explore` and a packaged scope template for code/CodeGraph
+  investigation, related Issue/PR/commit evidence, proportionate GitHub reference
+  research, and current/candidate directory trees.
+- Feature scope approval before specification and finalized file/interface/test
+  presentation at the existing plan gate; Bugfix structural exploration feeds
+  official assessment and its repair-scope gate without duplicating diagnosis.
+- Distribution regression fixtures for exploration resources and gate ordering,
+  plus clean-project checks for installed command/template/workflow contents.
+- Direct-workflow packet/gate dispatch seam tests using the actual Spec Kit
+  consumer and isolated fake host consumers.
+
+### Changed
+
+- Ralph requires Quality, Standards, and independent Review before task closure;
+  pre-commit receipts stay snapshot-bound and verified against the resulting commit.
+- Doctor, router, and handoff reject stale, blocked, incomplete, or uncovered
+  reviews. Repair budgets/finding IDs survive resume and new HEADs; Bugfix and
+  Lightweight keep proportional artifacts. Portable gates remain guided contracts.
+- Router and direct workflows share discovery/exploration/approval order and
+  explicitly carry evidence into spec, assessment, plan, and tasks. Lightweight
+  changes remain proportional; material expansion renews approval.
+- Direct workflows require `delivery_run`, persist a canonical packet before
+  host exit, and forward its exact path and actual gate choice. Context-only
+  fallback is limited to shared-session routing.
+- Bugfix review continuations preserve original official reports through a
+  packaged versioned-record adapter; Quality/Standards and callers require
+  original content/configuration evidence, not HEAD/path-only reuse.
+- Delivery catalog/checklists report all seven commands, with count validation.
+- Direct Bugfix uses an explicit `bug_slug` and coordinator-verified assessment
+  mapping, honoring the official assessor's output boundary. Continuation
+  preserves mandatory pre/post hooks with current-round context and outcomes.
+
+### Fixed
+
+- Exploration evidence and actual approval choices are explicitly passed between
+  direct-workflow host processes instead of relying on lost conversation context.
+- Same-HEAD/same-path changes no longer justify reuse of old Quality evidence;
+  original checked-input/configuration identities must match or checks rerun.
+- Bugfix review repairs no longer re-invoke official commands that refuse
+  automated overwrites of existing `fix.md`/`test.md`. Original reports remain
+  immutable; current-round evidence and all four applicable hook phases are retained.
+- An omitted finding, partial coverage, stale snapshot, or unaccepted self-review
+  cannot silently become a review pass. Fixers cannot approve their own repairs.
+
+### Upgrade notes
+
+- Upgrade the Bundle, or refresh the affected extensions and all three delivery
+  workflows together. Old copied prompts/workflows lack the new resources and
+  closure contracts; run `speckit.delivery.doctor` through the active host after
+  upgrading. Installing the thin `$sd` facade alone does not update these components.
+- **Direct-workflow input change:** all three lanes now require `delivery_run`,
+  a unique safe single-segment run ID. Bugfix additionally requires a separate
+  normalized `bug_slug` with an unused assessment path for a fresh run. Reuse
+  the same identities on resume; do not choose new IDs to reset repair budgets.
+
+  ```bash
+  specify workflow run feature-delivery --input delivery_run=audit-trail-01 --input spec="Add an audit trail"
+  specify workflow run bugfix-delivery --input delivery_run=retry-fix-01 --input bug_slug=duplicate-retry --input report="Retries duplicate notifications"
+  specify workflow run lightweight-delivery --input delivery_run=docs-fix-01 --input change="Correct a documentation heading"
+  ```
+
+- Direct workflows persist their packet under `.specify/delivery/<delivery_run>/`
+  before host exit, even with ephemeral artifacts; keep the local ignored files
+  for resume. Bugfix does not need full Feature Spec/Plan/Tasks solely for repairs.
+- Ralph task closure now needs current Quality, Standards, and independent Review
+  passes. Legacy HEAD/path-only receipts are insufficient. Repair slots are capped
+  at three (or a lower configured limit); exhausting the budget never waives blockers.
+- Minimum CLI requirements are unchanged: Spec Kit `>=0.16.4` for individual
+  components and `>=1.2.3` for Bundle installation.
+
+### Verification and limitations
+
+- Local validation includes 23 distribution contract/mutation tests, five actual
+  Spec Kit command/gate handoff tests with fake host consumers, four release-stamp
+  tests, link/diff checks, and clean OpenCode/Codex Skills Bundle installations.
+- Isolated probes exercised same-HEAD stale-hook rejection and a real Bugfix
+  red-to-green repair with four mandatory hooks, immutable originals, and an
+  incompatible-hook rejection. Repairs correctly remain pending independent review.
+- These checks are not full business/provider integration or autonomous delivery
+  end-to-end proof. `0.1.x` remains guided prompt/workflow contracts, not a new
+  machine-enforced semantic state engine or equivalent execution across all hosts.
+
 ## [0.1.1] - 2026-10-28
 
 ### Added
