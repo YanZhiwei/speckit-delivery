@@ -80,7 +80,21 @@ reopens scope/design approval; ordinary in-scope test additions do not.
 Run the installed Spec Kit commands in this sequence, honoring the scope,
 clarification, plan, and analysis gates just as the Feature YAML workflow does:
 
-`speckit.delivery.doctor → speckit.decision.context (discover) → speckit.delivery.explore → scope approval → speckit.specify → speckit.clarify → clarification approval → speckit.decision.context (resolve) → speckit.plan → speckit.decision.propose → plan approval → speckit.tasks → speckit.analyze → analysis approval → speckit.quality.brief → speckit.ralph.run → speckit.quality.check → speckit.review.standards → speckit.converge → speckit.simplify.scan → speckit.docs-sync.run (when configured) → bounded review/fix loop → final review gate → speckit.decision.finalize → speckit.decision.check → speckit.simplify.verify → review freshness check → speckit.evidence.collect → speckit.delivery.handoff`.
+`speckit.delivery.doctor → speckit.decision.context (discover) → speckit.delivery.explore → scope approval → speckit.specify → speckit.clarify → clarification approval → speckit.decision.context (resolve) → speckit.plan → speckit.decision.propose → plan approval → speckit.tasks → speckit.delivery.slice → slice approval → speckit.analyze → analysis approval → speckit.quality.brief → speckit.ralph.run → speckit.quality.check → speckit.review.standards → speckit.converge → speckit.simplify.scan → speckit.docs-sync.run (when configured) → bounded review/fix loop → final review gate → speckit.decision.finalize → speckit.decision.check → speckit.simplify.verify → review freshness check → speckit.evidence.collect → speckit.delivery.handoff`.
+
+Slice planning runs after task generation so it binds real task IDs. It does not
+rewrite or replace `tasks.md`; `tasks.md` remains the only execution queue and
+`slices.md` only supplies review/merge boundaries. Present the slice table,
+trunk-safety evidence, merge mode, and any exception or open decision at
+`slice-gate`. A `needs_decision` result is not approval: present bounded options
+with a recommendation and stop until the user chooses. If a task spans slices,
+return to `speckit.tasks`; do not hand-edit the queue. Material scope or design
+changes reopen the relevant approval and slice planning.
+
+At each verified slice boundary, use `speckit.delivery.handoff slice=<id>` to
+render that layer's PR body; the final handoff uses `mode=auto` for the release
+slice or integration rollup. Do not push, create, or merge a PR without separate
+user authorization.
 
 Treat `tasks.md` as the only execution queue. When a standards, review, or convergence
 finding remains, add or reopen a task and repeat `analyze → ralph → quality → standards → review`. A quality blocker, missing profile, unavailable configured check, or blocked standards verdict is a delivery blocker, not a passing warning.
@@ -90,10 +104,13 @@ ADRs must be self-contained and cannot depend on ignored Spec artifacts.
 ## Review and repair orchestration
 
 Ralph requires task-scoped `speckit.review.run` before its checkbox/commit gate,
-in addition to Quality and Standards. Final review uses `scope=outgoing-diff`
-and the installed Review template's six dimensions; task approvals do not prove
-integration correctness. The reviewer is read-only and independent where possible;
-unavailable independence must be declared, not silently simulated.
+in addition to Quality and Standards. Slice boundaries add the declared
+prefix/flag/checkpoint verification, but they do not replace final integrated
+review. Final review uses `scope=outgoing-diff` and the installed Review
+template's six dimensions, including cross-slice contracts and end-to-end
+behavior; task or slice approvals do not prove integration correctness. The
+reviewer is read-only and independent where possible; unavailable independence
+must be declared, not silently simulated.
 
 Match each lane's YAML: up to three safe review/repair slots, each invoking
 `speckit.review.run → speckit.delivery.review-fix`, followed by a final

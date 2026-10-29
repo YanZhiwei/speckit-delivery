@@ -2,9 +2,9 @@ schema_version: "1.0"
 workflow:
   id: "feature-delivery"
   name: "Spec Kit Feature Delivery"
-  version: "0.1.3"
+  version: "0.2.0"
   author: "Yan Zhiwei"
-  description: "Evidence-first feature delivery with code/history/reference exploration, scope and design approval, quality, review, and handoff."
+  description: "Evidence-first feature delivery with code/history/reference exploration, scope and design approval, slice planning and merge policy, quality, review, and handoff."
 
 requires:
   speckit_version: ">=0.16.4"
@@ -126,11 +126,34 @@ steps:
     integration: "{{ inputs.integration }}"
     input: { args: "delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md design_approval={{ steps.plan-gate.output.choice }} {{ inputs.spec }} Read the approved exploration, spec, plan, and ADR baseline; record the supplied plan-gate choice against the unchanged shown design, or stop if missing/stale. Derive tasks with exact change/test paths from the approved design, not just the original request. Material expansion returns to scope/design approval." }
 
+  - id: slice
+    command: speckit.delivery.slice
+    integration: "{{ inputs.integration }}"
+    input:
+      args: >-
+        delivery_run={{ inputs.delivery_run }}
+        exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
+        slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md
+        design_approval={{ steps.plan-gate.output.choice }}
+        {{ inputs.spec }}
+        Read the approved plan and generated tasks. Map every task exactly once,
+        classify trunk safety with executable evidence, derive the merge mode,
+        and write the slice plan. Do not edit tasks.md or implement. Return
+        needs_decision instead of forcing a mode when evidence or policy is
+        missing.
+
+  - id: slice-gate
+    show_file: ".specify/delivery/{{ inputs.delivery_run }}/slices.md"
+    type: gate
+    message: "Review the slice table, task coverage, trunk-safety evidence, merge mode, diff budgets, flags, verification, rollback, and merge policy. For a single-slice plan, confirm that one PR is appropriate. For stacked, approve only when every task is mapped exactly once, every prefix has credible trunk-safety evidence, and no unknown remains. For integration, confirm the explicit integration-only reason and accepted rollback scope. A material change to scope, design, task mapping, or merge policy requires renewed slice approval."
+    options: [approve, reject]
+    on_reject: abort
+
   - id: analyze
     command: speckit.analyze
     integration: "{{ inputs.integration }}"
     continue_on_error: true
-    input: { args: "{{ inputs.spec }}" }
+    input: { args: "delivery_run={{ inputs.delivery_run }} slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md slice_approval={{ steps.slice-gate.output.choice }} {{ inputs.spec }} Record the actual slice-gate choice against the unchanged slice plan or stop if missing/stale. Verify every task is mapped to exactly one approved slice, every acceptance requirement is covered, the slice dependency order is acyclic and linear for stacked mode, and every slice has verification and rollback. Treat slices.md as boundary metadata, not a second execution queue; report blocking findings without rewriting tasks.md." }
 
   - id: analyze-gate
     type: gate
@@ -146,7 +169,7 @@ steps:
   - id: ralph
     command: speckit.ralph.run
     integration: "{{ inputs.integration }}"
-    input: { args: "delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md {{ inputs.spec }}" }
+    input: { args: "delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md slice_approval={{ steps.slice-gate.output.choice }} {{ inputs.spec }} Require the actual slice-gate approval and unchanged slice plan. Execute only tasks from tasks.md, in slice order. Stop at each approved slice boundary, run the declared quality/standards/review and prefix/flag/checkpoint verification, write the slice receipt, and continue only after SLICE_READY. Do not create, push, or merge a PR." }
 
   - id: quality-after-ralph
     command: speckit.quality.check
@@ -172,11 +195,11 @@ steps:
         command: speckit.analyze
         integration: "{{ inputs.integration }}"
         continue_on_error: true
-        input: { args: "Analyze tasks appended by convergence for {{ inputs.spec }}" }
+        input: { args: "delivery_run={{ inputs.delivery_run }} slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md slice_approval={{ steps.slice-gate.output.choice }} Analyze tasks appended by convergence for {{ inputs.spec }}. Assign every appended task to an existing approved slice; if a new slice is required, stop for renewed slice approval instead of silently extending the queue." }
       - id: ralph-appended
         command: speckit.ralph.run
         integration: "{{ inputs.integration }}"
-        input: { args: "delivery_run={{ inputs.delivery_run }} Complete dependency-ready tasks appended for {{ inputs.spec }}" }
+        input: { args: "delivery_run={{ inputs.delivery_run }} slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md slice_approval={{ steps.slice-gate.output.choice }} Complete dependency-ready tasks appended for {{ inputs.spec }} only after they are mapped to an approved slice; preserve slice boundaries." }
       - id: quality-appended
         command: speckit.quality.check
         integration: "{{ inputs.integration }}"
@@ -201,12 +224,12 @@ steps:
     command: speckit.analyze
     integration: "{{ inputs.integration }}"
     continue_on_error: true
-    input: { args: "Analyze any tasks appended by simplification for {{ inputs.spec }}" }
+    input: { args: "delivery_run={{ inputs.delivery_run }} slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md slice_approval={{ steps.slice-gate.output.choice }} Analyze any tasks appended by simplification for {{ inputs.spec }}. Map each task to an approved slice or stop for renewed slice approval." }
 
   - id: simplify-tasks-run
     command: speckit.ralph.run
     integration: "{{ inputs.integration }}"
-    input: { args: "delivery_run={{ inputs.delivery_run }} Complete accepted simplification tasks for {{ inputs.spec }}" }
+    input: { args: "delivery_run={{ inputs.delivery_run }} slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md slice_approval={{ steps.slice-gate.output.choice }} Complete accepted simplification tasks for {{ inputs.spec }} only within approved slice boundaries." }
 
   - id: quality-after-simplify
     command: speckit.quality.check
@@ -236,7 +259,7 @@ steps:
       - id: review
         command: speckit.review.run
         integration: "{{ inputs.integration }}"
-        input: { args: "delivery_run={{ inputs.delivery_run }} lane=feature scope=outgoing-diff {{ inputs.spec }} Reuse only a complete current snapshot-bound pass; otherwise independently review all six dimensions and account for previous findings." }
+        input: { args: "delivery_run={{ inputs.delivery_run }} lane=feature scope=outgoing-diff slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md {{ inputs.spec }} Reuse only a complete current snapshot-bound pass; otherwise independently review all six dimensions, account for previous findings, and cover cross-slice integration as well as per-slice changes." }
       - id: review-fix
         command: speckit.delivery.review-fix
         integration: "{{ inputs.integration }}"
@@ -245,7 +268,7 @@ steps:
   - id: review-final
     command: speckit.review.run
     integration: "{{ inputs.integration }}"
-    input: { args: "delivery_run={{ inputs.delivery_run }} lane=feature scope=outgoing-diff {{ inputs.spec }} Verify after the last repair slot or reuse a still-current complete pass; do not add another repair round. Present all six verdicts, coverage, and unresolved finding IDs." }
+    input: { args: "delivery_run={{ inputs.delivery_run }} lane=feature scope=outgoing-diff slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md {{ inputs.spec }} Verify after the last repair slot or reuse a still-current complete pass; do not add another repair round. Present all six verdicts, coverage, cross-slice integration evidence, and unresolved finding IDs." }
 
   - id: review-gate
     type: gate
@@ -271,7 +294,7 @@ steps:
   - id: review-close
     command: speckit.review.run
     integration: "{{ inputs.integration }}"
-    input: { args: "delivery_run={{ inputs.delivery_run }} lane=feature scope=outgoing-diff {{ inputs.spec }} Reuse the final pass only if contents and requirements still match after ADR/finalization checks; otherwise refresh review. Do not reset repair attempts or hide ADR changes. A stale/blocked/incomplete result stops evidence and handoff." }
+    input: { args: "delivery_run={{ inputs.delivery_run }} lane=feature scope=outgoing-diff slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md {{ inputs.spec }} Reuse the final pass only if contents and requirements still match after ADR/finalization checks; otherwise refresh review. Do not reset repair attempts or hide ADR changes. A stale/blocked/incomplete result stops evidence and handoff." }
 
   - id: evidence
     command: speckit.evidence.collect
@@ -281,4 +304,4 @@ steps:
   - id: handoff
     command: speckit.delivery.handoff
     integration: "{{ inputs.integration }}"
-    input: { args: "delivery_run={{ inputs.delivery_run }} lane=feature {{ inputs.spec }}" }
+    input: { args: "delivery_run={{ inputs.delivery_run }} lane=feature slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md mode=auto {{ inputs.spec }} Render the final release-slice or rollup PR body from the approved slice plan. Include the merge plan, but do not push, create, or merge the PR." }

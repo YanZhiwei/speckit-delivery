@@ -13,7 +13,8 @@ Spec Kit Delivery 是 Spec Kit 之上的分发层，不是 Spec Kit 的 Fork，�
 | Standards Review | Task 或批次的语义规范判定 | 重跑机械质量检查 |
 | Code Review | 独立六维 Task／最终评审和问题核对 | 修改代码、自批修复或关闭任务 |
 | Delivery Review Fix | 一次已核实、由 Lane 负责人执行的修复及持续轮次记录 | Review 判定或第二套执行队列 |
-| Ralph | 依赖就绪任务执行、Git Task 提交和完成确认 | 规划或自行关闭任务 |
+| Delivery Slice | Slice 边界、Task 映射、trunk-safe 分类、合并策略与 Slice／Rollup 交接 | 需求、Task 生成、代码修改、Review 判定、分支或 PR 创建 |
+| Ralph | 依赖就绪任务执行、Git Task 提交、Slice 边界验证和完成确认 | 规划或自行关闭任务 |
 | Diagram | 每次变更一张有证据的视图，默认 Mermaid | 测试证据、评审判断或安装器行为 |
 
 系统分成三个控制面：
@@ -24,8 +25,8 @@ Spec Kit Workflow 排列阶段、Gate 和有限循环
 Machine State     承载文本无法可靠表达的 Verdict
 ```
 
-`0.1.x` 通过显式 Gate 和有限循环工作；计划中的 `0.2.x` 会引入机器可读的阶段和
-Verdict 状态文件。
+`0.1.x` 与 `0.2.x` 通过显式 Gate 和有限循环工作；`0.2.x` 增加交付切片与合并策略，
+后续版本再引入机器可读的阶段和 Verdict 状态文件。
 
 ## 决策与关闭生命周期
 
@@ -49,12 +50,23 @@ Lightweight 不继承完整取证仪式。
 进程传递。只有同会话 Router 可暂存上下文；临时直接运行仍需本地忽略文件。消费者记录
 批准，Gate 不编辑文件，Feature／Bug 标识确定后不搬移 Run 包。这不等于自动语义判断。
 
-Ralph 只把 `tasks.md` 当作执行队列。可移植协议是在干净的
-`ralph/<feature>` 分支上每轮执行一个依赖就绪任务。并行执行必须使用隔离
-Worktree 和 Provider 专用集成契约，不能在共享 Worktree 中进行。只有编排器检查
-变更路径、证据，并确认当前代码和需求快照的 `QUALITY_VERDICT: pass`、
-`STANDARDS_VERDICT: pass` 与 `REVIEW_VERDICT: pass` 后，才能标记 `[X]`；
-快照包括未提交和相关未跟踪内容，随后创建该 Task 的 Git 提交。
+Ralph 只把 `tasks.md` 当作执行队列；已批准的 `slices.md` 只提供评审／合并边界，
+不得增删或重排 Task。可移植协议是在干净的 `ralph/<feature>` 分支上每轮执行一个
+依赖就绪任务；启用切片时使用 `ralph/<feature>/<slice>`，stacked Slice 基于上一层，
+integration Slice 基于集成分支。并行执行必须使用隔离 Worktree 和 Provider 专用集成
+契约，不能在共享 Worktree 中进行。只有编排器检查变更路径、证据，并确认当前代码和需求
+快照的 `QUALITY_VERDICT: pass`、`STANDARDS_VERDICT: pass` 与
+`REVIEW_VERDICT: pass` 后，才能标记 `[X]`；快照包括未提交和相关未跟踪内容，随后创建
+该 Task 的 Git 提交。Slice 边界还要验证 `standalone` 的目标分支 prefix build/test、
+`flagged` 的开关关闭／打开行为，或 `integration-only` 的 checkpoint。
+
+Delivery Slice 在 Tasks 生成后运行，把真实 Task ID 绑定到可独立评审的 Slice。合并方式
+由证据推导而非偏好：`standalone`／`flagged` 且顺序线性时可用 `stacked`；存在
+`integration-only` 时使用 `integration`；证据不足或策略冲突返回 `needs_decision`。
+Slice Gate 记录用户实际批准；prefix check 失败时回到切片重新分类，不继续堆叠。Handoff
+负责单 Slice 与 Rollup PR 文本，不创建或合并 PR。合并策略明确：Slice 默认 squash，
+integration Rollup 使用 merge commit，禁止 squash 最终 Rollup、rebase 共享集成分支，
+或把目标分支 merge 进 stack 分支。
 
 质量闸门负责格式、lint、类型、测试和已配置的复杂度；DRY、模块归属、目录边界、
 公共 API 和架构一致性仍由 Simplify、Review 与 ADR 负责。

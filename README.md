@@ -3,7 +3,7 @@
 An evidence-driven delivery layer for [GitHub Spec Kit](https://github.com/github/spec-kit). It keeps Spec Kit's specification artifacts as the execution backbone and adds durable architecture decisions, project-local quality gates, task-based agent orchestration, convergence, simplification review, code review, documentation synchronization, release evidence, and a stable pull-request handoff.
 
 > [!IMPORTANT]
-> This repository is an early distribution scaffold (`0.1.x`). The guided workflows and prompt contracts are usable for evaluation. The portable Ralph path is sequential with per-task Git commits; provider-specific parallel execution and fully machine-driven semantic branching are later milestones.
+> This repository is an early distribution scaffold (`0.2.x`). The guided workflows and prompt contracts are usable for evaluation. The portable Ralph path is sequential with per-task Git commits; delivery slicing and merge policy are available, while provider-specific parallel execution and fully machine-driven semantic branching remain later milestones.
 
 [English] · [简体中文](README.zh-CN.md)
 
@@ -45,7 +45,7 @@ Spec Kit Delivery supplies those missing delivery contracts without replacing Sp
 doctor → decision discovery → explore code/history/GitHub references
        → show current + candidate trees → scope approval → specify → clarify
        → ADR resolution → plan → proposed ADR → finalized-tree/design approval
-       → tasks → analyze → quality brief → Ralph → quality + standards
+       → tasks → slice/slice gate → analyze → quality brief → Ralph → quality + standards
         → converge → simplify → docs sync → bounded review/fix → final review gate
         → accepted ADR → review freshness → evidence → snapshot-checked PR handoff
 ```
@@ -71,6 +71,13 @@ interfaces, and tests at the existing plan gate. Bug assessment retains diagnosi
 ownership; Lightweight avoids full research and two approval rounds. Mermaid/SVG
 may explain complex relationships, but never replaces the trees; AI image
 generation is not used. See the [Delivery contract](extensions/delivery/README.md).
+
+After tasks, `speckit.delivery.slice` binds real task IDs to reviewable slices and
+derives the merge mode from trunk-safety evidence. Large changes use stacked PRs
+by default; an integration branch is the fallback when intermediate slices cannot
+safely enter the target branch. Slice approval is a separate gate, and a failed
+prefix check reopens slicing instead of continuing the stack. `tasks.md` remains
+the only execution queue; see the [slice contract](extensions/delivery/commands/speckit.delivery.slice.md).
 
 Review covers requirements, code quality, architecture/design standards,
 correctness, security/compatibility, and test effectiveness. It stays read-only;
@@ -419,23 +426,23 @@ PR. Merge that PR before running **Release distribution**; the release pipeline
 does not write back to `main` or move an existing tag.
 
 > [!NOTE]
-> The commands below target the prepared `v0.1.3` release. Until it is published,
-> use the released `v0.1.2` catalogs, which do not include the new exploration and
-> snapshot-bound review contracts. Do not mix components from different tags.
+> The commands below target the prepared `v0.2.0` release. Until it is published,
+> use the released `v0.1.3` catalogs, which do not include delivery slicing and
+> merge policy. Do not mix components from different tags.
 
 Releases publish each extension as a root-layout zip, expose pinned catalogs, and publish the bundle artifact. Add the versioned catalogs before installing the bundle (Bundle requires Spec Kit `>=1.2.3`):
 
 ```bash
 specify extension catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.3/catalogs/extensions.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.2.0/catalogs/extensions.json \
   --name speckit-delivery --install-allowed
 
 specify workflow catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.3/catalogs/workflows.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.2.0/catalogs/workflows.json \
   --name speckit-delivery
 
 specify bundle catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.3/catalogs/bundles.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.2.0/catalogs/bundles.json \
   --id speckit-delivery --policy install-allowed
 
 specify bundle install speckit-delivery
@@ -457,7 +464,7 @@ release-preparation PR is reviewed and merged, maintainers explicitly run
 | Quality gate | `speckit.quality.brief`, `speckit.quality.check` |
 | Standards closure | `speckit.review.standards` |
 | Documentation | `speckit.docs-sync.run` |
-| Exploration, routing, repair, doctor, and handoff | `speckit.delivery.explore`, `.doctor`, `.route`, `.review-fix`, `.handoff` |
+| Exploration, slicing, routing, repair, doctor, and handoff | `speckit.delivery.explore`, `.slice`, `.doctor`, `.route`, `.review-fix`, `.handoff` |
 | Diagrams | `speckit.diagram.render` |
 | Code context | `speckit.delivery.context` |
 
@@ -485,7 +492,8 @@ See [Quick SD Configuration](QUICK-CONFIGURATION.md), [Architecture](ARCHITECTUR
 - Requirements before implementation details.
 - Evidence before completion claims.
 - Unknown or unavailable required quality checks block closure; they do not pass by omission.
-- One task queue: `tasks.md` is Ralph's scheduling source.
+- One task queue: `tasks.md` is Ralph's scheduling source; `slices.md` is boundary metadata only.
+- Large changes are sliced before coding; stacked PRs by default, integration only when a prefix cannot safely enter the target.
 - One durable owner for each architectural decision.
 - Review the real base/head diff, not a remembered change set.
 - Simplification requires production-consumer evidence and net deletion.
@@ -494,7 +502,7 @@ See [Quick SD Configuration](QUICK-CONFIGURATION.md), [Architecture](ARCHITECTUR
 ## Status and roadmap
 
 - `0.1.x`: prompt contracts, guided workflows, catalogs, release packaging, structural validation
-- `0.2.x`: richer machine-readable workflow state and cross-host semantic gates
+- `0.2.x`: delivery slicing and merge policy, then richer machine-readable workflow state and cross-host semantic gates
 - `0.3.x`: provider adapters for parallel Ralph execution
 - `1.0.0`: clean-project installation evidence across supported integrations
 

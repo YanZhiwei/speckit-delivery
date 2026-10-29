@@ -2,7 +2,29 @@
 
 ## Motivation
 
-Closes #
+Part of #<issue> for a lower slice; Closes #<issue> only on the release slice or final rollup.
+
+## Slice / stack
+
+<!-- For a sliced delivery. Remove for a single PR. Lower layers use
+     "Part of #", only the release or rollup uses "Closes #". -->
+- Slice and goal:
+- Base branch:
+- Depends on:
+- Merge order / method:
+- Not in this layer:
+- Rollback:
+
+## Rollup
+
+<!-- For an integration-to-target rollup. Remove for a single slice. -->
+| Slice | PR | Review |
+| --- | --- | --- |
+|  |  |  |
+
+- Aggregate CI / review evidence:
+- Final merge method: merge commit
+- Whole-feature rollback:
 
 ## Change type
 

@@ -94,6 +94,8 @@ class ReleaseStampTest(unittest.TestCase):
             self.assertEqual(entry["version"], self.target)
             self.assertIn(f"/v{self.target}/", entry["download_url"])
             self.assertTrue(entry["download_url"].endswith(f"-{self.target}.zip"))
+            if entry.get("documentation"):
+                self.assertIn(f"/v{self.target}/", entry["documentation"])
 
         workflow_catalog = json.loads(
             (root / "catalogs" / "workflows.json").read_text(encoding="utf-8")

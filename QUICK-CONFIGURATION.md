@@ -180,6 +180,17 @@ context_files: [AGENT_GUIDE.md, docs/architecture/boundaries.md]
 context_files: [AGENT_GUIDE.md, docs/engineering/quality.md]
 adr_directories: [docs/architecture/adr]
 docs_sync: auto
+pr_slicing: auto
+slice_warn_files: 20
+slice_warn_lines: 400
+stack_provider: github-native
+merge_policy:
+  slice: squash
+  final: merge-commit
+  sync: merge
+  use_queue: true
+  delete_branch: true
+  freeze_before_final: true
 ```
 
 Each Profile covers one code family with commands that genuinely run. Add

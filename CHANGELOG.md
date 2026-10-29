@@ -4,6 +4,49 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-30
+
+### Added
+
+- `speckit.delivery.slice` and the packaged `templates/slices.md` plan: bind
+  real task IDs to independently reviewable slices, classify trunk safety, derive
+  `single`/`stacked`/`integration`, and record merge policy and rollback before
+  execution.
+- Feature workflow `slice`/`slice-gate` between task generation and analysis,
+  with the approved `slices.md` path forwarded to analyze, Ralph, review, and
+  handoff.
+- Slice-aware Ralph boundaries: `standalone` target-branch prefix checks,
+  `flagged` flag-off/on evidence, `integration-only` checkpoints, and slice
+  receipts without creating or merging PRs.
+- Slice and rollup handoff modes, including stack maps, merge plans, issue-closing
+  rules, and the prohibition on squashing a final integration rollup.
+- Delivery config for `pr_slicing`, slice budgets, stack provider, and
+  `merge_policy` (`slice`, `final`, `sync`, queue, branch deletion, freeze).
+- Distribution checks, installer checks, and behavioral evaluations for slice
+  planning, gate ordering, path propagation, prefix failures, integration
+  fallback, and linear-history conflicts.
+
+### Changed
+
+- `speckit.delivery.init` discovers stack/flag/merge-queue/linear-history
+  capability before drafting slicing policy.
+- `speckit.delivery.doctor` treats a missing slice command/template/gate or an
+  invalid integration merge policy as stale or blocked.
+- `tasks.md` remains the only execution queue; `slices.md` is boundary metadata
+  and may not add, remove, or reorder tasks.
+
+### Upgrade notes
+
+- Upgrade the Bundle, or refresh the Delivery extension and all three delivery
+  workflows together. A copied Feature workflow without the new `slice` and
+  `slice-gate` steps is stale; run `speckit.delivery.doctor` after upgrading.
+- Existing projects keep a single-PR path with `pr_slicing: off`. New or updated
+  configurations default to `pr_slicing: auto`, which still requires the slice
+  gate when more than one slice is proposed.
+- Set `stack_provider: manual` when native stacked PR support is unavailable.
+  Do not claim a native provider or a merge queue that the repository does not
+  have.
+
 ## [0.1.3] - 2026-10-29
 
 Evidence-first exploration and independent review, from scope approval through

@@ -5,9 +5,9 @@ Spec Kit 的 `Spec → Plan → Tasks` 主线，并补充 ADR 决策记忆、项
 任务编排、实现收敛、简化审查、代码评审、文档同步、交付证据和 PR 交接。
 
 > [!IMPORTANT]
-> 当前为 `0.1.x` 初期分发阶段。引导式 Workflow 和命令契约可用于评估；可移植的
-> Ralph 路径按任务串行并逐 Task 提交 Git，Provider 级并行调度和完全机器化的语义
-> 分支属于后续里程碑。
+> 当前为 `0.2.x` 初期分发阶段。引导式 Workflow 和命令契约可用于评估；可移植的
+> Ralph 路径按任务串行并逐 Task 提交 Git，已支持交付切片与合并策略，Provider 级并行
+> 调度和完全机器化的语义分支仍属于后续里程碑。
 
 [English](README.md)
 
@@ -44,7 +44,7 @@ Spec Kit 已经提供了良好的 `specify → plan → tasks → implement` 主
 doctor → 既有决策发现 → 代码／历史／GitHub 参考取证
        → 展示现状＋候选改动目录树 → 范围确认 → specify → clarify
        → ADR 解析 → plan → Proposed ADR → 确定版目录／设计确认
-       → tasks → analyze → quality brief → Ralph → quality + standards
+       → tasks → slice／slice gate → analyze → quality brief → Ralph → quality + standards
         → converge → simplify → docs sync → 有界 review/fix → 最终 Review Gate
         → Accepted ADR → Review 时效核对 → evidence → 快照核对后 PR handoff
 ```
@@ -67,6 +67,11 @@ Spec 前必须在对话中展示**现状目录树和候选改动目录树**，�
 Plan 完成后在原有 Gate 展示确定版文件、接口和测试方案，再确认详细设计。Bug 根因诊断和复现
 仍由官方 `bug.assess` 负责，有界修复不强制完整 Feature Spec；Lightweight 不增加完整调研和
 两轮确认。复杂关系可配 Mermaid／SVG 技术图，但不能替代目录树，也不使用 AI 文生图。
+
+Tasks 生成后，`speckit.delivery.slice` 把真实 Task ID 绑定到可独立评审的 Slice，并根据
+trunk-safe 证据推导合并方式：默认 stacked PR；只有中间层无法安全进入目标分支时才使用
+integration branch。Slice 边界需要单独 Gate 确认；prefix check 失败时回到切片重新分类，
+而不是继续堆叠。`tasks.md` 仍是唯一执行队列，`slices.md` 只提供评审／合并边界。
 
 CodeGraph 有可用索引时优先使用；否则明确降级为源码／测试调查，不静默建索引。网络、
 GitHub 凭据或参考缺失要说明限制；影响范围判断的关键证据缺口阻断推进，非关键限制由用户明确
@@ -229,6 +234,7 @@ Quality 的复用依据是**原始执行时**的检查输入／配置身份；HE
 | 场景 | 入口 | 关键结果 |
 | --- | --- | --- |
 | 增加 Redis L2 缓存 | `$sd` | 检索本地缓存 ADR，生成 Proposed ADR，评审后形成自包含 Accepted ADR |
+| 大型多模块功能 | `$sd` | 先用 `speckit.delivery.slice` 切分可独立评审的 Slice，确认 stacked／integration 与 merge policy，再逐层交付 |
 | 修复重试重复通知 | `$sd` | 先建立红色回归证据，再修复和验证；只有架构决策变化才升级 ADR |
 | 修正文档标题 | `$sd` | 走 Lightweight，只运行文档检查，不创建完整 Spec/Ralph 队列 |
 | 已有 Tasks 继续实现 | `speckit.ralph.run` | 先创建或复用并验证 `ralph/<feature>` 分支，报告适用治理/代码风格规则；逐 Task 输出治理包并检测，通过关闭门禁后勾选 `[X]` 并立即提交 |
@@ -252,8 +258,8 @@ Quality 的复用依据是**原始执行时**的检查输入／配置身份；HE
 `main`，也不移动已有 Tag。
 
 > [!NOTE]
-> 安装命令指向准备中的 `v0.1.3`。发布前请使用已发布的 `v0.1.2` Catalog；旧版不包含本轮
-> 新增的取证与快照绑定 Review 契约。不要混用不同 Tag 的组件。
+> 安装命令指向准备中的 `v0.2.0`。发布前请使用已发布的 `v0.1.3` Catalog；旧版不包含
+> Delivery Slicing 与合并策略。不要混用不同 Tag 的组件。
 
 指定版本的 Catalog 和 Bundle 安装命令见根目录 `README.md` 的 Release installation
 一节；Bundle 要求 Spec Kit `>=1.2.3`，单独组件仍支持 `>=0.16.4`。
@@ -278,7 +284,7 @@ specify bundle build --path ./bundle --output ./dist
 ## 当前状态
 
 - `0.1.x`：命令契约、引导式 Workflow、Catalog、质量 Profile 和发布结构
-- `0.2.x`：更完整的机器可读状态与跨宿主语义 Gate
+- `0.2.x`：交付切片与合并策略，随后是更完整的机器可读状态与跨宿主语义 Gate
 - `0.3.x`：Ralph Provider 并行适配
 - `1.0.0`：完成多 Integration 的干净项目安装验证
 

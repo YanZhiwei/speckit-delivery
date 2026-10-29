@@ -97,6 +97,10 @@ def _stamp_catalog(path: Path, version: str, tag: str) -> str:
             entry["download_url"] = _asset_url(
                 entry.get("download_url"), version, tag
             )
+            if entry.get("documentation") is not None:
+                entry["documentation"] = _tagged_url(
+                    entry.get("documentation"), tag
+                )
     elif "workflows" in data:
         entries = data["workflows"]
         if not isinstance(entries, dict):

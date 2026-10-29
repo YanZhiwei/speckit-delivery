@@ -8,10 +8,44 @@ each worker an isolated worktree and an explicit integration contract.
 Before task selection, worker dispatch, quality briefing, or the first edit,
 resolve the active feature, capture the clean baseline, and execute the branch
 gate: create or reuse `ralph/<feature-slug>` (or the configured prefix), then
-verify that it is the active branch. Stating that the branch will be created is
+verify that it is the active branch. When an approved `slices.md` exists, use
+`ralph/<feature-slug>/<slice>` instead: a stacked slice starts from the previous
+slice's verified HEAD (the bottom starts from the target), while an integration
+slice starts from the integration branch. Verify the recorded base SHA and a
+clean worktree before every slice. Stating that the branch will be created is
 not execution. Never stash, reset, clean, or stage pre-existing user changes. A
 missing Git repository, dirty baseline, or unsafe branch transition is a
 blocker.
+
+## Slice boundaries
+
+An approved `slices.md` is boundary metadata, not a second queue. Require a
+recorded `SLICE_APPROVAL: approved` for the unchanged plan; pending, rejected, or
+stale approval blocks slice execution. Select and order tasks only from
+`tasks.md`; never add, remove, or reorder tasks because a slice needs them. A
+task that spans slices blocks the boundary and returns to slice planning/task
+generation.
+
+After every task in the current slice has a passing snapshot-bound receipt, run
+the slice closure before starting the next slice:
+
+- `standalone`: create a temporary worktree or throwaway branch from the target,
+  apply the slice's verified commits, and run the declared target-branch
+  build/test commands. A failure is `SLICE_PREFIX_CHECK: blocked`; stop, do not
+  continue stacking, and return to slice planning for a flag/abstraction or an
+  integration reclassification.
+- `flagged`: verify the named flag's default, kill switch, flag-off behavior,
+  and flag-off regression test, then the flag-on path. Missing flag evidence is
+  a blocker, not a warning.
+- `integration-only`: run the declared checkpoint checks on the integration
+  branch; do not claim target-branch safety from a slice that is not trunk-safe.
+- `unknown`: never start the slice under an approved mode; re-open the gate.
+
+Write a slice receipt under the actual run's `slice-verdicts.yml` with slice id,
+base/head, task IDs, checks and results, merge mode, and verdict. Emit
+`SLICE_READY: <id>` only when the boundary passes. Do not create, push, or merge
+a PR; handoff and user authorization own that transition. `ALL_TASKS_DONE` is
+valid only after every task is closed and every slice is `ready`.
 
 After the branch gate, Ralph emits a concise run-level governance summary
 before task selection. It names the active feature, branch, base `HEAD`,

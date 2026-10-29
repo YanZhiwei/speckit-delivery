@@ -7,7 +7,9 @@
 | `.specify/delivery/<feature-or-run>/exploration.md` | Delivery | Follows `artifact_policy` | Code/history/reference evidence, current/candidate trees, actual scope approval and limitations |
 | `spec.md` / `plan.md` | Feature | Project-configurable | Behavior contract and current approach |
 | `tasks.md` | Feature/Ralph | Project-configurable | Single execution queue; closure requires current verdict receipts |
+| `.specify/delivery/<run>/slices.md` | Delivery Slice | Follows `artifact_policy` | Approved slice boundaries, trunk-safety evidence, merge policy, and rollback; never a second execution queue |
 | `.specify/delivery/<feature>/task-verdicts.yml` | Ralph | Ephemeral | Task snapshot, Quality/Standards/Review receipts, and verified commit association |
+| `.specify/delivery/<feature>/slice-verdicts.yml` | Ralph | Ephemeral | Slice base/head, task range, prefix/flag/checkpoint evidence, and merge-mode verdict |
 | Proposed ADR | Architecture | Tracked | Implementation baseline before coding |
 | Accepted ADR | Architecture | Tracked | Self-contained truth reconciled with HEAD |
 | `reviews/<scope>/review.yml` under the actual delivery run | Coordinator | Follows `artifact_policy` | Snapshot, six verdicts, independence, coverage, stable finding IDs |
@@ -16,6 +18,12 @@
 | Standards verdict | Task/Ralph run | Ephemeral by default | Snapshot/scope, semantic rules and blockers |
 | Evidence report | Delivery run/PR | Durable summary | Commands, results, caveats |
 | PR body | Pull request | Durable | Change, risk, decisions, evidence |
+
+`slices.md` is a review and merge-boundary plan. It binds the real `tasks.md`
+IDs, but it never adds, removes, or reorders tasks. A slice receipt is evidence
+for one boundary; it does not replace task receipts or the final integrated
+review. Delete or refresh stale slice plans when scope, design, task mapping, a
+prefix check, or the merge policy changes.
 
 ## Ephemeral Spec mode
 

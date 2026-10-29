@@ -6,7 +6,7 @@ Before release installation, add the versioned Extension and Workflow catalogs d
 
 ## Installed workflows
 
-- `feature-delivery`: full specification-driven delivery.
+- `feature-delivery`: full specification-driven delivery with slice planning and merge policy.
 - `bugfix-delivery`: bounded defect assessment and regression path.
 - `lightweight-delivery`: proportional path for small changes.
 

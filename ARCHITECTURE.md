@@ -14,7 +14,8 @@ existing workflow.
 | Standards Review | Task or batch semantic standards verdict | Re-running mechanical quality checks |
 | Code Review | Independent six-dimensional task/final analysis and finding reconciliation | Source edits, self-approved repairs, task closure |
 | Delivery Review Fix | One verified, lane-owned repair pass and persistent attempt accounting | Review verdicts or a second execution queue |
-| Ralph | Dependency-ready task execution, Git task commits, and task completion | Planning or self-authorized task closure |
+| Delivery Slice | Slice boundaries, task mapping, trunk-safety classification, merge policy, and slice/rollup handoff | Requirements, task generation, source edits, review verdicts, branches, or PR creation |
+| Ralph | Dependency-ready task execution, Git task commits, slice-boundary verification, and task completion | Planning or self-authorized task closure |
 | Diagram | One evidence-backed view per change, in Mermaid by default | Test evidence, review judgment, or installer behavior |
 
 The system has three control planes:
@@ -25,8 +26,9 @@ Spec Kit workflow  Phase order, gates, and bounded loops
 Machine state      Verdicts that prose or exit status cannot safely express
 ```
 
-In `0.1.x`, workflows use explicit gates and bounded loops. The planned `0.2.x`
-state file will carry machine-readable phase and verdict transitions.
+`0.1.x` and `0.2.x` use explicit gates and bounded loops. `0.2.x` adds delivery
+slicing and merge policy; a later state file remains planned to carry
+machine-readable phase and verdict transitions.
 
 ## Decision and closure lifecycle
 
@@ -55,15 +57,32 @@ may temporarily keep context-only evidence; ephemeral direct runs still persist
 ignored local files. Consumers record approval; gates do not edit artifacts.
 Feature/bug identity does not relocate the run packet. Transport is not semantic judgment.
 
-Ralph consumes only `tasks.md` as its execution queue. The portable contract is
-one dependency-ready task per iteration on a clean `ralph/<feature>` branch.
-Parallel execution requires isolated worktrees and a provider-specific
-integration contract; it is not valid in the shared worktree. Only the
-orchestrator can mark `[X]`, after checking changed paths, evidence, and
-current `QUALITY_VERDICT: pass`, `STANDARDS_VERDICT: pass`, and
-`REVIEW_VERDICT: pass` for that task's code and requirements snapshot, including
-uncommitted/untracked contents. It then creates the task commit and stores the task receipt in
-local `.specify/delivery` state.
+Ralph consumes only `tasks.md` as its execution queue. An approved `slices.md`
+supplies review/merge boundaries only: it cannot add, remove, or reorder tasks.
+The portable contract is one dependency-ready task per iteration on a clean
+`ralph/<feature>` branch. With slicing enabled, the branch is
+`ralph/<feature>/<slice>`: stacked slices build on the previous slice, while
+integration slices build on the integration branch. Parallel execution requires
+isolated worktrees and a provider-specific integration contract; it is not valid
+in the shared worktree. Only the orchestrator can mark `[X]`, after checking
+changed paths, evidence, and current `QUALITY_VERDICT: pass`,
+`STANDARDS_VERDICT: pass`, and `REVIEW_VERDICT: pass` for that task's code and
+requirements snapshot, including uncommitted/untracked contents. At a slice
+boundary it also verifies the declared `standalone` prefix build/test,
+`flagged` flag-off/on behavior, or `integration-only` checkpoint. It then creates
+the task commit and stores the task and slice receipts in local
+`.specify/delivery` state.
+
+Delivery Slice runs after task generation so it binds real task IDs. It derives
+`single`, `stacked`, or `integration` from evidence rather than preference:
+`standalone`/`flagged` slices with a linear order may stack; any
+`integration-only` slice forces an integration branch; unknown evidence or a
+policy conflict returns `needs_decision`. The gate records actual approval. A
+failed slice prefix check reopens slicing instead of silently extending the
+stack. Handoff owns per-slice and rollup PR bodies, never PR creation or merges.
+The merge policy is explicit: squash slice layers by default, use a merge commit
+for an integration rollup, never squash the rollup, never rebase a shared
+integration branch, and never merge the target into a stack branch.
 
 Quality checks formatting, lint, types, tests, and configured complexity.
 Standards Review checks DRY, ownership, directory boundaries, public-surface

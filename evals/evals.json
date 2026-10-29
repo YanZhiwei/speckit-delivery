@@ -183,6 +183,52 @@
       "prompt": "Diagnose a bug in a repository with no .codegraph directory and no codegraph CLI on PATH.",
       "expected_output": "speckit.delivery.context reports CODE_CONTEXT: partial or unavailable with INDEX: absent, falls back to targeted search of the changed paths, names the unverified relationships in GAPS, never runs codegraph init, and the bugfix workflow continues instead of aborting.",
       "files": []
+    },
+    {
+      "id": 24,
+      "prompt": "A multi-tenant API needs audit logging: event contract, persistence, write path, admin read API and UI, retention cleanup. The project has audit.write and audit.read flags with kill switches. Tasks are already generated. Plan the delivery slices and merge mode; do not implement.",
+      "expected_output": "Runs speckit.delivery.slice after tasks, maps every task exactly once, makes the design baseline and additive contract/persistence slices standalone, makes write and read/UI slices flagged with default-off and flag-off tests, and makes enable/cleanup the release slice. Derives stacked because every prefix is safe, records target-branch verification for standalone slices, presents the budget and rollback per slice, and leaves SLICE_APPROVAL pending. tasks.md remains the only execution queue; no source edits or integration branch.",
+      "files": [],
+      "expectations": [
+        "Runs slicing after task generation and binds every task exactly once without rewriting tasks.md",
+        "Classifies additive and release slices as standalone and flag-controlled behavior as flagged with kill-switch evidence",
+        "Derives stacked mode because every prefix is safe and does not create an integration branch",
+        "Presents slice verification, rollback, budget, and pending approval before Ralph"
+      ]
+    },
+    {
+      "id": 25,
+      "prompt": "Upgrade a mobile search library from v1 to v2. The old and new libraries cannot be linked together, intermediate states do not compile, and no runtime flag can hide the change. Tasks are generated. Choose the slice plan and merge method.",
+      "expected_output": "Classifies the dependent chain as integration-only, selects one integration branch, and explains why stacked-to-target and a flag are impossible. Slice PRs squash into integration with green checkpoints; the final rollup uses a merge commit, never squash. Records target sync as merge, freeze-before-final, whole-feature rollback, and pending slice approval. Does not claim each slice is trunk-safe.",
+      "files": [],
+      "expectations": [
+        "Classifies the chain integration-only with a concrete cannot-coexist/cannot-flag reason",
+        "Selects integration mode and squash-per-slice with a final merge commit, rejecting final squash",
+        "Defines integration green checkpoints, merge sync, freeze, and whole-feature rollback",
+        "Does not claim intermediate slices are safe on the target branch"
+      ]
+    },
+    {
+      "id": 26,
+      "prompt": "The approved slice plan says S2 is standalone. At the S2 boundary, merging only S2 into the target branch fails because S2 imports a type introduced in S3. The implementation otherwise passes. What should Ralph do?",
+      "expected_output": "Reports SLICE_PREFIX_CHECK: blocked, does not emit SLICE_READY, does not continue to S3, and does not merge or push. Returns to slice planning to add a real adapter/flag, merge S2 and S3, or reclassify the dependent chain as integration. Preserves the failed evidence and does not claim the original standalone classification.",
+      "files": [],
+      "expectations": [
+        "Stops at the failed prefix check instead of continuing the stack",
+        "Does not mark S2 ready, merge, push, or silently move the missing type into S3",
+        "Reopens slice planning and offers flag/adapter, combined slice, or integration reclassification"
+      ]
+    },
+    {
+      "id": 27,
+      "prompt": "A repository requires linear history. The draft slice plan chooses an integration branch and a final merge commit. The user asks to continue. What should slice planning and handoff do?",
+      "expected_output": "Returns needs_decision or a policy blocker instead of silently switching the final merge to squash. Explains that squash would destroy slice boundaries and per-slice rollback, and presents bounded options: use stacked slices with flags, use a private short-lived integration with fast-forward, or obtain an explicit ruleset exception. Does not approve or hand off a merge plan that conflicts with branch policy.",
+      "files": [],
+      "expectations": [
+        "Detects the linear-history versus final-merge-commit conflict",
+        "Rejects a silent final squash because it destroys slice boundaries and rollback",
+        "Presents bounded alternatives with consequences and leaves approval pending"
+      ]
     }
   ]
 }

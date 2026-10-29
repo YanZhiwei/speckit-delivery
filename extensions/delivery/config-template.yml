@@ -6,6 +6,25 @@ adr_directories: [docs/architecture/decisions]
 max_convergence_rounds: 3
 max_review_fix_rounds: 3
 docs_sync: auto
+# Delivery slicing: off | auto | stacked | integration. `auto` derives the mode
+# from trunk-safety evidence; `off` uses one PR. `stacked` and `integration` pin
+# the mode and still require the slice gate.
+pr_slicing: auto
+# Review-size heuristics, not hard proof. Generated, lock, and vendor files are
+# excluded. Exceeding a budget requires an explicit accepted reason.
+slice_warn_files: 20
+slice_warn_lines: 400
+slice_requires_approval: true
+# github-native | ghstack | graphite | manual. `manual` is the fallback when the
+# host does not support stacked PRs; it still uses ordered branches and rebases.
+stack_provider: github-native
+merge_policy:
+  slice: squash          # squash | rebase | merge
+  final: merge-commit    # integration -> target; never squash
+  sync: merge            # target -> integration; never rebase a shared branch
+  use_queue: true
+  delete_branch: true
+  freeze_before_final: true
 # Use the project's local code graph when `.codegraph/` exists. `off` skips the
 # context step; it never blocks delivery.
 code_context: auto

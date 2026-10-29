@@ -5,6 +5,37 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-30
+
+### 新增
+
+- `speckit.delivery.slice` 与 `templates/slices.md`：把真实 Task ID 绑定到可独立评审的
+  Slice，标注 trunk-safe 证据，并推导 `single`／`stacked`／`integration` 与合并策略。
+- Feature Workflow 在 tasks 与 analyze 之间增加 `slice`／`slice-gate`，并把确认后的
+  `slices.md` 路径传给 analyze、Ralph、Review 和 Handoff。
+- Ralph 在 Slice 边界执行 `standalone` 目标分支 prefix check、`flagged` 开关关闭／打开
+  证据、`integration-only` checkpoint，并写入 Slice 回执；不创建、推送或合并 PR。
+- Handoff 支持单 Slice PR 与最终 Rollup，包含 stack map、合并顺序、Issue 关闭规则和回滚；
+  禁止最终 Rollup 使用 squash。
+- Delivery 配置新增 `pr_slicing`、Slice 预算、`stack_provider` 与 `merge_policy`。
+
+### 变更
+
+- `speckit.delivery.init` 先核实 stack、flag、merge queue、linear history 能力，再写入切片策略。
+- `speckit.delivery.doctor` 把缺失 Slice 命令／模板／Gate 或非法 integration 合并策略视为
+  stale／blocked。
+- `tasks.md` 仍是唯一执行队列；`slices.md` 只提供评审／合并边界，不得增删或重排 Task。
+
+### 升级说明
+
+- 升级 Bundle，或同时刷新 Delivery 扩展和三条 Delivery Workflow。缺少
+  `slice`／`slice-gate` 的旧 Feature Workflow 视为 stale，升级后运行
+  `speckit.delivery.doctor`。
+- 现有项目可用 `pr_slicing: off` 保持单 PR；新配置默认 `pr_slicing: auto`，
+  但提出多个 Slice 时仍需通过 Slice Gate。
+- 没有原生 Stacked PR 能力时设置 `stack_provider: manual`，不要声称支持原生
+  Provider 或仓库并不存在的 Merge Queue。
+
 ## [0.1.3] - 2026-10-29
 
 取证优先的需求探索与独立评审：从范围确认，到有界修复复审和快照核对后的交接。
