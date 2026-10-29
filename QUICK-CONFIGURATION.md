@@ -78,6 +78,7 @@ specify extension add --dev "$delivery\extensions\simplify"
 specify extension add --dev "$delivery\extensions\evidence"
 specify extension add --dev "$delivery\extensions\quality"
 specify extension add --dev "$delivery\extensions\docs-sync"
+specify extension add --dev "$delivery\extensions\diagram"
 specify extension add --dev "$delivery\extensions\delivery"
 
 specify workflow add --dev "$delivery\workflows\feature-delivery\workflow.yml"
@@ -87,7 +88,7 @@ specify workflow add --dev "$delivery\workflows\lightweight-delivery\workflow.ym
 
 When upgrading, add `--force` for changed extensions. Verify with `specify
 extension list` and `specify workflow list`; at minimum, see `quality` (2
-commands), `delivery` (7), and `review` (2).
+commands), `delivery` (8), and `review` (2).
 
 ## 2. Initialize project governance
 

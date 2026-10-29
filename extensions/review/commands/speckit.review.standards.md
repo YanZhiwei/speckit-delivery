@@ -28,6 +28,19 @@ them as outside the governed scope; do not review them as production work.
 Review semantic standards that require judgment: unnecessary duplicate logic,
 ownership and directory boundaries, layer direction, single responsibility,
 public-surface growth, comment intent, and whether the change alters an ADR.
+Include these discipline checks:
+
+- **Behavior, not implementation.** Tests must exercise the user-visible
+  behavior. A test that still passes when every function returns nothing does
+  not cover the change.
+- **Cause, not symptom.** A guard or fallback that only hides a reproduced
+  failure is blocking; the change must fix the cause and pin it with a test.
+- **Subtract before adding.** New branching, state, or indirection without a
+  reason the previous design could not express is a finding, not a style
+  preference.
+- **Verifiable units.** The task must be checkable on its own at the reported
+  HEAD; work that only succeeds together with a later task is not closable.
+
 Treat a documented project rule as blocking unless an approved, durable
 exception applies. Treat a heuristic finding as blocking only when its impact
 and remediation are evidenced; otherwise return it as a follow-up rather than

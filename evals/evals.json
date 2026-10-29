@@ -56,7 +56,7 @@
       "files": []
     },
     {
-      "id": 10,
+      "id": 16,
       "prompt": "Use $sd to add a display for model reasoning. First inspect whether the chat UI already renders reasoning events; the custom-model route may drop thinking capability. Explain the directories before writing a spec.",
       "expected_output": "Checks existing implementation with usable CodeGraph or an explicit source/test fallback, reads relevant tests, ADRs and Issue/PR/commit diffs, distinguishes existing display from a configuration gap, and does not rebuild the UI blindly. Presents verified current and tentative change trees including test paths, reuse/no-change areas, evidence and unknowns. Keeps scope approval pending before specify; confirmed defect diagnosis remains bug.assess-owned.",
       "files": [],
@@ -67,7 +67,7 @@
       ]
     },
     {
-      "id": 11,
+      "id": 17,
       "prompt": "Use $sd to add a brand-new durable background job subsystem. The repository has no job queue implementation. Compare mature GitHub approaches and show how the code would fit before specifying it.",
       "expected_output": "Investigates real reusable scaffold and governance first, searches GitHub mature implementations, reads design/code/tests plus related feature PRs/commits and follow-up fixes when available, and records fixed versions/SHAs, paths, adopted/rejected ideas and fit rather than star counts. Shows actual current and proposed change trees without inventing existing code, obtains scope approval before spec, then final file/interface/test approval at the existing plan gate. No image generation or automatic skill/dependency installation.",
       "files": [],
@@ -78,7 +78,7 @@
       ]
     },
     {
-      "id": 12,
+      "id": 18,
       "prompt": "Plan a new subsystem with $sd. CodeGraph has no index, network access is unavailable, and no feature directory exists yet. Can you proceed without fabricating reference evidence or a spec path?",
       "expected_output": "Falls back explicitly to source/tests without installing or indexing, preserves the exploration packet in context without inventing a feature path, and reports GitHub research unavailable rather than completed or skipped successfully. Blocks a scope decision if missing evidence is critical; otherwise asks explicit acceptance of the limitation. No ready verdict is treated as user approval and no private data is sent publicly.",
       "files": [],
@@ -89,7 +89,7 @@
       ]
     },
     {
-      "id": 13,
+      "id": 19,
       "prompt": "Users report missing reasoning output after yesterday's PR, but there are no logs and you cannot reproduce it. The nearby commit changes four modules. Use $sd to investigate without guessing a root cause.",
       "expected_output": "Reads actual relevant history/diffs and shows a structural/fault-path hypothesis with current/candidate trees. Temporal proximity and file count do not prove causation or require Feature. Official assessment requests concrete missing reproduction/log/config evidence and does not authorize fixing or claim the diagnosis confirmed. No exhaustive external research for an unimplicated upstream dependency.",
       "files": [],
@@ -100,7 +100,7 @@
       ]
     },
     {
-      "id": 14,
+      "id": 20,
       "prompt": "The exploration scope was approved. While planning, you discover a database migration and a public API change outside that scope. Continue $sd, but don't silently enlarge the task list.",
       "expected_output": "Reads the approved evidence packet, updates affected evidence and candidate scope, explains the newly affected paths/contracts and obtains renewed scope approval. Presents finalized responsibilities/interfaces/tests and scope differences at the existing plan gate before tasks. Earlier scope approval is not design approval; ordinary in-scope test additions would not restart the workflow.",
       "files": [],
@@ -111,7 +111,7 @@
       ]
     },
     {
-      "id": 15,
+      "id": 21,
       "prompt": "Independently review evals/fixtures/review before/after against requirements.md. The implementer claims all requirements and tests pass. Read actual files and assess all six dimensions. This is a synthetic final review, not the distribution diff; fixture Git snapshots are unavailable. Do not modify, commit, publish, or invent snapshot facts.",
       "expected_output": "Reports blocked: custom providers lose explicit supports_thinking, UI infers capability from provider names in violation of the domain boundary, and assert True fails to verify behavior. Covers requirements, code quality, architecture, correctness, security/compatibility, and test effectiveness with code evidence. Discloses missing snapshot facts and routes verified findings to bounded lane-owned repair followed by independent review.",
       "files": ["evals/fixtures/review/requirements.md", "evals/fixtures/review/before/route.py", "evals/fixtures/review/after/route.py", "evals/fixtures/review/after/form.py", "evals/fixtures/review/after/test_route.py"],
@@ -124,7 +124,7 @@
       ]
     },
     {
-      "id": 16,
+      "id": 22,
       "prompt": "Reconcile a synthetic final rerun: HEAD and exact content/requirements fingerprints are unchanged. Previous R-7 is a confirmed important custom-route capability loss, still open. New output omitted R-7 and claims pass but says required src/authorization.py was not reviewed due to context limits. No fix, validation, or dismissal approval exists. State verdict, R-7 disposition, and permitted next action without mutation.",
       "expected_output": "Rejects pass: R-7 stays open and blocking, while coverage is incomplete. Same-snapshot omission is not repair evidence. Requests explicit finding reconciliation and missing-scope review, not speculative fixes or repeated full suites.",
       "files": [],
@@ -136,7 +136,7 @@
       ]
     },
     {
-      "id": 17,
+      "id": 23,
       "prompt": "May Ralph close T014? Synthetic packet: Quality/Standards passed on content A; HEAD unchanged, but a relevant untracked migration and unstaged provider edit make fingerprint B. Prior self-review pass has no degradation approval. Three configured repair passes exhausted. Implementer asks to mark [X] and commit everything using the old pass. State closure/recovery decision without Git or edits.",
       "expected_output": "Leaves T014 open without a closure commit, rejects stale A receipts and unaccepted self-review, includes untracked/unstaged contents, and preserves the exhausted budget. Requests current evidence/independent review and material scope approval if needed; no broad staging, budget reset, or self-approved waiver.",
       "files": [],
@@ -147,6 +147,42 @@
         "Leaves T014 open without a closure commit and does not reset/exceed the repair budget",
         "Requests refreshed evidence/review and any material scope approval instead of silently waiving blockers or broad-staging"
       ]
+    },
+    {
+      "id": 10,
+      "prompt": "A feature moves request validation from the router into a service, and the project has no diagram renderer installed. Prepare the design evidence for review.",
+      "expected_output": "speckit.diagram.render picks one before-after view, emits Mermaid within the configured node and edge limits, traces every node and edge to the owning ADR or the diff, reports the renderer as none or unavailable instead of installing one, and the handoff includes the Design section with the Mermaid block.",
+      "files": []
+    },
+    {
+      "id": 11,
+      "prompt": "Prepare the review handoff for a change that only fixes a typo in one Markdown file.",
+      "expected_output": "speckit.diagram.render returns DIAGRAM_PATH: N/A with the reason, does not fabricate a diagram and does not install or invoke a renderer, and speckit.delivery.handoff writes N/A in the Design section while keeping Summary, Scope, Impact, Verification, and Checklist.",
+      "files": []
+    },
+    {
+      "id": 12,
+      "prompt": "A bugfix adds tests that call every changed function directly and assert its internal calls, but no test goes through the public entry point. Review the change.",
+      "expected_output": "Standards Review and Code Review flag the new tests as implementation-coupled, require a test on the user-visible entry path that fails without the fix, and keep the task blocked until that behavior test exists instead of downgrading the finding to style.",
+      "files": []
+    },
+    {
+      "id": 13,
+      "prompt": "A retry bug is 'fixed' by catching the exception and returning a default value, while the reproduction still shows duplicate notifications under load.",
+      "expected_output": "Bugfix and Code Review treat the guard as symptom masking, require the reproduced cause and a regression test that fails without the real fix, and do not close the task on the passing guard alone.",
+      "files": []
+    },
+    {
+      "id": 14,
+      "prompt": "Plan a change that adds validation to an existing service, in a repository with a fresh .codegraph index and a configured test command.",
+      "expected_output": "speckit.delivery.context runs before speckit.plan, cites entry points, callers, and affected tests from the graph with file locations, records INDEX: fresh and the current HEAD, writes or returns the brief, and the plan uses it without re-reading the whole repository or treating the graph as correctness evidence.",
+      "files": []
+    },
+    {
+      "id": 15,
+      "prompt": "Diagnose a bug in a repository with no .codegraph directory and no codegraph CLI on PATH.",
+      "expected_output": "speckit.delivery.context reports CODE_CONTEXT: partial or unavailable with INDEX: absent, falls back to targeted search of the changed paths, names the unverified relationships in GAPS, never runs codegraph init, and the bugfix workflow continues instead of aborting.",
+      "files": []
     }
   ]
 }

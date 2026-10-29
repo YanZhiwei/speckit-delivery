@@ -1,0 +1,18 @@
+schema_version: "1.0"
+
+# Mermaid is the default because GitHub renders it inside the pull-request body
+# with no runtime dependency, and the source stays reviewable in the diff.
+# Switch to svg/png/html only when the selected renderer is installed and
+# verified in this project.
+format: mermaid          # mermaid | svg | png | html
+renderer: auto           # auto | none | archify | fireworks
+output_dir: docs/diagrams
+max_nodes: 15
+max_edges: 25
+
+# Optional renderer paths. `auto` discovers the first installed skill under
+# `.agents/skills`, `.claude/skills`, or `.github/skills`; set a path here only
+# when the project keeps the renderer somewhere else.
+renderer_paths:
+  archify: ""
+  fireworks: ""

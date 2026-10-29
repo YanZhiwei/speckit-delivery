@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: delivery
   name: Spec Kit Delivery Core
-  version: "0.1.1"
+  version: "0.1.3"
   description: "Explore and scope delivery work, initialize local policy, and render a durable pull-request handoff from final evidence."
   category: process
   effect: read-write
@@ -38,6 +38,9 @@ provides:
     - name: speckit.delivery.doctor
       file: commands/speckit.delivery.doctor.md
       description: "Check delivery component installation, policy coverage, and workflow readiness before implementation."
+    - name: speckit.delivery.context
+      file: commands/speckit.delivery.context.md
+      description: "Assemble a short, evidence-backed map of the implementation the current change touches."
   config:
     - name: delivery-config.yml
       template: config-template.yml

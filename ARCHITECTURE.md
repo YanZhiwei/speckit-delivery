@@ -15,6 +15,7 @@ existing workflow.
 | Code Review | Independent six-dimensional task/final analysis and finding reconciliation | Source edits, self-approved repairs, task closure |
 | Delivery Review Fix | One verified, lane-owned repair pass and persistent attempt accounting | Review verdicts or a second execution queue |
 | Ralph | Dependency-ready task execution, Git task commits, and task completion | Planning or self-authorized task closure |
+| Diagram | One evidence-backed view per change, in Mermaid by default | Test evidence, review judgment, or installer behavior |
 
 The system has three control planes:
 

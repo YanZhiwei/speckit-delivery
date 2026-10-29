@@ -1,7 +1,7 @@
 # Behavioral evaluations
 
 `evals.json` contains delivery scenarios and expected behavior, not a test runner
-or a claim that every scenario has been executed end to end. Cases 15–17 probe
+or a claim that every scenario has been executed end to end. Cases 21–23 probe
 Review's defect analysis, finding reconciliation, and stale task closure.
 
 ## Review fixtures

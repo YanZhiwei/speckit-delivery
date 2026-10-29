@@ -5,7 +5,7 @@ Spec Kit 的 `Spec → Plan → Tasks` 主线，并补充 ADR 决策记忆、项
 任务编排、实现收敛、简化审查、代码评审、文档同步、交付证据和 PR 交接。
 
 > [!IMPORTANT]
-> 当前为 `0.1.0` 初始分发骨架。引导式 Workflow 和命令契约可用于评估；可移植的
+> 当前为 `0.1.x` 初期分发阶段。引导式 Workflow 和命令契约可用于评估；可移植的
 > Ralph 路径按任务串行并逐 Task 提交 Git，Provider 级并行调度和完全机器化的语义
 > 分支属于后续里程碑。
 
@@ -81,9 +81,9 @@ GitHub 凭据或参考缺失要说明限制；影响范围判断的关键证据�
 - 支持 Spec Kit 的宿主集成、Git，以及目标项目自己的构建和测试工具
 
 > [!NOTE]
-> 已发布的 `v0.1.0` Bundle 早于 Catalog 对齐修复。下一版 Release 之前，请按当前安装
-> 说明逐个安装固定版本 Extension 和 Workflow，或使用已准备的源码修复并配合 Spec Kit
-> `>=1.2.3`；不要把旧 Tag 的 Bundle 安装当成已通过。
+> `v0.1.1` 已修复 Workflow Catalog 对齐问题，Bundle 在 Spec Kit `>=1.2.3` 上可用；
+> `v0.1.2` 增加 Diagram 扩展。请安装与所需组件匹配的固定版本 Catalog，不要把不同
+> Tag 的组件混装。
 
 ## 快速开始
 
@@ -120,6 +120,7 @@ specify extension add --dev "$delivery\extensions\simplify"
 specify extension add --dev "$delivery\extensions\evidence"
 specify extension add --dev "$delivery\extensions\quality"
 specify extension add --dev "$delivery\extensions\docs-sync"
+specify extension add --dev "$delivery\extensions\diagram"
 specify extension add --dev "$delivery\extensions\delivery"
 
 specify workflow add --dev "$delivery\workflows\feature-delivery\workflow.yml"
@@ -157,6 +158,11 @@ Codex skills 模式会把已安装的 Delivery 扩展渲染成 `speckit-delivery
 `/speckit-delivery-route`，OpenCode 是 `/speckit.delivery.route`，通用适配器
 则执行渲染出的命令文件。不要用 `which speckit*` 这类 PATH 检查判断宿主扩展
 是否已安装。
+
+`speckit.delivery.context` 是 Feature 规划前和 Bugfix 诊断前的可选上下文步骤：
+项目存在 `.codegraph/` 时报告入口、调用方和受影响测试，不存在时返回带缺口说明的
+部分结果。它不会初始化索引，也不把代码图当作测试或正确性证据；可用
+`code_context: off` 关闭。
 
 路由器会选择 Feature、Bugfix 或 Lightweight，不会默认所有需求都走完整 Feature
 流程。也可以直接运行：
@@ -245,10 +251,9 @@ Quality 的复用依据是**原始执行时**的检查输入／配置身份；HE
 `release/v<version>` PR。合并后再运行 **Release distribution**；发布 Pipeline 不回写
 `main`，也不移动已有 Tag。
 
-> [!WARNING]
-> 已发布的 `v0.1.0` Bundle 早于 Workflow Catalog 对齐修复，在 Spec Kit 1.2.3 上会失败。
-> Bundle 路径请使用下一版 Release；当前可按 Release 说明逐个安装固定版本
-> Extension/Workflow。不要把下列命令当作 `v0.1.0` Bundle 已验证。
+> [!NOTE]
+> 安装命令指向准备中的 `v0.1.3`。发布前请使用已发布的 `v0.1.2` Catalog；旧版不包含本轮
+> 新增的取证与快照绑定 Review 契约。不要混用不同 Tag 的组件。
 
 指定版本的 Catalog 和 Bundle 安装命令见根目录 `README.md` 的 Release installation
 一节；Bundle 要求 Spec Kit `>=1.2.3`，单独组件仍支持 `>=0.16.4`。

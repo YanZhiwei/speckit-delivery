@@ -50,3 +50,15 @@ SD adds one six-dimensional task/final contract, current content/requirements
 identity, explicit coverage/independence gaps, coordinator-owned lane repairs,
 and persistent bounded attempts. Synthetic evaluations are behavioral probes,
 not proof of a complete business-repository delivery or universal defect detection.
+
+## Borrowed discipline criteria
+
+Code Review and Standards Review adapt four criteria from
+[unclebob/ub-mode](https://github.com/unclebob/ub-mode): test behavior rather
+than implementation, fix the cause rather than the symptom, subtract before
+adding, and close only independently verifiable units. The skill itself is not
+vendored. Its "push to the main line at the end" and commit-frequency guidance
+conflict with this distribution's explicit authorization and task-gate
+boundaries, and its CRAP/duplication/mutation tools report results rather than
+failing a process, so they need a project-owned wrapper before they can be
+Quality Gate commands.

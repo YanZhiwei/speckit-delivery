@@ -34,7 +34,7 @@
   选择；仅上下文降级限于同会话 Router。
 - Bugfix 复审续修通过随包的版本化记录适配器保留官方原始报告；Quality／Standards 与调用者
   要求原始内容／配置证据，不再仅凭 HEAD／路径复用。
-- Delivery Catalog 和清单同步为七条命令，增加数量一致性校验。
+- Delivery Catalog 和清单同步为八条命令，保留 0.1.2 的可选代码上下文命令，增加数量一致性校验。
 - 直接 Bugfix 显式传入 `bug_slug`，由编排器核实评估映射，不突破官方 Assess 输出边界；
   续修补齐强制前后置 Hook 的实际执行、当前轮上下文与结果。
 
@@ -76,6 +76,36 @@
   原始报告不变和不兼容 Hook 的阻断。修复仍正确保留为待独立复审，不自批通过。
 - 上述不代表完整业务／Provider 集成或自主交付端到端验证。`0.1.x` 仍是引导式提示与 Workflow
   契约，并非新增机器强制执行的语义状态引擎，也不承诺所有宿主的执行能力等价。
+
+## [0.1.2] - 2026-10-28
+
+### 新增
+
+- 新增 Delivery Diagrams 扩展与 `speckit.diagram.render`：默认输出 Mermaid，仅在
+  项目已安装渲染器时生成 SVG/PNG/HTML，并可返回 `N/A` 而不编造图。
+- 在 `skills/` 增加可选、版本固定的 `archify`（v3.2.0）和
+  `fireworks-tech-graph`（v1.2.0）渲染器副本，附带来源、提交和 SHA-256。
+- PR Handoff 模板新增“当前设计/本次改动/影响范围/设计图/AI 使用披露”小节。
+- 新增 `speckit.delivery.context`：规划前或诊断前的可选代码上下文简报。项目存在
+  `.codegraph/` 时报告入口、调用方和受影响测试；不存在时返回带缺口说明的部分结果，
+  且不会初始化索引。
+
+### 变更
+
+- `speckit.delivery.handoff` 明确模板解析顺序：项目配置路径 → 仓库 `.github` 模板 →
+  扩展内置模板 → 命令内的小节契约。
+- Code Review 与 Standards Review 增加四项纪律检查：测试行为而非实现、修复根因而非
+  症状、先减后加、可独立验证的单元。
+- Quality Gate 文档说明 CRAP、重复度和变异阈值何时才算真正门禁：必须由项目自有
+  wrapper 产生非零退出，只写报告的工具不算。
+- Bundle 现在包含 10 个扩展；Diagram 本身不增加 Workflow 步骤。
+- Feature 与 Bugfix Workflow 分别在 `plan` 和 `assess` 之前增加非阻塞的代码上下文
+  步骤；缺少索引或工具时只降级结果，不中断交付。可用 `code_context: off` 关闭。
+
+### 修复
+
+- 修复 `pull_request_template` 默认指向不存在的根 `templates/` 路径；模板随
+  delivery 扩展分发，默认值改为 `null` 并回退到 `.github` 模板。
 
 ## [0.1.1] - 2026-10-28
 

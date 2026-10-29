@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "bugfix-delivery"
   name: "Spec Kit Bugfix Delivery"
-  version: "0.1.1"
+  version: "0.1.3"
   author: "Yan Zhiwei"
   description: "Evidence-first structure/history exploration, bug assessment and scope approval, repair, regression validation, review, and handoff."
 
@@ -43,6 +43,12 @@ steps:
     command: speckit.delivery.explore
     integration: "{{ inputs.integration }}"
     input: { args: "lane=bugfix delivery_run={{ inputs.delivery_run }} bug_slug={{ inputs.bug_slug }} {{ inputs.report }} Persist .specify/delivery/{{ inputs.delivery_run }}/exploration.md before returning; record this explicit expected Bug slug and assessment path as unverified until assessment exists. No context-only workflow handoff." }
+
+  - id: code-context
+    command: speckit.delivery.context
+    integration: "{{ inputs.integration }}"
+    continue_on_error: true
+    input: { args: "lane=bugfix {{ inputs.report }}" }
 
   - id: assess
     command: speckit.bug.assess

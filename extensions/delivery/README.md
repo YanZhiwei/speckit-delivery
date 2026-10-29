@@ -13,6 +13,7 @@ Invoke commands through the active host, not as shell executables:
 - `speckit.delivery.init`: discover and draft project-local policy.
 - `speckit.delivery.doctor`: detect missing/stale components, profiles, and rule owners.
 - `speckit.delivery.explore`: investigate code, history, and references; show candidate scope.
+- `speckit.delivery.context`: optionally assemble an implementation-context brief.
 - `speckit.delivery.route`: orchestrate the selected lane and user approvals.
 - `speckit.delivery.lightweight`: perform a bounded mechanical change.
 - `speckit.delivery.review-fix`: coordinate one verified, lane-owned repair pass.
@@ -130,3 +131,11 @@ CodeGraph and network/credential access are capabilities, not mandatory installs
 Use verified source/test fallback when indexing is unavailable. No silent
 indexing, dependency/skill installation, private-data upload, tracker mutation,
 publishing, or execution of downloaded reference code is authorized by exploration.
+
+## Optional code context
+
+`speckit.delivery.context` is the optional code-context step: when the project
+has a local `.codegraph/` index it reports entry points, callers, and affected
+tests for the change; otherwise it degrades to a partial brief with the gaps
+named. It never initializes an index and never treats the graph as correctness
+evidence. `delivery-config.yml` controls it with `code_context: auto | off`.

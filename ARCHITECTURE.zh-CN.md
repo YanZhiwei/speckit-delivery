@@ -14,6 +14,7 @@ Spec Kit Delivery 是 Spec Kit 之上的分发层，不是 Spec Kit 的 Fork，�
 | Code Review | 独立六维 Task／最终评审和问题核对 | 修改代码、自批修复或关闭任务 |
 | Delivery Review Fix | 一次已核实、由 Lane 负责人执行的修复及持续轮次记录 | Review 判定或第二套执行队列 |
 | Ralph | 依赖就绪任务执行、Git Task 提交和完成确认 | 规划或自行关闭任务 |
+| Diagram | 每次变更一张有证据的视图，默认 Mermaid | 测试证据、评审判断或安装器行为 |
 
 系统分成三个控制面：
 
