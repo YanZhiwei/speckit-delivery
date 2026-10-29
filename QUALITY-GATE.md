@@ -96,11 +96,12 @@ narrow, credible structural checker; a test-layout checker is a useful example.
 See [examples](examples/quality-gate/) for native configuration plus matching
 Profile fragments.
 
-Ralph may mark a task `[X]` only after both current-HEAD reports say:
+Ralph may mark a task `[X]` only after three current-snapshot reports say:
 
 ```text
 QUALITY_VERDICT: pass
 STANDARDS_VERDICT: pass
+REVIEW_VERDICT: pass
 HEAD: <current SHA>
 SCOPE: T014
 ```
@@ -109,3 +110,13 @@ Missing profiles, unavailable required commands, failed checks, or stale scope
 are `blocked`, never an implicit pass. The quality verdict covers executable
 checks; the standards verdict covers DRY, ownership, layer direction, public
 surface, comment intent, and whether an ADR must change.
+
+Independent task Review adds six-dimensional analysis, not another mechanical
+suite. Receipts must match current code/requirements, including uncommitted and
+relevant untracked contents, not just HEAD. See the
+[Reviewer contract](extensions/review/templates/reviewer.md).
+
+Quality's [execution-receipt contract](extensions/quality/commands/speckit.quality.check.md)
+binds the original check to its checked inputs and configuration, including
+relevant untracked inputs and staged/worktree distinctions. HEAD/path-only hooks
+must be rerun; attaching today's hash to an old result does not prove execution.

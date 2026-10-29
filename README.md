@@ -3,7 +3,7 @@
 An evidence-driven delivery layer for [GitHub Spec Kit](https://github.com/github/spec-kit). It keeps Spec Kit's specification artifacts as the execution backbone and adds durable architecture decisions, project-local quality gates, task-based agent orchestration, convergence, simplification review, code review, documentation synchronization, release evidence, and a stable pull-request handoff.
 
 > [!IMPORTANT]
-> This repository is an early distribution scaffold (`0.1.0`). The guided workflows and prompt contracts are usable for evaluation. The portable Ralph path is sequential with per-task Git commits; provider-specific parallel execution and fully machine-driven semantic branching are later milestones.
+> This repository is an early distribution scaffold (`0.1.x`). The guided workflows and prompt contracts are usable for evaluation. The portable Ralph path is sequential with per-task Git commits; provider-specific parallel execution and fully machine-driven semantic branching are later milestones.
 
 [English] · [简体中文](README.zh-CN.md)
 
@@ -26,6 +26,8 @@ The portable contract is the `speckit.*` extension command family. `$sd` and
 Core Spec Kit provides an excellent `specify → plan → tasks → implement` path. Real delivery also needs answers to questions that live beyond a feature's temporary artifacts:
 
 - Which accepted architecture decisions constrain this work?
+- What already exists, which Issue/PR/commit history explains it, and which
+  files would this change actually touch?
 - Which decision should become the implementation baseline, and when is it final?
 - Can independent tasks be dispatched safely without losing task ownership?
 - Does the implementation converge on the specification after agents finish?
@@ -40,9 +42,12 @@ Spec Kit Delivery supplies those missing delivery contracts without replacing Sp
 ## Workflow
 
 ```text
-context → doctor → specify → clarify → plan → proposed ADR → tasks → analyze
-        → quality brief → Ralph → quality + standards → converge → simplify
-        → docs sync → review → accepted ADR → evidence → PR handoff
+doctor → decision discovery → explore code/history/GitHub references
+       → show current + candidate trees → scope approval → specify → clarify
+       → ADR resolution → plan → proposed ADR → finalized-tree/design approval
+       → tasks → analyze → quality brief → Ralph → quality + standards
+        → converge → simplify → docs sync → bounded review/fix → final review gate
+        → accepted ADR → review freshness → evidence → snapshot-checked PR handoff
 ```
 
 Three lanes keep the process proportional:
@@ -50,8 +55,31 @@ Three lanes keep the process proportional:
 | Lane | Use it for | Path |
 | --- | --- | --- |
 | Feature | New behavior, cross-module work, architectural change | Full SDD workflow |
-| Bugfix | A reproducible defect with bounded scope | Assess → red test → fix → verify |
+| Bugfix | A reported defect expected to have bounded scope | Explore → assess/red evidence → repair-scope approval → fix → verify |
 | Lightweight | Mechanical, documentation, or very small behavior-preserving changes | Scope → change → targeted evidence |
+
+Before a Feature spec, `speckit.delivery.explore` shows actual code directories
+and candidate changes, including tests, reuse/no-change areas, alternatives,
+risks, and evidence gaps. It traces relevant project Issues, PRs, and commit
+diffs. New capabilities and new architectural mechanisms get GitHub reference
+research grounded in actual code, fixed versions/SHAs, and related follow-up fixes;
+small understood extensions may skip with a reason. CodeGraph is preferred when
+available, with an explicit source/test fallback rather than mandatory indexing.
+
+The user approves scope first, then the finalized file responsibilities,
+interfaces, and tests at the existing plan gate. Bug assessment retains diagnosis
+ownership; Lightweight avoids full research and two approval rounds. Mermaid/SVG
+may explain complex relationships, but never replaces the trees; AI image
+generation is not used. See the [Delivery contract](extensions/delivery/README.md).
+
+Review covers requirements, code quality, architecture/design standards,
+correctness, security/compatibility, and test effectiveness. It stays read-only;
+Delivery coordinates verified repairs and independent re-review. All lanes keep
+stable finding IDs and content/requirements fingerprints, not HEAD-only passes.
+Up to three safe repair slots honor a lower configured budget and no-op after a
+complete current pass. Blocked/incomplete and missing coverage cannot pass a gate.
+These are guided contracts, not a machine-enforced semantic engine; see the
+[Reviewer contract](extensions/review/templates/reviewer.md).
 
 ## Repository layout
 
@@ -247,13 +275,35 @@ Use `$sd <request>` for agent-native orchestration, or start the installed
 workflow directly when its explicit steps suit the integration:
 
 ```bash
-specify workflow run feature-delivery --input spec="Describe the change"
+specify workflow run feature-delivery --input delivery_run=audit-trail-01 --input spec="Describe the change"
 ```
 
-The Feature lane runs `specify → clarify → ADR resolution → plan → proposed
-ADR → tasks → analyze`, then implementation, quality, and the verification loop. The
+The Feature lane runs `doctor → decision discovery → explore → scope approval →
+specify → clarify → ADR resolution → plan → proposed ADR → design approval →
+tasks → analyze`, then implementation, quality, and the verification loop. The
 Proposed ADR remains editable through implementation and review. Only after
 the reviewed repository HEAD matches the decision does it become Accepted.
+
+Approved exploration is explicitly passed into spec, assessment, plan, and task
+generation. Once the actual feature/run location exists, its record is
+`.specify/delivery/<feature-or-run>/exploration.md`, honoring `artifact_policy`;
+before that it remains preserved context without a fabricated feature path.
+Material expansion returns to scope/design approval, not a silently enlarged task
+queue. Research limitations must be explicit; decision-critical gaps block progress.
+
+Direct workflows require a unique safe `delivery_run` id (reuse on resume).
+Explore persists `.specify/delivery/<delivery_run>/exploration.md` before its host
+process exits; downstream steps receive that exact path and the actual gate
+choice, recording approval against the reviewed scope/snapshot. Keep this run
+path stable after Feature/bug identity becomes known. Context-only preservation
+is limited to a shared-session router; ephemeral direct workflows still need a
+local ignored file. Bugfix review repairs preserve original official fix/test
+reports through a versioned continuation adapter rather than overwriting them.
+
+Direct Bugfix also takes explicit `bug_slug=<lowercase-kebab-slug>`; only its
+coordinator persists the verified assessment mapping, not official Assess.
+Continuation runs applicable mandatory pre/post fix/test hooks with current
+round report context and blocks on incompatible or missing required hook results.
 
 ## Run Ralph from tasks
 
@@ -270,24 +320,25 @@ It reads `tasks.md` as the only execution source, finds one dependency-ready
 contracts, and unresolved decisions as blocking edges. Before selecting a
 task, the command creates or reuses and verifies a clean `ralph/<feature>`
 branch, reports the applicable governance and code-style rules, and emits a
-task-specific governance packet. It then runs the task checks plus Quality and
-Standards gates. Only after the pre-checkbox closure gate passes is a task
+task-specific governance packet. It then runs the task checks plus Quality,
+Standards, and independent task-scoped Review gates. Only after the pre-checkbox closure gate passes is a task
 marked `[X]`; it is immediately committed with its receipt. It emits
-`<promise>ALL_TASKS_DONE</promise>` only after every task has a current receipt
+`<promise>ALL_TASKS_DONE</promise>` only after every task has a snapshot-bound receipt associated with its verified commit
 and a clean committed worktree.
 
 Each worker receives the task's acceptance condition, allowed scope, relevant
 Spec/Plan/ADR excerpts, and expected verification. Workers report results;
-the orchestrator verifies changed paths, evidence, and a current-HEAD Quality
-Gate verdict, then—and only then—marks the task `[X]`. A failed or blocked task
+the orchestrator verifies changed paths, evidence, and all three current-snapshot
+verdicts, then—and only then—marks the task `[X]`. A failed or blocked task
 remains open and blocks dependents. If Spec files
 are ignored, the excerpts are injected into every cross-worktree packet.
 
 After Ralph, run the aggregate Quality Gate and Standards Review, then
 convergence, simplification, review, and evidence collection. A task stays open
-unless both verdicts cover its current HEAD and declared scope.
-Review findings become new or reopened tasks and re-enter the same
-`analyze → Ralph → review` loop. The final ADR is reconciled against HEAD,
+unless all three verdicts cover its actual code, requirements, and declared scope.
+Task review repairs stay in the open task without recursive Ralph. Final Feature
+findings become new or reopened tasks and re-enter the same
+`analyze → Ralph → review` loop within the persistent repair budget. The final ADR is reconciled against HEAD,
 not against an earlier plan.
 
 ## Usage scenarios
@@ -336,9 +387,9 @@ contract as `T014`.
 
 Run `speckit.ralph.run`. Ralph first creates or reuses and verifies the
 feature's `ralph/<feature>` branch, reports the applicable governance packet,
-then selects one ready task and runs its checks plus Quality and Standards
-gates. A pre-checkbox closure gate verifies acceptance evidence, current
-`HEAD`, allowed paths, and required tools. After it passes, Ralph marks `[X]`
+then selects one ready task and runs its checks plus Quality, Standards, and
+independent Review gates. A pre-checkbox closure gate verifies acceptance evidence,
+current code/requirements snapshot, allowed paths, and required tools. After it passes, Ralph marks `[X]`
 and immediately creates exactly one commit containing the verified scope and
 task receipt. Workers return their changes and evidence; Ralph alone updates
 task checkboxes and commits. If `T014` fails verification or commit validation,
@@ -368,29 +419,31 @@ PR. Merge that PR before running **Release distribution**; the release pipeline
 does not write back to `main` or move an existing tag.
 
 > [!NOTE]
-> The commands below pin `v0.1.2`, the release that adds the Diagram extension.
-> Until that tag is published, use the `v0.1.1` catalogs; the Diagram extension
-> is the only difference.
+> The commands below target the prepared `v0.1.3` release. Until it is published,
+> use the released `v0.1.2` catalogs, which do not include the new exploration and
+> snapshot-bound review contracts. Do not mix components from different tags.
 
 Releases publish each extension as a root-layout zip, expose pinned catalogs, and publish the bundle artifact. Add the versioned catalogs before installing the bundle (Bundle requires Spec Kit `>=1.2.3`):
 
 ```bash
 specify extension catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.2/catalogs/extensions.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.3/catalogs/extensions.json \
   --name speckit-delivery --install-allowed
 
 specify workflow catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.2/catalogs/workflows.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.3/catalogs/workflows.json \
   --name speckit-delivery
 
 specify bundle catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.2/catalogs/bundles.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.1.3/catalogs/bundles.json \
   --id speckit-delivery --policy install-allowed
 
 specify bundle install speckit-delivery
 ```
 
-The remote repository and release do not exist until the maintainer explicitly publishes them. Local creation of this project does not create or push a GitHub repository.
+Preparing source or installing components does not publish a release. After the
+release-preparation PR is reviewed and merged, maintainers explicitly run
+**Release distribution** for the selected version and commit.
 
 ## Commands
 
@@ -404,9 +457,9 @@ The remote repository and release do not exist until the maintainer explicitly p
 | Quality gate | `speckit.quality.brief`, `speckit.quality.check` |
 | Standards closure | `speckit.review.standards` |
 | Documentation | `speckit.docs-sync.run` |
+| Exploration, routing, repair, doctor, and handoff | `speckit.delivery.explore`, `.doctor`, `.route`, `.review-fix`, `.handoff` |
 | Diagrams | `speckit.diagram.render` |
 | Code context | `speckit.delivery.context` |
-| Routing, doctor, and handoff | `speckit.delivery.doctor`, `.route`, `.handoff` |
 
 `speckit.delivery.context` reads the project's local `.codegraph/` index when it
 exists and reports entry points, callers, and affected tests for the change. It

@@ -52,6 +52,176 @@ def _list(value: object, label: str, errors: list[str]) -> list[Any]:
     return value
 
 
+def _check_exploration_workflow(
+    workflow_id: str, workflow: dict[str, Any], errors: list[str]
+) -> None:
+    """Check portable step order/gates, not the agent's semantic conclusions."""
+    required = {
+        "feature-delivery": [
+            ("delivery-doctor", "speckit.delivery.doctor"),
+            ("decision-discover", "speckit.decision.context"),
+            ("explore", "speckit.delivery.explore"),
+            ("scope-gate", "gate"),
+            ("specify", "speckit.specify"),
+            ("clarify", "speckit.clarify"),
+            ("clarify-gate", "gate"),
+            ("decision-resolve", "speckit.decision.context"),
+            ("plan", "speckit.plan"),
+            ("decision-propose", "speckit.decision.propose"),
+            ("plan-gate", "gate"),
+            ("tasks", "speckit.tasks"),
+        ],
+        "bugfix-delivery": [
+            ("delivery-doctor", "speckit.delivery.doctor"),
+            ("decision-discover", "speckit.decision.context"),
+            ("explore", "speckit.delivery.explore"),
+            ("assess", "speckit.bug.assess"),
+            ("assessment-gate", "gate"),
+            ("decision-context", "speckit.decision.context"),
+            ("quality-brief-before-fix", "speckit.quality.brief"),
+            ("fix", "speckit.bug.fix"),
+        ],
+    }.get(workflow_id)
+    if required is None:
+        return
+    label = f"workflows/{workflow_id}/workflow.yml"
+    steps = _list(workflow.get("steps"), f"{label}:steps", errors)
+    previous = -1
+    for step_id, expected in required:
+        matches = [
+            (index, step)
+            for index, step in enumerate(steps)
+            if isinstance(step, dict) and step.get("id") == step_id
+        ]
+        if len(matches) != 1:
+            errors.append(f"{label}: expected exactly one {step_id} step")
+            continue
+        index, step = matches[0]
+        if index <= previous:
+            errors.append(f"{label}: {step_id} violates exploration/approval order")
+        previous = index
+        if expected == "gate":
+            if (
+                step.get("type") != "gate"
+                or step.get("options") != ["approve", "reject"]
+                or step.get("on_reject") != "abort"
+            ):
+                errors.append(f"{label}: {step_id} must abort on rejected approval")
+        elif step.get("command") != expected:
+            errors.append(f"{label}: {step_id} must invoke {expected}")
+        if step.get("continue_on_error"):
+            errors.append(f"{label}: {step_id} cannot continue on error")
+
+
+def _check_review_workflow(
+    workflow_id: str, workflow: dict[str, Any], errors: list[str]
+) -> None:
+    """Verify bounded repair dispatch and closure order, not semantic verdicts."""
+    if workflow_id not in {"feature-delivery", "bugfix-delivery", "lightweight-delivery"}:
+        return
+    label = f"workflows/{workflow_id}/workflow.yml"
+    run_input = workflow.get("inputs", {}).get("delivery_run", {})
+    if run_input.get("type") != "string" or run_input.get("required") is not True:
+        errors.append(f"{label}: delivery_run must be an explicit required string input")
+    steps = _list(workflow.get("steps"), f"{label}:steps", errors)
+    by_id = {}
+    for index, step in enumerate(steps):
+        if isinstance(step, dict):
+            by_id.setdefault(step.get("id"), []).append((index, step))
+    previous = -1
+    required = ["review-loop", "review-final", "review-gate"]
+    if workflow_id != "lightweight-delivery":
+        required.append("review-close")
+    required.extend(["evidence", "handoff"])
+    for step_id in required:
+        matches = by_id.get(step_id, [])
+        if len(matches) != 1:
+            errors.append(f"{label}: expected exactly one {step_id} review-closure step")
+            continue
+        index, step = matches[0]
+        if index <= previous:
+            errors.append(f"{label}: {step_id} violates review-closure order")
+        previous = index
+        if step.get("continue_on_error"):
+            errors.append(f"{label}: {step_id} cannot bypass review closure on error")
+        if step_id == "review-loop":
+            cap = step.get("max_iterations")
+            if (
+                step.get("type") != "do-while"
+                or step.get("condition") != "true"
+                or type(cap) is not int
+                or not 1 <= cap <= 3
+            ):
+                errors.append(f"{label}: review-loop must have 1-3 safe bounded slots")
+            children = step.get("steps", [])
+            if not isinstance(children, list) or [
+                child.get("command") if isinstance(child, dict) else None
+                for child in children
+            ] != ["speckit.review.run", "speckit.delivery.review-fix"]:
+                errors.append(f"{label}: review-loop must review then dispatch one repair pass")
+            elif any(child.get("continue_on_error") for child in children):
+                errors.append(f"{label}: review-loop cannot continue on command error")
+            else:
+                args = children[1].get("input", {}).get("args", "")
+                if f"repair_slots={cap}" not in str(args):
+                    errors.append(f"{label}: repair_slots must match the YAML slot ceiling")
+        elif step_id == "review-gate":
+            if (
+                step.get("type") != "gate"
+                or step.get("options") != ["approve", "reject"]
+                or step.get("on_reject") != "abort"
+            ):
+                errors.append(f"{label}: review-gate must abort on rejection")
+        elif step_id in {"review-final", "review-close"}:
+            if step.get("command") != "speckit.review.run":
+                errors.append(f"{label}: {step_id} must invoke speckit.review.run")
+
+    def check_dispatch(step: dict[str, Any]) -> None:
+        command = step.get("command", "")
+        if command in {
+            "speckit.delivery.doctor", "speckit.delivery.explore",
+            "speckit.ralph.run", "speckit.review.run",
+            "speckit.delivery.review-fix", "speckit.delivery.handoff",
+        }:
+            if "delivery_run={{ inputs.delivery_run }}" not in str(step.get("input", {}).get("args", "")):
+                errors.append(f"{label}: {step.get('id')} must forward the canonical delivery_run")
+        for key in ("steps", "then", "else"):
+            for child in step.get(key, []):
+                if isinstance(child, dict):
+                    check_dispatch(child)
+
+    for step in steps:
+        if isinstance(step, dict):
+            check_dispatch(step)
+    packet = ".specify/delivery/{{ inputs.delivery_run }}/exploration.md"
+    if workflow_id in {"feature-delivery", "bugfix-delivery"}:
+        for step_id in ("explore", "specify", "clarify", "plan", "tasks") if workflow_id == "feature-delivery" else ("explore", "assess", "decision-context", "fix", "regression-test"):
+            for _, step in by_id.get(step_id, []):
+                if packet not in str(step.get("input", {}).get("args", "")):
+                    errors.append(f"{label}: {step_id} must pass the exact exploration packet path")
+        gate_id, consumer, choice = (
+            ("scope-gate", "specify", "scope_approval") if workflow_id == "feature-delivery"
+            else ("assessment-gate", "decision-context", "assessment_approval")
+        )
+        for _, gate in by_id.get(gate_id, []):
+            if gate.get("show_file") != packet:
+                errors.append(f"{label}: {gate_id} must display the persisted packet")
+        for _, step in by_id.get(consumer, []):
+            if f"{choice}={{{{ steps.{gate_id}.output.choice }}}}" not in str(step.get("input", {}).get("args", "")):
+                errors.append(f"{label}: {consumer} must forward the actual {gate_id} choice")
+    if workflow_id == "bugfix-delivery":
+        slug_input = workflow.get("inputs", {}).get("bug_slug", {})
+        if slug_input.get("type") != "string" or slug_input.get("required") is not True:
+            errors.append(f"{label}: bug_slug must be an explicit required string input")
+        for step_id in ("assess", "fix", "regression-test"):
+            for _, step in by_id.get(step_id, []):
+                if "slug={{ inputs.bug_slug }}" not in str(step.get("input", {}).get("args", "")):
+                    errors.append(f"{label}: {step_id} must pass the explicit official Bug slug")
+        for _, step in by_id.get("decision-context", []):
+            if "assessment=.specify/bugs/{{ inputs.bug_slug }}/assessment.md" not in str(step.get("input", {}).get("args", "")):
+                errors.append(f"{label}: coordinator must verify the exact assessment reference")
+
+
 def validate(root: Path, expected_version: str | None = None) -> list[str]:
     """Return contract errors; an empty list means the distribution is coherent."""
     errors: list[str] = []
@@ -127,6 +297,38 @@ def validate(root: Path, expected_version: str | None = None) -> list[str]:
                 f"catalogs/extensions.json:{extension_id}: requires "
                 f"{entry.get('requires')!r} != manifest {extension_requires!r}"
             )
+        provides = _mapping(
+            manifest.get("provides"), f"{manifest_path}:provides", errors
+        )
+        commands = _list(
+            provides.get("commands"), f"{manifest_path}:commands", errors
+        )
+        command_names = []
+        for command in commands:
+            command = _mapping(command, f"{manifest_path}:commands[]", errors)
+            command_names.append(command.get("name"))
+            relative = command.get("file")
+            if (
+                not isinstance(relative, str)
+                or not (manifest_path.parent / relative).is_file()
+            ):
+                errors.append(f"{manifest_path}: missing command file {relative!r}")
+        catalog_provides = _mapping(entry.get("provides"), f"{extension_id}:provides", errors)
+        if type(catalog_provides.get("commands")) is not int or catalog_provides["commands"] != len(commands):
+            errors.append(f"catalogs/extensions.json:{extension_id}: command count differs from manifest")
+        if extension_id == "delivery":
+            for required in ("speckit.delivery.explore", "speckit.delivery.review-fix"):
+                if required not in command_names:
+                    errors.append(f"{manifest_path}: missing {required} command")
+            template = manifest_path.parent / "templates" / "exploration.md"
+            if not template.is_file():
+                errors.append(f"{manifest_path}: missing templates/exploration.md")
+            if not (manifest_path.parent / "templates" / "bugfix-review-repair.md").is_file():
+                errors.append(f"{manifest_path}: missing templates/bugfix-review-repair.md")
+        if extension_id == "review":
+            template = manifest_path.parent / "templates" / "reviewer.md"
+            if not template.is_file():
+                errors.append(f"{manifest_path}: missing templates/reviewer.md")
 
     workflow_entries = _mapping(
         workflow_catalog.get("workflows"),
@@ -147,6 +349,8 @@ def validate(root: Path, expected_version: str | None = None) -> list[str]:
             )
             continue
         workflow = _load_yaml(workflow_path)
+        _check_exploration_workflow(workflow_id, workflow, errors)
+        _check_review_workflow(workflow_id, workflow, errors)
         definition = _mapping(
             workflow.get("workflow"), f"{workflow_path}:workflow", errors
         )

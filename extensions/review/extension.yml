@@ -3,8 +3,8 @@ schema_version: "1.0"
 extension:
   id: review
   name: Delivery Code Review
-  version: "0.1.2"
-  description: "Review the live outgoing diff against standards, specification, architecture, correctness, and risk."
+  version: "0.1.3"
+  description: "Read-only task and final review of requirements, code quality, architecture, correctness, security/compatibility, and tests."
   category: code
   effect: read-only
   author: Yan Zhiwei
@@ -22,6 +22,6 @@ provides:
       description: "Review a task or batch diff against project standards and return a closure verdict."
     - name: speckit.review.run
       file: commands/speckit.review.run.md
-      description: "Perform a structured delivery review against a verified base/head scope."
+      description: "Return six-dimensional, snapshot-bound task or final findings with explicit independence and coverage."
 
 tags: ["review", "quality", "spec", "standards"]

@@ -11,7 +11,8 @@ contract.
   checks.
 - A blocking result when changed source paths have no quality profile, or a
   configured required check cannot run.
-- Reuse of a passing hook only when HEAD and changed-file scope match exactly.
+- Reuse of a passing hook only when original checked-input/configuration
+  fingerprints, HEAD, and scope match exactly; missing identity means rerun.
 
 It does not replace semantic design review. DRY, redundant APIs, unclear
 ownership, and dependency boundaries remain findings for Simplify, Review, and
@@ -36,3 +37,8 @@ editing to give the worker the applicable rules. Invoke
 `speckit.quality.check task=T014` after the focused change, or without a task
 identifier for the outgoing-diff gate. Ralph uses the returned verdict before
 it closes a task.
+
+The [Quality Check command](commands/speckit.quality.check.md) owns execution
+identity and original check receipts. Staged-only hooks must have checked bytes
+identical to the reviewed worktree; same HEAD/paths cannot prove this. Callers
+must not stamp a new checkout fingerprint on an old hook result.

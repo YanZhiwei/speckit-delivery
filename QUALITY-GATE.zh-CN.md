@@ -83,11 +83,12 @@ profiles:
 目录边界也是如此，除非项目提供了范围明确、可信的结构 checker；测试目录 checker 就是
 一个合适例子。原生配置与 Profile 配对示例见[质量闸门示例](examples/quality-gate/)。
 
-Ralph 只有收到当前 HEAD 的两类结果，才能把 Task 标记为 `[X]`：
+Ralph 只有收到当前代码和需求快照的三类结果，才能把 Task 标记为 `[X]`：
 
 ```text
 QUALITY_VERDICT: pass
 STANDARDS_VERDICT: pass
+REVIEW_VERDICT: pass
 HEAD: <当前 SHA>
 SCOPE: T014
 ```
@@ -95,3 +96,10 @@ SCOPE: T014
 缺少 Profile、必需命令不可执行、检查失败或范围过期，都是 `blocked`，不能默认为
 通过。Quality verdict 负责可执行检查；Standards verdict 负责 DRY、模块归属、分层方向、
 公共接口、注释意图与 ADR 是否需要调整。
+
+独立 Task Review 补充六维审查，不重复机械测试。回执必须匹配未提交和相关未跟踪内容，
+不能只看 HEAD。详见 [Reviewer 契约](extensions/review/templates/reviewer.md)。
+
+[Quality 原始执行回执](extensions/quality/commands/speckit.quality.check.md) 绑定实际检查输入和
+配置，包括相关未跟踪文件及暂存／工作区区别。只有 HEAD／路径的 Hook 回执需要重跑，
+不能补当前哈希就声称旧检查覆盖了新代码。

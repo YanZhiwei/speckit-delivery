@@ -49,4 +49,6 @@ unprofiled_changed_paths: block
 # reported as excluded, never treated as passing quality results.
 excluded_paths: []
 # - "poc/**"
+# Reuse requires original checked-input/config identities, not HEAD/paths alone;
+# missing or mismatched identity reruns the affected check (see quality.check).
 reuse_passing_hooks: true

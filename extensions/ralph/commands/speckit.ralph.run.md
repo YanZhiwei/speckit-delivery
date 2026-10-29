@@ -15,6 +15,10 @@ Ralph-style autonomous loop. It consumes the active feature's `tasks.md` and
 executes exactly one dependency-ready task per iteration. The default portable
 mode is sequential: do not dispatch parallel workers in the shared worktree.
 
+When supplied, preserve `delivery_run=<id>` and its canonical Delivery run path
+in task Review/repair packets and receipts, including nested converge invocations.
+Never create a new report location or reset finding/attempt state on resume.
+
 ## Preconditions and safety
 
 The following preflight is a mandatory control-flow gate, not a suggestion.
@@ -61,7 +65,7 @@ feature: <feature-slug>
 branch: <active-ralph-branch>
 base_head: <starting-sha>
 policy_sources: <Constitution, applicable ADRs, quality profile, standards rules>
-required_closure_verdicts: QUALITY_VERDICT=pass; STANDARDS_VERDICT=pass
+required_closure_verdicts: QUALITY_VERDICT=pass; STANDARDS_VERDICT=pass; REVIEW_VERDICT=pass
 stop_conditions: <dirty baseline, missing check, blocked verdict, unsafe scope, commit failure>
 ```
 
@@ -91,15 +95,33 @@ the remaining dependency graph, or the configured iteration limit is reached:
    commands, results, residual risk, and blockers; it does not edit the task
    checkbox and does not create the closure commit.
 5. Run the task's stated checks and invoke both `speckit.quality.check` and
-   `speckit.review.standards` for the same task scope. A missing configured
-   check, unavailable required tool, stale `HEAD`, out-of-scope path, or
-   blocked verdict leaves the task open. Capture the command results and both
-   verdicts at the current `HEAD`.
+    `speckit.review.standards` for the same task scope. Then invoke
+    `speckit.review.run scope=task task=<id>` using the installed Reviewer
+    contract. Hand an independent reviewer the task brief/global constraints,
+    approved exploration/Spec/Plan/ADRs, actual diff/caller context, test evidence,
+    and prior finding state; do not send the whole implementation conversation.
+    Capture all three verdicts against current HEAD plus content/requirements
+    fingerprints, including staged, unstaged, and relevant untracked files.
+    Tests/standards success does not replace the six-dimensional task review.
+
+    For confirmed blockers, invoke `speckit.delivery.review-fix` with
+    `lane=feature scope=task task=<id>` to dispatch a bounded repair of this same
+    open task, not recursive Ralph. Refresh affected checks and independently
+    re-review the repaired task, preserving finding IDs and the configured
+    `max_review_fix_rounds` budget across resume. Missing evidence/coverage calls
+    for investigation, not speculative repairs. At cap exhaustion, blocked or
+    incomplete review, stale snapshot, unsafe scope, or missing tools, leave the
+    task open. The fixer cannot waive blockers or mark its own findings resolved.
 6. Before changing the task checkbox, run and report this closure checklist:
    - the task acceptance criteria are evidenced;
    - every task-declared check passed;
-   - `QUALITY_VERDICT: pass` is current for this task scope and `HEAD`;
-   - `STANDARDS_VERDICT: pass` is current for this task scope and `HEAD`;
+    - `QUALITY_VERDICT: pass` includes original per-check execution receipts for
+      the current contents/configuration, task scope, and HEAD; do not stamp a
+      reused old result with today's checkout fingerprint to imply it checked it;
+    - `STANDARDS_VERDICT: pass` matches current contents, policy inputs, scope, and HEAD;
+    - `REVIEW_VERDICT: pass` covers all six dimensions, current task content and
+      requirements, accounted-for prior findings, and actual reviewer independence
+      (or the user's recorded acceptance of self-review degradation);
    - `HEAD` is unchanged since the task started;
    - every changed path is within the task's allowed scope; and
    - no required check, policy source, or tool is missing or unavailable.
@@ -111,7 +133,7 @@ the remaining dependency graph, or the configured iteration limit is reached:
    a failed task as complete.
 8. If the task gate passes, verify the diff contains only the task's allowed
    paths plus declared task-state files. Update the matching task to `[X]` and
-   persist the Quality and Standards reports in
+    persist the Quality, Standards, and Review report references/fingerprints in
    `.specify/delivery/<feature>/task-verdicts.yml`.
 9. If a progress file is configured, append the concise iteration record now,
    including the task id, commit subject, changed paths, checks, and next task
@@ -133,8 +155,14 @@ the remaining dependency graph, or the configured iteration limit is reached:
     using the equivalent of `git show --stat HEAD` and
     `git status --short --untracked-files=all`. Record the resulting commit SHA
     in the local verdict receipt without modifying tracked task state after the
-    clean commit. If commit or verification fails, reopen the task as `[ ]`,
-    leave it uncommitted, and report the exact recovery blocker.
+     clean commit. If commit or verification fails, reopen the task as `[ ]`,
+     leave it uncommitted, and report the exact recovery blocker.
+
+    The pre-commit review receipt must remain identified as such. Associate it
+    with the resulting commit only after verifying identical reviewed production
+    contents and requirement inputs; only declared checkbox/receipt/progress
+    bookkeeping may differ. Do not relabel an old review as a review of new code.
+    Evidence-only records must not create tracked post-commit dirtiness.
 
 After a successful commit, begin the next iteration with fresh task focus and
 re-read all durable artifacts. A task is not complete merely because source
@@ -143,8 +171,11 @@ receipt exist.
 
 ## Completion
 
-When no incomplete task remains, verify that every task has a passing current
-receipt, the active branch is the Ralph branch, and the worktree is clean. Only
+When no incomplete task remains, verify that every task has a passing
+snapshot-bound task receipt associated with its verified commit, the active
+branch is the Ralph branch, and the worktree is clean. Earlier task receipts are
+not relabeled as reviews of the final HEAD; the later outgoing-diff review owns
+cross-task integration coverage. Only
 then emit this exact machine-readable signal:
 
 ```text

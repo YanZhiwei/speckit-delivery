@@ -2,9 +2,9 @@ schema_version: "1.0"
 workflow:
   id: "bugfix-delivery"
   name: "Spec Kit Bugfix Delivery"
-  version: "0.1.2"
+  version: "0.1.3"
   author: "Yan Zhiwei"
-  description: "Guided bug assessment, fix, regression validation, quality, review, evidence, and handoff."
+  description: "Evidence-first structure/history exploration, bug assessment and scope approval, repair, regression validation, review, and handoff."
 
 requires:
   speckit_version: ">=0.16.4"
@@ -12,6 +12,14 @@ requires:
     any: ["codex", "claude", "copilot", "gemini", "opencode", "generic"]
 
 inputs:
+  bug_slug:
+    type: string
+    required: true
+    prompt: "Explicit unused normalized bug slug (lowercase kebab-case; distinct from delivery run id)"
+  delivery_run:
+    type: string
+    required: true
+    prompt: "Unique delivery run id (safe single path segment; reuse on resume)"
   report:
     type: string
     required: true
@@ -24,7 +32,17 @@ steps:
   - id: delivery-doctor
     command: speckit.delivery.doctor
     integration: "{{ inputs.integration }}"
-    input: { args: "lane=bugfix {{ inputs.report }}" }
+    input: { args: "lane=bugfix delivery_run={{ inputs.delivery_run }} bug_slug={{ inputs.bug_slug }} {{ inputs.report }}" }
+
+  - id: decision-discover
+    command: speckit.decision.context
+    integration: "{{ inputs.integration }}"
+    input: { args: "mode=discover {{ inputs.report }}" }
+
+  - id: explore
+    command: speckit.delivery.explore
+    integration: "{{ inputs.integration }}"
+    input: { args: "lane=bugfix delivery_run={{ inputs.delivery_run }} bug_slug={{ inputs.bug_slug }} {{ inputs.report }} Persist .specify/delivery/{{ inputs.delivery_run }}/exploration.md before returning; record this explicit expected Bug slug and assessment path as unverified until assessment exists. No context-only workflow handoff." }
 
   - id: code-context
     command: speckit.delivery.context
@@ -35,18 +53,40 @@ steps:
   - id: assess
     command: speckit.bug.assess
     integration: "{{ inputs.integration }}"
-    input: { args: "{{ inputs.report }}" }
+    input:
+      args: >-
+        slug={{ inputs.bug_slug }}
+        {{ inputs.report }}
+        delivery_run={{ inputs.delivery_run }}
+        exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
+        Read this exact persisted exploration packet (stop if missing): current code
+        structure, related Issues/PRs/commit diffs, governing ADRs, symptoms,
+        logs/configuration, and reference limitations. Reuse that investigation;
+        bug.assess owns reproduction, root-cause diagnosis, and red evidence.
+        Present the packet's current and candidate directory trees, fault path,
+        reproduction/red evidence, proposed bounded repair, tests, exclusions,
+        risks, and unknowns in the conversation before the assessment gate.
+        Use the explicit normalized slug supplied above, not the delivery run id.
+        Write only the official assessment in its permitted Bug output root;
+        do not edit the external Delivery packet. The coordinator verifies the
+        expected assessment and records its reference after this command exits.
+        No confirmed root cause or permission to fix without
+        reproduction. Keep the assessment as the repair contract, not a full
+        Feature spec. Stop on critical evidence gaps; escalate new capability,
+        material architecture, or durable-contract changes to Feature, carrying
+        evidence forward. Multiple files alone do not require escalation.
 
   - id: assessment-gate
+    show_file: ".specify/delivery/{{ inputs.delivery_run }}/exploration.md"
     type: gate
-    message: "Confirm the bug is bounded; escalate architectural or cross-module remediation to Feature Delivery."
+    message: "Review the shown current/candidate trees, fault path, reproduction/red evidence, repair/test scope, exclusions, and risks. Approve and record the bounded repair scope and accepted non-critical limitations only when evidence supports it. Reject/stop for missing reproduction, critical gaps, or new capability/material architecture/durable-contract decisions; resume Feature with the evidence, not merely because several files are affected."
     options: [approve, reject]
     on_reject: abort
 
   - id: decision-context
     command: speckit.decision.context
     integration: "{{ inputs.integration }}"
-    input: { args: "mode=resolve {{ inputs.report }}" }
+    input: { args: "mode=resolve delivery_run={{ inputs.delivery_run }} bug_slug={{ inputs.bug_slug }} assessment=.specify/bugs/{{ inputs.bug_slug }}/assessment.md exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md assessment_approval={{ steps.assessment-gate.output.choice }} {{ inputs.report }} As coordinator, verify this exact expected assessment exists and matches the requested Bug and approved repair; persist its actual reference/hash and the supplied gate choice, approved scope/snapshot, and accepted limitations in the Delivery packet. Stop on missing/mismatched output, stale packet, or missing approval; never select a different or latest Bug. Do not treat delivery_run as a Bug slug. Resolve ADRs without silently changing scope." }
 
   - id: quality-brief-before-fix
     command: speckit.quality.brief
@@ -56,12 +96,12 @@ steps:
   - id: fix
     command: speckit.bug.fix
     integration: "{{ inputs.integration }}"
-    input: { args: "{{ inputs.report }}" }
+    input: { args: "slug={{ inputs.bug_slug }} {{ inputs.report }} delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md Read the exact coordinator-verified assessment reference; stop if it does not match this explicit slug. Consume the approved repair scope and red evidence; no silent scope expansion." }
 
   - id: regression-test
     command: speckit.bug.test
     integration: "{{ inputs.integration }}"
-    input: { args: "{{ inputs.report }}" }
+    input: { args: "slug={{ inputs.bug_slug }} {{ inputs.report }} delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md Read the coordinator-verified assessment reference; stop on a slug mismatch, not a single-candidate guess." }
 
   - id: quality
     command: speckit.quality.check
@@ -78,21 +118,40 @@ steps:
     integration: "{{ inputs.integration }}"
     input: { args: "scope=diff {{ inputs.report }}" }
 
-  - id: review
+  - id: review-loop
+    type: do-while
+    condition: "true"
+    max_iterations: 3
+    steps:
+      - id: review
+        command: speckit.review.run
+        integration: "{{ inputs.integration }}"
+        input: { args: "delivery_run={{ inputs.delivery_run }} lane=bugfix scope=outgoing-diff {{ inputs.report }} Review all six dimensions against the approved assessment and regression evidence; reuse only a complete current pass and retain prior finding IDs." }
+      - id: review-fix
+        command: speckit.delivery.review-fix
+        integration: "{{ inputs.integration }}"
+        input: { args: "delivery_run={{ inputs.delivery_run }} lane=bugfix scope=outgoing-diff repair_slots=3 {{ inputs.report }} One bounded assessment-owned repair pass using the installed Bugfix continuation adapter; preserve original official fix/test reports. No Feature tasks required. Pass is no-op; stale/incomplete evidence, cap, or scope expansion stops repairs." }
+
+  - id: review-final
     command: speckit.review.run
     integration: "{{ inputs.integration }}"
-    input: { args: "lane=bugfix {{ inputs.report }}" }
+    input: { args: "delivery_run={{ inputs.delivery_run }} lane=bugfix scope=outgoing-diff {{ inputs.report }} Re-review after the last repair slot or reuse a complete current pass; no extra repair rounds. Present all six verdicts, coverage, and prior finding dispositions." }
 
   - id: review-gate
     type: gate
-    message: "Approve when regression evidence passes and no blocking review finding remains."
+    message: "Approve only complete current snapshot-bound REVIEW_VERDICT: pass for all six dimensions, verified finding closure, full required coverage, accepted actual review independence, and passing regression evidence. Blocked/incomplete or exhausted repairs stop delivery; approval cannot waive an unresolved blocker."
     options: [approve, reject]
     on_reject: abort
 
   - id: decision-check
     command: speckit.decision.check
     integration: "{{ inputs.integration }}"
-    input: { args: "{{ inputs.report }}" }
+    input: { args: "{{ inputs.report }} delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md Read the actual Bug slug and assessment path from this packet, not the run id." }
+
+  - id: review-close
+    command: speckit.review.run
+    integration: "{{ inputs.integration }}"
+    input: { args: "delivery_run={{ inputs.delivery_run }} lane=bugfix scope=outgoing-diff {{ inputs.report }} Verify final snapshot after decision checks; reuse only an unchanged complete pass. No new repair budget; stale/blocked/incomplete stops evidence and handoff." }
 
   - id: evidence
     command: speckit.evidence.collect
@@ -102,4 +161,4 @@ steps:
   - id: handoff
     command: speckit.delivery.handoff
     integration: "{{ inputs.integration }}"
-    input: { args: "lane=bugfix {{ inputs.report }}" }
+    input: { args: "delivery_run={{ inputs.delivery_run }} lane=bugfix {{ inputs.report }}" }

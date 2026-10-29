@@ -16,6 +16,12 @@ the applicable policy sources configured in
 changed code's owning-module documentation. Do not repeat executable checks
 owned by `speckit.quality.check`.
 
+Bind this semantic verdict to the actual reviewed contents (including staged,
+unstaged, deleted, and relevant untracked paths) and applicable policy inputs.
+Record deterministic fingerprint methods/manifests. Reuse only an original
+exact-content/policy receipt; same HEAD/paths alone is insufficient. If reviewed
+inputs change during analysis, refresh it or return blocked with the gap.
+
 Exclude paths matching `excluded_paths` in the quality configuration and report
 them as outside the governed scope; do not review them as production work.
 
@@ -47,6 +53,8 @@ STANDARDS_VERDICT: pass | blocked
 HEAD: <sha>
 SCOPE: <task-id, batch-id, or outgoing-diff>
 PATHS: <repository-relative paths>
+CONTENT_FINGERPRINT: <hash/method and reviewed-input manifest reference>
+POLICY_FINGERPRINT: <hash/method for applicable policy inputs>
 EXCLUDED_PATHS: <paths or none>
 POLICY_SOURCES: <paths read>
 FINDINGS:
@@ -59,6 +67,8 @@ FOLLOW_UP:
 ```
 
 For a task invocation, Ralph may close the task only when the verdict is
-`pass`, the reported HEAD is current, and the scope covers every changed path.
+`pass`, the reported HEAD and original content/policy identities remain current,
+and the scope covers every changed path. Never stamp current hashes on an old
+verdict to imply its analysis covered new contents.
 This command does not edit `tasks.md`; it reports its verdict to the
 orchestrator.

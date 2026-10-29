@@ -5,6 +5,78 @@
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-10-29
+
+取证优先的需求探索与独立评审：从范围确认，到有界修复复审和快照核对后的交接。
+
+### 新增
+
+- 统一 Task／最终集成 Reviewer 模板，覆盖需求符合性、代码质量、架构与设计规范、运行
+  正确性、安全与兼容性、测试有效性；报告包含独立性、内容／需求指纹、覆盖和稳定问题 ID／状态。
+- 新增 `speckit.delivery.review-fix`、有界 Lane 修复复审槽位、最终 Gate 与后置变化时效核对。
+- 增加真实植入缺陷、遗漏问题、过期任务关闭的合成评估，以及 Review／修复／Ralph 分发安装检查。
+- 新增 `speckit.delivery.explore` 与随包分发的范围模板：支持代码／CodeGraph 调查、关联
+  Issue／PR／Commit 取证、按场景检索 GitHub 开源参考，以及现状／候选改动目录树。
+- Feature 在 Spec 前确认范围，并增强原有 Plan Gate 的文件／接口／测试展示；Bugfix
+  的结构取证交给官方 Assessment 继续诊断，在原有 Gate 确认修复范围，不重复根因分析。
+- 增加取证资源、Gate 顺序回归检查与干净项目命令／模板／Workflow 安装内容检查。
+- 使用真实 Spec Kit 消费者和隔离假宿主，增加直接 Workflow 取证包／Gate 调度边界检查。
+
+### 变更
+
+- Ralph 关闭任务前要求 Quality、Standards、独立 Review 三门通过；预提交回执绑定快照，
+  并核对结果提交内容等价。
+- Doctor、Router、Handoff 拒绝过期、blocked、incomplete 或覆盖不足的评审；跨恢复／新 HEAD
+  保留修复预算和问题 ID。Bugfix／Lightweight 保持比例原则，Gate 仍为引导式契约。
+- Router 与直接 Workflow 对齐发现／取证／确认顺序，显式把证据交给 Spec、Assessment、
+  Plan 和 Tasks。Lightweight 保持轻量，重大范围扩大需要重新确认。
+- 直接 Workflow 要求 `delivery_run`，宿主退出前持久化固定取证包，传入确切路径和真实 Gate
+  选择；仅上下文降级限于同会话 Router。
+- Bugfix 复审续修通过随包的版本化记录适配器保留官方原始报告；Quality／Standards 与调用者
+  要求原始内容／配置证据，不再仅凭 HEAD／路径复用。
+- Delivery Catalog 和清单同步为八条命令，保留 0.1.2 的可选代码上下文命令，增加数量一致性校验。
+- 直接 Bugfix 显式传入 `bug_slug`，由编排器核实评估映射，不突破官方 Assess 输出边界；
+  续修补齐强制前后置 Hook 的实际执行、当前轮上下文与结果。
+
+### 修复
+
+- 直接 Workflow 在不同宿主进程间显式传递取证记录与真实批准选择，不再依赖丢失的会话上下文。
+- HEAD／路径相同不能作为复用旧 Quality 证据的依据；必须核对原始检查输入／配置身份，否则重跑。
+- Bugfix 复审续修不再重复调用会拒绝自动覆盖已有 `fix.md`／`test.md` 的官方命令；保留原始
+  报告，新增当前轮证据，并保留全部四个适用的 Hook 阶段。
+- 遗漏问题、覆盖不足、快照过期或未经接受的自审不能静默变成 pass；修复者不能自批修复。
+
+### 升级注意事项
+
+- 升级 Bundle，或同步更新受影响的 Extension 与三条交付 Workflow。旧复制命令／Workflow
+  缺少新资源和关闭契约；升级后通过当前宿主运行 `speckit.delivery.doctor`。只更新薄 `$sd`
+  门面不会更新底层组件。
+- **直接 Workflow 的输入发生变化：**三条 Lane 都必须传入 `delivery_run`，使用唯一、安全的
+  单段 Run 标识。Bugfix 另需单独指定规范化 `bug_slug`，全新运行的评估输出路径不得已存在。
+  恢复时沿用相同标识，不能通过更换 ID 重置修复预算。
+
+  ```bash
+  specify workflow run feature-delivery --input delivery_run=audit-trail-01 --input spec="增加审计轨迹"
+  specify workflow run bugfix-delivery --input delivery_run=retry-fix-01 --input bug_slug=duplicate-retry --input report="重试导致重复通知"
+  specify workflow run lightweight-delivery --input delivery_run=docs-fix-01 --input change="修正文档标题"
+  ```
+
+- 直接 Workflow 在宿主退出前将记录保存到 `.specify/delivery/<delivery_run>/`；临时产物模式
+  也需保留本地忽略文件以便恢复。Bugfix 不会仅因复审修复就强制完整 Feature Spec／Plan／Tasks。
+- Ralph 关闭任务前必须同时通过当前快照的 Quality、Standards、独立 Review。旧 HEAD／路径
+  回执不足以通过；修复槽位最多三次（或更低的配置上限），预算耗尽不代表阻断项获准忽略。
+- CLI 最低要求不变：单独组件支持 Spec Kit `>=0.16.4`，Bundle 安装要求 `>=1.2.3`。
+
+### 验证与限制
+
+- 本地验证覆盖 23 项分发契约／变异测试、5 项使用真实 Spec Kit Command／Gate 与假宿主
+  消费者的交接测试、4 项版本写入测试、链接／diff 检查，以及 OpenCode／Codex Skills 干净
+  项目的 Bundle 安装。
+- 隔离案例实际验证了同 HEAD 的过期 Hook 拒绝复用，以及 Bugfix 红→绿修复、四个强制 Hook、
+  原始报告不变和不兼容 Hook 的阻断。修复仍正确保留为待独立复审，不自批通过。
+- 上述不代表完整业务／Provider 集成或自主交付端到端验证。`0.1.x` 仍是引导式提示与 Workflow
+  契约，并非新增机器强制执行的语义状态引擎，也不承诺所有宿主的执行能力等价。
+
 ## [0.1.2] - 2026-10-28
 
 ### 新增

@@ -30,10 +30,11 @@ task, including the acceptance condition and relevant Spec/Plan/ADR excerpts.
 
 The worker returns changed paths, commands, results, residual risk, and
 blockers. It does not edit the task checkbox or create the closure commit. The
-orchestrator runs the task checks and both Quality and Standards verdicts. Before
+orchestrator runs the task checks, Quality, Standards, and independent task Review. Before
 the checkbox changes, it verifies acceptance evidence, all declared checks,
-current `QUALITY_VERDICT: pass`, current `STANDARDS_VERDICT: pass`, unchanged
-`HEAD`, allowed changed paths, and availability of required checks and policy
+current `QUALITY_VERDICT: pass`, `STANDARDS_VERDICT: pass`, and `REVIEW_VERDICT: pass`,
+unchanged code/requirements snapshot including uncommitted and relevant untracked
+contents, unchanged `HEAD`, allowed paths, and availability of required checks and policy
 sources. It reports `RALPH_TASK_GATE: PASS` only when every item passes. Only
 then may the orchestrator mark `[X]` and persist the receipt.
 That state transition is immediately followed by staging the verified task
@@ -50,6 +51,13 @@ The orchestrator verifies that `HEAD` advanced, the commit contains the task
 result and task-state transition, and the worktree is clean before recording
 the commit identity; it does not modify tracked task state after that clean
 commit. A failed or blocked task remains open and blocks its dependents.
-Completion is valid only when every task has a passing current receipt, the
+Completion is valid only when every task has a passing snapshot-bound receipt
+associated with its verified commit, the
 Ralph branch is active, the worktree is clean, and the loop emits
 `<promise>ALL_TASKS_DONE</promise>`.
+
+Use the installed Ralph command as the execution owner, the installed Review
+template for six dimensions/independence/finding policy, and Delivery review-fix
+for one bounded repair pass. Task repairs stay in the same open task, never
+recursive Ralph. Attempts survive resume; fixers cannot resolve their own findings.
+Final Review still checks integration after task-level passes.
