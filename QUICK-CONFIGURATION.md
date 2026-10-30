@@ -191,6 +191,8 @@ merge_policy:
   use_queue: true
   delete_branch: true
   freeze_before_final: true
+pull_request_template: null
+install_pull_request_template: false
 ```
 
 Each Profile covers one code family with commands that genuinely run. Add

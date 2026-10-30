@@ -50,6 +50,13 @@ is true, require a recorded `SLICE_APPROVAL: approved` before Ralph. Verify
 `slices.md` is presented as boundary metadata, not as a second execution queue;
 `tasks.md` must remain the only source of task selection and ordering.
 
+Verify the configured `pull_request_template` exists when non-null. If
+`install_pull_request_template` is true, require the approved static template at
+`.github/pull_request_template.md` and report a mismatch as stale; if false, do
+not claim GitHub UI will use the extension fallback. Verify Handoff writes a real
+`PR_BODY_PATH` and prints a `gh pr create --body-file` hint; chat-only output does
+not satisfy the handoff contract.
+
 Verify Review ships `.specify/extensions/review/templates/reviewer.md` and
 supports task/final scopes, six dimension verdicts, independence/coverage, and
 content-bound findings; Delivery ships `speckit.delivery.review-fix`; Ralph

@@ -4,6 +4,35 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-30
+
+### Fixed
+
+- `speckit.delivery.handoff` now writes the reviewed body to
+  `.specify/delivery/<run>/pull-request.md` (or `pull-request-<slice>.md`),
+  reports `PR_BODY_PATH`, and prints a `gh pr create --body-file` hint. A
+  chat-only body is no longer a durable handoff.
+- `speckit.delivery.init` can install the packaged static fallback at
+  `.github/pull_request_template.md` only with explicit approval and never
+  overwrites an existing template. Installing the extension no longer appears to
+  change GitHub's UI template when it does not.
+- `speckit.delivery.doctor` checks the configured PR template and the Handoff
+  body-path contract.
+
+### Changed
+
+- The repository's default GitHub PR template is now Chinese. The extension's
+  packaged fallback remains a separate formatting contract and does not replace
+  a target project's `.github` template.
+
+### Verification and limitations
+
+- Distribution validation rejects a Handoff command that cannot emit
+  `PR_BODY_PATH` and a `--body-file` hint; installer checks assert the rendered
+  Handoff command contains the marker; eval 28 covers the missing-template case.
+- This patch does not create, push, or merge PRs. Publishing still requires
+  separate user authorization.
+
 ## [0.2.0] - 2026-10-30
 
 ### Added

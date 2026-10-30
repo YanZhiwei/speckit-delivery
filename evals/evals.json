@@ -229,6 +229,19 @@
         "Rejects a silent final squash because it destroys slice boundaries and rollback",
         "Presents bounded alternatives with consequences and leaves approval pending"
       ]
+    },
+    {
+      "id": 28,
+      "prompt": "A project has installed the Delivery extension under .specify but has no .github/pull_request_template.md. The final review passed and the user asks handoff to prepare the PR body. What must handoff produce so `gh pr create` uses the reviewed body instead of the repository's default template?",
+      "expected_output": "Writes the rendered body to .specify/delivery/<run>/pull-request.md (or pull-request-<slice>.md), prints PR_BODY_PATH and a gh pr create --body-file hint, and does not create or push the PR. Explains that installing the extension does not install a GitHub UI template; init may copy a static template to .github/pull_request_template.md only with explicit approval and without overwriting an existing one. Does not claim chat-only output is a durable handoff.",
+      "files": [],
+      "expectations": [
+        "Writes the reviewed body to a real local PR body path and reports PR_BODY_PATH",
+        "Prints a gh pr create --body-file hint using verified base/head fields without executing it",
+        "Distinguishes the extension fallback from the target repository's GitHub UI template",
+        "Allows an optional static template install only with explicit approval and no overwrite",
+        "Does not create, push, or merge the PR without separate authorization"
+      ]
     }
   ]
 }

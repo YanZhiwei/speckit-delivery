@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: decision
   name: Decision Memory
-  version: "0.2.0"
+  version: "0.2.1"
   description: "Retrieve, propose, finalize, and validate durable architecture decisions around Spec Kit delivery."
   category: process
   effect: read-write

@@ -400,6 +400,14 @@ def validate(root: Path, expected_version: str | None = None) -> list[str]:
                 errors.append(f"{manifest_path}: missing templates/slices.md")
             if not (manifest_path.parent / "templates" / "bugfix-review-repair.md").is_file():
                 errors.append(f"{manifest_path}: missing templates/bugfix-review-repair.md")
+            handoff = manifest_path.parent / "commands" / "speckit.delivery.handoff.md"
+            if handoff.is_file():
+                handoff_text = handoff.read_text(encoding="utf-8")
+                for needle in ("PR_BODY_PATH", "gh pr create", "--body-file"):
+                    if needle not in handoff_text:
+                        errors.append(
+                            f"{handoff}: handoff must emit {needle!r} for a usable PR body"
+                        )
             doctor = manifest_path.parent / "commands" / "speckit.delivery.doctor.md"
             if doctor.is_file():
                 doctor_text = doctor.read_text(encoding="utf-8")

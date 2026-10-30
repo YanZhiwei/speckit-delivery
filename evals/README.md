@@ -4,7 +4,8 @@
 or a claim that every scenario has been executed end to end. Cases 21–23 probe
 Review's defect analysis, finding reconciliation, and stale task closure. Cases
 24–27 probe slice planning, stacked versus integration selection, failed prefix
-checks, and linear-history merge-policy conflicts.
+checks, and linear-history merge-policy conflicts. Case 28 probes PR-body output
+and the distinction between the extension fallback and GitHub's UI template.
 
 ## Review fixtures
 

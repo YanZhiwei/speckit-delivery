@@ -17,6 +17,7 @@
 | Quality verdict | Task/Ralph run | Ephemeral by default | HEAD, scope, profiles, checks, pass/blocked |
 | Standards verdict | Task/Ralph run | Ephemeral by default | Snapshot/scope, semantic rules and blockers |
 | Evidence report | Delivery run/PR | Durable summary | Commands, results, caveats |
+| `.specify/delivery/<run>/pull-request.md` | Delivery Handoff | Follows `artifact_policy` | Rendered PR body and body path for `gh pr create --body-file`; not the GitHub UI template |
 | PR body | Pull request | Durable | Change, risk, decisions, evidence |
 
 `slices.md` is a review and merge-boundary plan. It binds the real `tasks.md`

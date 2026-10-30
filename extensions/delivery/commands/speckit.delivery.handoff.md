@@ -28,6 +28,12 @@ Use the first applicable source, and never mix sections from two:
 A configured path that does not exist is a reported gap, not a reason to
 invent a template.
 
+The selected template is a formatting contract for the body rendered here. It
+does not install a GitHub pull-request template: GitHub UI and `gh pr create`
+without `--body-file` read the target repository's `.github` template. Only
+`speckit.delivery.init`, with explicit user approval, may install a static
+project template; this command always renders the current change.
+
 ## Slice and rollup modes
 
 Read the approved `.specify/delivery/<run>/slices.md` when present and select the
@@ -110,6 +116,31 @@ merging require separate user authorization. If the repository requires linear
 history, do not recommend a final merge commit; report the policy conflict
 instead of silently choosing a squash that destroys slice boundaries.
 
+## Output
+
+Write the complete body to a real local file under the actual run or feature
+directory, honoring `artifact_policy`:
+
+- single, final, or rollup: `.specify/delivery/<run>/pull-request.md`
+- one slice: `.specify/delivery/<run>/pull-request-<slice>.md`
+
+Use the resolved feature/run directory when no `delivery_run` was supplied; never
+invent a path. Overwrite only the same mode/slice's prior body, and never clobber
+unrelated delivery records. A chat-only body is not a durable handoff when a run
+directory exists.
+
+Print:
+
+```text
+PR_BODY_PATH: <actual path>
+PR_CREATE_HINT: gh pr create --base <target> --head <branch> --title "<title>" --body-file <actual path>
+```
+
+Use the verified provider, target branch, head branch, and title. If any field
+cannot be verified, print the body path and the unresolved fields instead of a
+fabricated command. The hint is not executed; pushing, creating, and merging a PR
+still require separate user authorization.
+
 ## Boundaries
 
 Before final handoff, require the Review template's complete current
@@ -125,6 +156,7 @@ Do not cite ignored Spec/Plan files, task identifiers, review rounds, agent
 identities, conversation history, or obsolete command output. Link durable
 Issues and ADRs instead.
 
-Generate the body locally. Publishing or creating the PR requires separate user
-authorization. The command is complete when every statement reflects the actual
-reviewed contents and all evidence links or commands are resolvable.
+Write the body locally and report `PR_BODY_PATH`. Publishing or creating the PR
+requires separate user authorization. The command is complete when every
+statement reflects the actual reviewed contents, all evidence links or commands
+are resolvable, and the reported body file contains the same rendered content.

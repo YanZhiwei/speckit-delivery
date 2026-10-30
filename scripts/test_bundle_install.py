@@ -63,6 +63,7 @@ def check_delivery_install(
     for name, marker in (
         ("speckit.delivery.explore", "EXPLORATION_VERDICT"),
         ("speckit.delivery.slice", "SLICE_PLAN_VERDICT"),
+        ("speckit.delivery.handoff", "PR_BODY_PATH"),
         ("speckit.review.run", "REVIEW_VERDICT"),
         ("speckit.delivery.review-fix", "REVIEW_FIX_STATUS"),
         ("speckit.ralph.run", "REVIEW_VERDICT=pass"),

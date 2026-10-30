@@ -5,6 +5,30 @@
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-30
+
+### 修复
+
+- `speckit.delivery.handoff` 现在把审阅后的正文写入
+  `.specify/delivery/<run>/pull-request.md`（或 `pull-request-<slice>.md`），
+  输出 `PR_BODY_PATH`，并给出 `gh pr create --body-file` 提示；仅输出到对话不再算
+  可持久化的 Handoff。
+- `speckit.delivery.init` 只有在用户明确批准时才可安装静态兜底模板到
+  `.github/pull_request_template.md`，且绝不覆盖已有模板。安装扩展不再被误解为
+  自动改变 GitHub UI 模板。
+- `speckit.delivery.doctor` 检查已配置的 PR 模板和 Handoff 正文路径契约。
+
+### 变更
+
+- 仓库默认 GitHub PR 模板改为中文；扩展随包兜底模板仍是独立的格式契约，不会替换
+  目标项目的 `.github` 模板。
+
+### 验证与限制
+
+- 分发校验拒绝无法输出 `PR_BODY_PATH` 和 `--body-file` 提示的 Handoff 命令；
+  安装检查断言渲染后的 Handoff 命令包含该标记；评估 28 覆盖无模板场景。
+- 本补丁不创建、推送或合并 PR；发布仍需单独授权。
+
 ## [0.2.0] - 2026-10-30
 
 ### 新增

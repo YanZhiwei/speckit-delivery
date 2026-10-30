@@ -106,6 +106,16 @@ class DistributionContractTest(unittest.TestCase):
                 errors = validator.validate(root)
                 self.assertTrue(any("slice" in error for error in errors), errors)
 
+    def test_handoff_must_emit_usable_body_path(self) -> None:
+        root = self.fixture()
+        path = root / "extensions/delivery/commands/speckit.delivery.handoff.md"
+        path.write_text(
+            path.read_text(encoding="utf-8").replace("PR_BODY_PATH", "PR_BODY"),
+            encoding="utf-8",
+        )
+        errors = validator.validate(root)
+        self.assertTrue(any("PR_BODY_PATH" in error for error in errors), errors)
+
     def test_slice_gate_and_downstream_path_cannot_be_removed(self) -> None:
         for mutation in ("remove_gate", "drop_ralph_path", "drop_approval"):
             with self.subTest(mutation=mutation):

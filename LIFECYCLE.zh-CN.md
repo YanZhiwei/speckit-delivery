@@ -17,6 +17,7 @@
 | Quality Verdict | Task/Ralph | 默认临时 | HEAD、范围、Profile、检查和结果 |
 | Standards Verdict | Task/Ralph | 默认临时 | HEAD、范围、语义规范判定和阻断项 |
 | Evidence 报告 | 交付运行/PR | 持久摘要 | 命令、结果和环境风险 |
+| `.specify/delivery/<run>/pull-request.md` | Delivery Handoff | 遵循 `artifact_policy` | 渲染后的 PR 正文和 `gh pr create --body-file` 路径；不是 GitHub UI 模板 |
 | PR 正文 | Pull Request | 持久 | 变更、风险、决策和证据 |
 
 `slices.md` 是评审和合并边界计划。它绑定 `tasks.md` 的真实 Task ID，但不得增删或重排
