@@ -106,6 +106,14 @@ class DistributionContractTest(unittest.TestCase):
                 errors = validator.validate(root)
                 self.assertTrue(any("slice" in error for error in errors), errors)
 
+    def test_delivery_fallback_template_is_chinese(self) -> None:
+        text = (
+            ROOT / "extensions/delivery/templates/pull-request.md"
+        ).read_text(encoding="utf-8")
+        self.assertIn("## 摘要", text)
+        self.assertIn("Closes #", text)
+        self.assertNotIn("## Summary", text)
+
     def test_handoff_must_emit_usable_body_path(self) -> None:
         root = self.fixture()
         path = root / "extensions/delivery/commands/speckit.delivery.handoff.md"

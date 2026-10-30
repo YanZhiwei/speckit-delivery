@@ -1,15 +1,15 @@
 {
   "schema_version": "1.0",
   "updated_at": "2026-10-30T00:00:00Z",
-  "catalog_url": "https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.2.1/catalogs/workflows.json",
+  "catalog_url": "https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.2.2/catalogs/workflows.json",
   "workflows": {
     "feature-delivery": {
       "id": "feature-delivery",
       "name": "Spec Kit Feature Delivery",
       "description": "Full SDD delivery with decisions, slice planning, quality gates, Ralph, convergence, simplification, review, evidence, and handoff.",
       "author": "Yan Zhiwei",
-      "version": "0.2.1",
-      "url": "https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.2.1/workflows/feature-delivery/workflow.yml",
+      "version": "0.2.2",
+      "url": "https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.2.2/workflows/feature-delivery/workflow.yml",
       "repository": "https://github.com/YanZhiwei/speckit-delivery",
       "license": "MIT",
       "requires": {
@@ -36,8 +36,8 @@
       "name": "Spec Kit Bugfix Delivery",
       "description": "Bug assessment, remediation, regression verification, quality, review, evidence, and handoff.",
       "author": "Yan Zhiwei",
-      "version": "0.2.1",
-      "url": "https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.2.1/workflows/bugfix-delivery/workflow.yml",
+      "version": "0.2.2",
+      "url": "https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.2.2/workflows/bugfix-delivery/workflow.yml",
       "repository": "https://github.com/YanZhiwei/speckit-delivery",
       "license": "MIT",
       "requires": {
@@ -64,8 +64,8 @@
       "name": "Spec Kit Lightweight Delivery",
       "description": "Proportional quality, review, and evidence for mechanical or behavior-preserving changes.",
       "author": "Yan Zhiwei",
-      "version": "0.2.1",
-      "url": "https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.2.1/workflows/lightweight-delivery/workflow.yml",
+      "version": "0.2.2",
+      "url": "https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.2.2/workflows/lightweight-delivery/workflow.yml",
       "repository": "https://github.com/YanZhiwei/speckit-delivery",
       "license": "MIT",
       "requires": {

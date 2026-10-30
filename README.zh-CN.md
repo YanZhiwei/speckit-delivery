@@ -263,8 +263,8 @@ Quality 的复用依据是**原始执行时**的检查输入／配置身份；HE
 `main`，也不移动已有 Tag。
 
 > [!NOTE]
-> 安装命令指向准备中的 `v0.2.1`。发布前请使用已发布的 `v0.2.0` Catalog；该版本包含
-> Delivery Slicing，但不包含 PR 正文路径的 Handoff 修复。不要混用不同 Tag 的组件。
+> 安装命令指向准备中的 `v0.2.2`。发布前请使用已发布的 `v0.2.1` Catalog；该版本包含
+> PR 正文路径的 Handoff 修复，但不包含中文兜底模板。不要混用不同 Tag 的组件。
 
 指定版本的 Catalog 和 Bundle 安装命令见根目录 `README.md` 的 Release installation
 一节；Bundle 要求 Spec Kit `>=1.2.3`，单独组件仍支持 `>=0.16.4`。

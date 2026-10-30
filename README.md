@@ -426,23 +426,24 @@ PR. Merge that PR before running **Release distribution**; the release pipeline
 does not write back to `main` or move an existing tag.
 
 > [!NOTE]
-> The commands below target the prepared `v0.2.1` release. Until it is published,
-> use the released `v0.2.0` catalogs, which contain delivery slicing but not the
-> PR body-path handoff fix. Do not mix components from different tags.
+> The commands below target the prepared `v0.2.2` release. Until it is published,
+> use the released `v0.2.1` catalogs, which contain the PR body-path handoff fix
+> but not the Chinese fallback template. Do not mix components from different
+> tags.
 
 Releases publish each extension as a root-layout zip, expose pinned catalogs, and publish the bundle artifact. Add the versioned catalogs before installing the bundle (Bundle requires Spec Kit `>=1.2.3`):
 
 ```bash
 specify extension catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.2.1/catalogs/extensions.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.2.2/catalogs/extensions.json \
   --name speckit-delivery --install-allowed
 
 specify workflow catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.2.1/catalogs/workflows.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.2.2/catalogs/workflows.json \
   --name speckit-delivery
 
 specify bundle catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.2.1/catalogs/bundles.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.2.2/catalogs/bundles.json \
   --id speckit-delivery --policy install-allowed
 
 specify bundle install speckit-delivery
