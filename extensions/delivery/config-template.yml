@@ -33,3 +33,9 @@ code_context: auto
 # templates/pull-request.md, then the section contract in
 # speckit.delivery.handoff.
 pull_request_template: null
+# When true, Delivery Init may copy the packaged fallback template to
+# .github/pull_request_template.md, but only when the project has no existing
+# template and the user explicitly approves. This static template affects the
+# GitHub UI; dynamic per-change bodies still come from
+# speckit.delivery.handoff.
+install_pull_request_template: false

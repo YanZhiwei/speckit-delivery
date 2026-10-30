@@ -1,104 +1,109 @@
-## Summary
+<!--
+中文 PR 模板（仓库默认）。
+保持 `Closes #` 为英文，GitHub 依赖该关键字自动关闭 Issue。
+-->
 
-<!-- The final behavior or contract at repository HEAD, in one short paragraph. -->
+## 摘要
 
-## Motivation
+<!-- 用一段话说明合并到 HEAD 后的最终行为或契约。 -->
+
+## 动机
 
 Closes #
 
-## Change type
+## 变更类型
 
-- [ ] Feature or new component
-- [ ] Bugfix or contract correction
-- [ ] Refactor or simplification
-- [ ] Documentation or governance
-- [ ] Release preparation
+- [ ] 新功能或新组件
+- [ ] Bugfix 或契约修正
+- [ ] 重构或简化
+- [ ] 文档或治理
+- [ ] 发布准备
 
-## Current design (before)
+## 当前设计（变更前）
 
-<!-- How the affected area works today: entry points, owner, data flow, invariants.
-     Link the document or ADR that owns it instead of restating it. -->
+<!-- 说明受影响区域当前如何工作：入口、归属、数据流、约束。
+     能链接现有文档或 ADR 时不要重复复述。 -->
 
-- Entry point or component:
-- Owner and dependency direction:
-- Current constraints and invariants:
+- 入口或组件：
+- 归属与依赖方向：
+- 当前约束与不变量：
 
-## What changed
+## 变更内容
 
-<!-- One row per module or contract. Do not paste the diff. -->
+<!-- 每个模块或契约一行，不要粘贴完整 diff。 -->
 
-| Location | Change | Why |
+| 位置 | 变更 | 原因 |
 | --- | --- | --- |
 |  |  |  |
 
-## Impact
+## 影响
 
-<!-- Name the evidence for each row, or write "none" with the reason. -->
+<!-- 每行都要给出证据；没有影响时写“无”并说明原因。 -->
 
-| Dimension | Impact | Evidence |
+| 维度 | 影响 | 证据 |
 | --- | --- | --- |
-| Public API, commands, config |  |  |
-| Persistence or migration |  |  |
-| Compatibility and upgrade path |  |  |
-| Security and permissions |  |  |
-| Performance and resources |  |  |
-| Dependencies and supply chain |  |  |
+| 公共 API、命令、配置 |  |  |
+| 持久化或迁移 |  |  |
+| 兼容性与升级路径 |  |  |
+| 安全与权限 |  |  |
+| 性能与资源 |  |  |
+| 依赖与供应链 |  |  |
 
-## Design
+## 设计
 
-<!-- Optional. Prefer a Mermaid block; link a committed SVG instead of pasting HTML.
-     Write "N/A" with the reason when the change has no durable structure to show. -->
+<!-- 可选。优先使用 Mermaid；也可以链接已提交的 SVG，不要粘贴 HTML。
+     没有持久结构变化时写“N/A”并说明原因。 -->
 
 ```mermaid
 flowchart LR
 ```
 
-## Architecture decisions
+## 架构决策
 
-- [ ] Relevant ADRs are linked and match the implementation at HEAD.
-- [ ] No architectural decision changed.
+- [ ] 已链接相关 ADR，并与 HEAD 的实现一致。
+- [ ] 没有架构决策变化。
 
-## Behavior and acceptance
+## 行为与验收
 
-| Requirement | Result | Evidence |
+| 需求 | 结果 | 证据 |
 | --- | --- | --- |
 |  |  |  |
 
-## Verification
+## 验证
 
-| Check | Result | Evidence |
+| 检查 | 结果 | 证据 |
 | --- | --- | --- |
-| Build and packaging |  |  |
-| Tests |  |  |
-| Standards and spec review |  |  |
-| Distribution or install check |  |  |
-| Diff-scoped simplification |  |  |
+| 构建与打包 |  |  |
+| 测试 |  |  |
+| 规范与 Spec 审查 |  |  |
+| 分发或安装检查 |  |  |
+| 变更范围的简化检查 |  |  |
 
-## Documentation
+## 文档
 
-- [ ] Source documentation updated.
-- [ ] Generated documentation synchronized.
-- [ ] No documentation change required.
+- [ ] 源文档已更新。
+- [ ] 生成文档已同步。
+- [ ] 不需要文档变更。
 
-## Rollback
+## 回滚
 
-<!-- The safe rollback, or why one is unnecessary. -->
+<!-- 安全的回滚方式；如果不需要，说明原因。 -->
 
-## AI assistance
+## AI 辅助
 
-<!-- Describe the tool and the extent; keep human-reviewed facts separate from generated text. -->
+<!-- 说明使用的工具和范围；人工核实的事实要与生成文本分开。 -->
 
-- [ ] No AI assistance was used.
-- [ ] AI assistance was used, and every changed line was reviewed and verified.
+- [ ] 未使用 AI 辅助。
+- [ ] 使用了 AI 辅助，且每一行变更都已审阅和验证。
 
-## Review notes
+## 评审说明
 
-<!-- Point reviewers at risk and invariants, not agent or review chronology. -->
+<!-- 指引 reviewer 关注风险和关键不变量，不要写 agent 或评审的时间线。 -->
 
-## Checklist
+## 检查清单
 
-- [ ] Acceptance conditions are covered.
-- [ ] Blocking review findings are resolved.
-- [ ] ADRs reflect the implementation at HEAD.
-- [ ] Relevant verification evidence is attached.
-- [ ] The outgoing diff matches the reviewed scope.
+- [ ] 验收条件已覆盖。
+- [ ] 阻断性评审问题已解决。
+- [ ] ADR 与 HEAD 的实现一致。
+- [ ] 已附相关验证证据。
+- [ ] 外发 diff 与已审阅范围一致。

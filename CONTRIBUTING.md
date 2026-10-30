@@ -19,4 +19,7 @@
 
 ## Pull requests
 
-Use `.github/pull_request_template.md`. Explain the user-visible contract, compatibility impact, evidence, and any architecture decision changes.
+Use the Chinese template at `.github/pull_request_template.md` (the repository
+default). Explain the user-visible contract, compatibility impact, evidence, and
+any architecture decision changes. Keep the literal `Closes #` keyword so GitHub
+can close the linked Issue automatically.

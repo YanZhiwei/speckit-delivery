@@ -169,6 +169,11 @@ Codex skills 模式会把已安装的 Delivery 扩展渲染成 `speckit-delivery
 部分结果。它不会初始化索引，也不把代码图当作测试或正确性证据；可用
 `code_context: off` 关闭。
 
+`speckit.delivery.handoff` 会把审阅后的 PR 正文写入
+`.specify/delivery/<run>/pull-request.md`（或 `pull-request-<slice>.md`），输出
+`PR_BODY_PATH` 和 `gh pr create --body-file` 提示。安装扩展不会替换目标仓库的
+`.github` PR 模板；GitHub UI 仍读取目标仓库文件，除非显式传入 body 文件。
+
 路由器会选择 Feature、Bugfix 或 Lightweight，不会默认所有需求都走完整 Feature
 流程。也可以直接运行：
 
@@ -258,9 +263,8 @@ Quality 的复用依据是**原始执行时**的检查输入／配置身份；HE
 `main`，也不移动已有 Tag。
 
 > [!NOTE]
-> 安装命令指向准备中的 `v0.2.0`。发布前请使用已发布的 `v0.1.4` Catalog；该版本包含
-> 修正后的 Doctor Reviewer 路径，但不包含 Delivery Slicing 与合并策略。不要混用不同
-> Tag 的组件。
+> 安装命令指向准备中的 `v0.2.1`。发布前请使用已发布的 `v0.2.0` Catalog；该版本包含
+> Delivery Slicing，但不包含 PR 正文路径的 Handoff 修复。不要混用不同 Tag 的组件。
 
 指定版本的 Catalog 和 Bundle 安装命令见根目录 `README.md` 的 Release installation
 一节；Bundle 要求 Spec Kit `>=1.2.3`，单独组件仍支持 `>=0.16.4`。

@@ -426,24 +426,23 @@ PR. Merge that PR before running **Release distribution**; the release pipeline
 does not write back to `main` or move an existing tag.
 
 > [!NOTE]
-> The commands below target the prepared `v0.2.0` release. Until it is published,
-> use the released `v0.1.4` catalogs, which contain the Doctor Reviewer path
-> correction but not delivery slicing and merge policy. Do not mix components
-> from different tags.
+> The commands below target the prepared `v0.2.1` release. Until it is published,
+> use the released `v0.2.0` catalogs, which contain delivery slicing but not the
+> PR body-path handoff fix. Do not mix components from different tags.
 
 Releases publish each extension as a root-layout zip, expose pinned catalogs, and publish the bundle artifact. Add the versioned catalogs before installing the bundle (Bundle requires Spec Kit `>=1.2.3`):
 
 ```bash
 specify extension catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.2.0/catalogs/extensions.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.2.1/catalogs/extensions.json \
   --name speckit-delivery --install-allowed
 
 specify workflow catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.2.0/catalogs/workflows.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.2.1/catalogs/workflows.json \
   --name speckit-delivery
 
 specify bundle catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.2.0/catalogs/bundles.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.2.1/catalogs/bundles.json \
   --id speckit-delivery --policy install-allowed
 
 specify bundle install speckit-delivery
@@ -473,6 +472,12 @@ release-preparation PR is reviewed and merged, maintainers explicitly run
 exists and reports entry points, callers, and affected tests for the change. It
 is optional: without the index it returns a partial brief and names the gaps,
 and it never initializes an index or treats the graph as test evidence.
+
+`speckit.delivery.handoff` writes the reviewed PR body to
+`.specify/delivery/<run>/pull-request.md` (or `pull-request-<slice>.md`) and
+prints `PR_BODY_PATH` plus a `gh pr create --body-file` hint. Installing the
+extension does not replace the target repository's `.github` PR template; GitHub
+UI still reads that repository file unless a body file is supplied.
 
 ## Durable and ephemeral artifacts
 

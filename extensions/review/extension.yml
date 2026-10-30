@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: review
   name: Delivery Code Review
-  version: "0.2.0"
+  version: "0.2.1"
   description: "Read-only task and final review of requirements, code quality, architecture, correctness, security/compatibility, and tests."
   category: code
   effect: read-only

@@ -4,6 +4,51 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-30
+
+### Added
+
+- `speckit.delivery.handoff` writes the reviewed body to
+  `.specify/delivery/<run>/pull-request.md` (or `pull-request-<slice>.md`),
+  reports `PR_BODY_PATH`, and prints a `gh pr create --body-file` hint.
+- `install_pull_request_template` in `delivery-config.yml` allows Init to copy
+  the packaged static fallback to `.github/pull_request_template.md` only after
+  explicit approval and only when no project template exists.
+- Eval 28 covers a project that installed Delivery but has no GitHub PR template.
+
+### Fixed
+
+- A chat-only handoff is no longer treated as durable output; the rendered body
+  must exist at the reported local path.
+- Installing Delivery no longer appears to change GitHub's UI template when it
+  does not. GitHub reads the target repository's `.github` file unless a
+  `--body-file` is supplied.
+- `speckit.delivery.doctor` checks the configured PR template and the Handoff
+  body-path contract.
+
+### Changed
+
+- The repository's default GitHub PR template is now Chinese. The extension's
+  packaged fallback remains a separate formatting contract and does not replace
+  a target project's `.github` template.
+
+### Upgrade notes
+
+- Refresh the Bundle, or Delivery plus the three workflows. Then run Handoff and
+  use the printed `PR_BODY_PATH` with `gh pr create --body-file`.
+- Existing project PR templates are preserved. Static installation is opt-in;
+  existing `.github/pull_request_template.md` is never overwritten.
+- The extension's packaged fallback remains English; translating it is a separate
+  product decision from the repository's own Chinese template.
+
+### Verification and limitations
+
+- Distribution validation rejects a Handoff command that cannot emit
+  `PR_BODY_PATH` and a `--body-file` hint; installer checks assert the rendered
+  Handoff command contains the marker.
+- This patch does not create, push, or merge PRs. Publishing still requires
+  separate user authorization.
+
 ## [0.2.0] - 2026-10-30
 
 ### Added

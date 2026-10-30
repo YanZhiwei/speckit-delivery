@@ -87,11 +87,17 @@ a standalone slice gets a target-branch prefix build/test, a flagged slice gets
 flag-off and flag-on evidence, and an integration-only slice gets its declared
 checkpoint. A failed check returns to slice planning for reclassification.
 
-`speckit.delivery.handoff` renders either one slice PR body or the final rollup.
-Use `handoff slice=<id>` at each verified boundary to render that layer's PR
-body; the workflow's final handoff uses `mode=auto` for the release slice or
-rollup. Publishing and merging remain separately authorized. Stacked deliveries
-merge each layer with the configured slice method; an integration delivery
+`speckit.delivery.handoff` renders either one slice PR body or the final rollup,
+writes it to `.specify/delivery/<run>/pull-request.md` (or
+`pull-request-<slice>.md`), and prints `PR_BODY_PATH` plus a
+`gh pr create --body-file` hint. Use `handoff slice=<id>` at each verified
+boundary to render that layer's PR body; the workflow's final handoff uses
+`mode=auto` for the release slice or rollup. Installing the extension does not
+change GitHub's UI template: GitHub reads the target repository's `.github`
+template unless `--body-file` is supplied. `speckit.delivery.init` may install a
+static project template only with explicit approval; dynamic bodies still come
+from handoff. Publishing and merging remain separately authorized. Stacked
+deliveries merge each layer with the configured slice method; an integration delivery
 squash-merges slices into the integration branch and merges the final rollup with
 a merge commit. Never squash the final rollup, never rebase a shared integration
 branch, and never merge the target into a stack branch. See the
