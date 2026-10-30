@@ -1,111 +1,117 @@
-## Summary
+<!--
+Delivery 扩展的中文兜底 PR 模板。目标项目可通过 delivery-config.yml 的
+pull_request_template 或自己的 .github/pull_request_template.md 覆盖本模板。
+保持 `Part of #` / `Closes #` 为英文，GitHub 依赖这些关键字关联和关闭 Issue。
+-->
 
-## Motivation
+## 摘要
+
+## 动机
 
 Part of #<issue> for a lower slice; Closes #<issue> only on the release slice or final rollup.
 
-## Slice / stack
+## Slice / Stack
 
-<!-- For a sliced delivery. Remove for a single PR. Lower layers use
-     "Part of #", only the release or rollup uses "Closes #". -->
-- Slice and goal:
-- Base branch:
-- Depends on:
-- Merge order / method:
-- Not in this layer:
-- Rollback:
+<!-- 适用于切片交付；单 PR 可删除本节。低层使用 "Part of #"，
+     只有 release slice 或 rollup 使用 "Closes #"。 -->
+- Slice 与目标：
+- Base 分支：
+- 依赖：
+- 合并顺序 / 方式：
+- 不包含在本层：
+- 回滚：
 
 ## Rollup
 
-<!-- For an integration-to-target rollup. Remove for a single slice. -->
+<!-- 适用于 integration -> target 的最终汇总；单 Slice 可删除。 -->
 | Slice | PR | Review |
 | --- | --- | --- |
 |  |  |  |
 
-- Aggregate CI / review evidence:
-- Final merge method: merge commit
-- Whole-feature rollback:
+- 聚合 CI / Review 证据：
+- 最终合并方式：merge commit
+- 整体功能回滚：
 
-## Change type
+## 变更类型
 
-- [ ] Feature
+- [ ] 新功能
 - [ ] Bugfix
-- [ ] Refactor or simplification
-- [ ] Documentation or governance
-- [ ] Release preparation
+- [ ] 重构或简化
+- [ ] 文档或治理
+- [ ] 发布准备
 
-## Current design (before)
+## 当前设计（变更前）
 
-- Entry point or component:
-- Owner and dependency direction:
-- Current constraints and invariants:
+- 入口或组件：
+- 归属与依赖方向：
+- 当前约束与不变量：
 
-## What changed
+## 变更内容
 
-| Location | Change | Why |
+| 位置 | 变更 | 原因 |
 | --- | --- | --- |
 |  |  |  |
 
-## Impact
+## 影响
 
-| Dimension | Impact | Evidence |
+| 维度 | 影响 | 证据 |
 | --- | --- | --- |
-| Public API, commands, config |  |  |
-| Persistence or migration |  |  |
-| Compatibility and upgrade path |  |  |
-| Security and permissions |  |  |
-| Performance and resources |  |  |
-| Dependencies and supply chain |  |  |
+| 公共 API、命令、配置 |  |  |
+| 持久化或迁移 |  |  |
+| 兼容性与升级路径 |  |  |
+| 安全与权限 |  |  |
+| 性能与资源 |  |  |
+| 依赖与供应链 |  |  |
 
-## Design
+## 设计
 
-<!-- Optional. Prefer Mermaid; link a committed SVG instead of pasting HTML.
-     Write "N/A" with the reason when nothing durable changed. -->
+<!-- 可选。优先使用 Mermaid；也可以链接已提交的 SVG，不要粘贴 HTML。
+     没有持久结构变化时写 "N/A" 并说明原因。 -->
 
 ```mermaid
 flowchart LR
 ```
 
-## Architecture decisions
+## 架构决策
 
-- [ ] Relevant ADRs are linked and match the implementation at HEAD.
-- [ ] No architectural decision changed.
+- [ ] 已链接相关 ADR，并与 HEAD 的实现一致。
+- [ ] 没有架构决策变化。
 
-## Behavior and acceptance
+## 行为与验收
 
-| Requirement | Result | Evidence |
+| 需求 | 结果 | 证据 |
 | --- | --- | --- |
 |  |  |  |
 
-## Verification
+## 验证
 
-| Check | Result | Evidence |
+| 检查 | 结果 | 证据 |
 | --- | --- | --- |
-| Build |  |  |
-| Tests |  |  |
-| Standards and spec review |  |  |
-| ADR consistency |  |  |
-| Diff-scoped simplification |  |  |
+| 构建 |  |  |
+| 测试 |  |  |
+| 规范与 Spec 审查 |  |  |
+| ADR 一致性 |  |  |
+| 变更范围的简化检查 |  |  |
 
-## Documentation
+## 文档
 
-- [ ] Source documentation updated.
-- [ ] Generated documentation synchronized.
-- [ ] No documentation change required.
+- [ ] 源文档已更新。
+- [ ] 生成文档已同步。
+- [ ] 不需要文档变更。
 
-## Rollback
+## 回滚
 
-## AI assistance
+## AI 辅助
 
-- [ ] No AI assistance was used.
-- [ ] AI assistance was used, and every changed line was reviewed and verified.
+- [ ] 未使用 AI 辅助。
+- [ ] 使用了 AI 辅助，且每一行变更都已审阅和验证。
 
-## Review notes
+## 评审说明
 
-## Checklist
+## 检查清单
 
-- [ ] Acceptance conditions are covered.
-- [ ] Blocking review findings are resolved.
-- [ ] ADRs reflect the implementation at HEAD.
-- [ ] Relevant verification evidence is attached.
-- [ ] The outgoing diff matches the reviewed scope.
+- [ ] 验收条件已覆盖。
+- [ ] 阻断性评审问题已解决。
+- [ ] ADR 与 HEAD 的实现一致。
+- [ ] 已附相关验证证据。
+- [ ] 外发 diff 与已审阅范围一致。

@@ -5,6 +5,26 @@
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-10-30
+
+### 变更
+
+- Delivery 随包兜底模板
+  `extensions/delivery/templates/pull-request.md` 改为中文。只有目标项目未配置
+  `pull_request_template` 且没有仓库自己的 `.github/pull_request_template.md` 时才使用；
+  已有项目模板绝不覆盖。项目可通过配置或自己的 `.github` 模板保留其他语言。
+
+### 升级说明
+
+- 刷新 Delivery（或 Bundle）即可获得中文兜底模板。Handoff 的 `PR_BODY_PATH` 和
+  `--body-file` 行为不变。
+- 兜底模板只是格式默认值，不是 GitHub UI 安装。Init 仍只在用户明确批准时才复制到
+  `.github/pull_request_template.md`。
+
+### 验证与限制
+
+- 分发与安装检查核对随包模板内容；行为评估覆盖 fallback 选择与项目覆盖。
+
 ## [0.2.1] - 2026-10-30
 
 ### 新增

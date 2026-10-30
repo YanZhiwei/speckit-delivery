@@ -4,6 +4,29 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-10-30
+
+### Changed
+
+- The packaged Delivery fallback at
+  `extensions/delivery/templates/pull-request.md` is now Chinese. It applies only
+  when the target project has no configured template and no repository
+  `.github/pull_request_template.md`; existing project templates are never
+  overwritten. A project can keep another language by setting
+  `pull_request_template` or maintaining its own `.github` template.
+
+### Upgrade notes
+
+- Refresh Delivery (or the Bundle) to get the Chinese fallback. Handoff's
+  `PR_BODY_PATH` and `--body-file` behavior are unchanged.
+- The fallback is a formatting default, not a GitHub UI installation. Init still
+  copies it to `.github/pull_request_template.md` only with explicit approval.
+
+### Verification and limitations
+
+- Distribution and installer checks verify the packaged fallback bytes; a
+  behavioral evaluation covers fallback selection and project overrides.
+
 ## [0.2.1] - 2026-10-30
 
 ### Added

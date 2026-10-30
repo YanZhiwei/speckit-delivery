@@ -242,6 +242,17 @@
         "Allows an optional static template install only with explicit approval and no overwrite",
         "Does not create, push, or merge the PR without separate authorization"
       ]
+    },
+    {
+      "id": 29,
+      "prompt": "A target project has no delivery-config template and no .github/pull_request_template.md. It runs Handoff. Which packaged fallback language should be used, and how can the project keep an English or custom template?",
+      "expected_output": "Uses the packaged Chinese fallback at extensions/delivery/templates/pull-request.md when the target has no configured or repository template. Explains that the project can override it with pull_request_template or by maintaining its own .github/pull_request_template.md; the fallback never overwrites an existing file. Does not claim the fallback is installed into GitHub UI automatically.",
+      "files": [],
+      "expectations": [
+        "Selects the packaged Chinese fallback only when no project or repository template exists",
+        "Documents pull_request_template and .github as project-level overrides",
+        "Does not overwrite an existing template or claim automatic GitHub UI installation"
+      ]
     }
   ]
 }
