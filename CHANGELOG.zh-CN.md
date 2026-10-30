@@ -7,21 +7,34 @@
 
 ## [0.2.1] - 2026-10-30
 
+### 新增
+
+- `speckit.delivery.handoff` 把审阅后的正文写入
+  `.specify/delivery/<run>/pull-request.md`（或 `pull-request-<slice>.md`），
+  输出 `PR_BODY_PATH`，并给出 `gh pr create --body-file` 提示。
+- `delivery-config.yml` 新增 `install_pull_request_template`：仅当用户明确批准且项目
+  没有现有模板时，Init 才可把静态兜底模板复制到
+  `.github/pull_request_template.md`。
+- 评估 28 覆盖“已安装 Delivery 但目标仓库没有 GitHub PR 模板”的场景。
+
 ### 修复
 
-- `speckit.delivery.handoff` 现在把审阅后的正文写入
-  `.specify/delivery/<run>/pull-request.md`（或 `pull-request-<slice>.md`），
-  输出 `PR_BODY_PATH`，并给出 `gh pr create --body-file` 提示；仅输出到对话不再算
-  可持久化的 Handoff。
-- `speckit.delivery.init` 只有在用户明确批准时才可安装静态兜底模板到
-  `.github/pull_request_template.md`，且绝不覆盖已有模板。安装扩展不再被误解为
-  自动改变 GitHub UI 模板。
+- 仅输出到对话不再算可持久化的 Handoff；正文必须存在于报告出的本地路径。
+- 安装扩展不再被误解为自动改变 GitHub UI 模板；GitHub 仍读取目标仓库
+  `.github` 文件，除非显式传入 `--body-file`。
 - `speckit.delivery.doctor` 检查已配置的 PR 模板和 Handoff 正文路径契约。
 
 ### 变更
 
 - 仓库默认 GitHub PR 模板改为中文；扩展随包兜底模板仍是独立的格式契约，不会替换
   目标项目的 `.github` 模板。
+
+### 升级说明
+
+- 升级 Bundle，或刷新 Delivery 和三条 Workflow；运行 Handoff 后使用输出的
+  `PR_BODY_PATH` 配合 `gh pr create --body-file`。
+- 已有项目 PR 模板不会被覆盖；静态模板安装必须显式开启。
+- 扩展随包兜底模板仍为英文；是否中文化是独立的产品决策，不等同于本仓库默认模板。
 
 ### 验证与限制
 
