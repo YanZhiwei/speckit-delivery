@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: evidence
   name: Diff-Driven Evidence
-  version: "0.3.0"
+  version: "0.3.1"
   description: "Select and run the narrowest credible verification for the actual outgoing diff."
   category: process
   effect: read-write

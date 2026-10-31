@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "feature-delivery"
   name: "Spec Kit Feature Delivery"
-  version: "0.3.0"
+  version: "0.3.1"
   author: "Yan Zhiwei"
   description: "Evidence-first feature delivery with code/history/reference exploration, scope and design approval, slice planning and merge policy, quality, review, and handoff."
 

@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: quality
   name: Project Quality Gate
-  version: "0.3.0"
+  version: "0.3.1"
   description: "Apply project-local executable quality profiles before work can be closed."
   category: process
   effect: read-write
