@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: diagram
   name: Delivery Diagrams
-  version: "0.2.2"
+  version: "0.3.0"
   description: "Turn a reviewed change into an evidence-backed diagram, Mermaid by default and a rendered asset only through an installed renderer."
   category: process
   effect: read-write
