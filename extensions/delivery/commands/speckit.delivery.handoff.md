@@ -134,12 +134,17 @@ Print:
 ```text
 PR_BODY_PATH: <actual path>
 PR_CREATE_HINT: gh pr create --base <target> --head <branch> --title "<title>" --body-file <actual path>
+PR_CLOSE_HINT: after the pull request is merged or closed, run speckit.delivery.close delivery_run=<run> outcome=merged|closed pr=<number|url>
 ```
 
 Use the verified provider, target branch, head branch, and title. If any field
 cannot be verified, print the body path and the unresolved fields instead of a
 fabricated command. The hint is not executed; pushing, creating, and merging a PR
 still require separate user authorization.
+
+The rendered body is run workspace, not a second durable record. Under
+`artifact_policy: ephemeral`, keep `pull-request.md` local and publish the body
+through `--body-file`; the durable summary belongs in `evidence.md`.
 
 ## Boundaries
 

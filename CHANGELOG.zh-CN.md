@@ -5,6 +5,34 @@
 
 ## [Unreleased]
 
+### 新增
+
+- `speckit.delivery.close`：记录 PR 的真实结果并退役交付运行。合并记为
+  `delivered`；未合并关闭记为 `abandoned`，只保留一份自包含的 `evidence.md`
+  退役说明；被替代记为 `superseded`，并给出可解析的引用。
+
+### 变更
+
+- Evidence 绑定 PR 实际发布的已审阅 HEAD 和 PR 引用，不再要求在发布前引用尚不存在的
+  合并提交；合并结果由 `speckit.delivery.close` 事后记录，去掉“合并后再开 PR 改写
+  证据”的循环。
+- Delivery 命令明确区分持久 `evidence.md` 与运行工作区（`exploration.md`、
+  `slices.md`、`receipts/`、verdict、review、渲染后的 PR 正文）。`artifact_policy:
+  ephemeral` 时工作区只保留在本地。
+- `speckit.delivery.doctor` 报告过期或矛盾的交付记录：有工作区但无证据、结果缺少
+  必要引用或原因、`superseded_by` 无法解析，以及把安装／升级记录放在交付根目录而
+  不是项目持久证据根目录。
+- Route、Handoff、Lane 参考、`LIFECYCLE` 和 README 把收口写入交付完成条件；记录状态
+  与实际 PR 结果矛盾时不算收口。
+
+### 升级说明
+
+- 已跟踪的运行工作区不会自动删除。对已合并或已关闭的 Run 运行
+  `speckit.delivery.close`；下一次交付前先让 `speckit.delivery.doctor` 列出缺少结果或
+  结果矛盾的记录。
+- 先把安装／升级记录迁移到项目持久证据根目录，再退役其 `.specify/delivery/<id>/`
+  副本。
+
 ## [0.2.2] - 2026-10-30
 
 ### 变更

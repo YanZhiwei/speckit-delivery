@@ -106,6 +106,14 @@ class DistributionContractTest(unittest.TestCase):
                 errors = validator.validate(root)
                 self.assertTrue(any("slice" in error for error in errors), errors)
 
+    def test_close_command_must_ship(self) -> None:
+        root = self.fixture()
+        (root / "extensions/delivery/commands/speckit.delivery.close.md").unlink()
+        errors = validator.validate(root)
+        self.assertTrue(
+            any("speckit.delivery.close" in error for error in errors), errors
+        )
+
     def test_delivery_fallback_template_is_chinese(self) -> None:
         text = (
             ROOT / "extensions/delivery/templates/pull-request.md"

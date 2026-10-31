@@ -80,7 +80,7 @@ reopens scope/design approval; ordinary in-scope test additions do not.
 Run the installed Spec Kit commands in this sequence, honoring the scope,
 clarification, plan, and analysis gates just as the Feature YAML workflow does:
 
-`speckit.delivery.doctor → speckit.decision.context (discover) → speckit.delivery.explore → scope approval → speckit.specify → speckit.clarify → clarification approval → speckit.decision.context (resolve) → speckit.plan → speckit.decision.propose → plan approval → speckit.tasks → speckit.delivery.slice → slice approval → speckit.analyze → analysis approval → speckit.quality.brief → speckit.ralph.run → speckit.quality.check → speckit.review.standards → speckit.converge → speckit.simplify.scan → speckit.docs-sync.run (when configured) → bounded review/fix loop → final review gate → speckit.decision.finalize → speckit.decision.check → speckit.simplify.verify → review freshness check → speckit.evidence.collect → speckit.delivery.handoff`.
+`speckit.delivery.doctor → speckit.decision.context (discover) → speckit.delivery.explore → scope approval → speckit.specify → speckit.clarify → clarification approval → speckit.decision.context (resolve) → speckit.plan → speckit.decision.propose → plan approval → speckit.tasks → speckit.delivery.slice → slice approval → speckit.analyze → analysis approval → speckit.quality.brief → speckit.ralph.run → speckit.quality.check → speckit.review.standards → speckit.converge → speckit.simplify.scan → speckit.docs-sync.run (when configured) → bounded review/fix loop → final review gate → speckit.decision.finalize → speckit.decision.check → speckit.simplify.verify → review freshness check → speckit.evidence.collect → speckit.delivery.handoff → (after the authorized PR outcome) speckit.delivery.close`.
 
 Slice planning runs after task generation so it binds real task IDs. It does not
 rewrite or replace `tasks.md`; `tasks.md` remains the only execution queue and
@@ -134,22 +134,42 @@ complete pass instead of repeating the same review. Do not hide ADR/spec/source
 changes as bookkeeping or reset the repair budget. Evidence/handoff cannot
 proceed on stale, blocked, or incomplete review.
 
+## Outcome and retirement
+
+Handoff ends before publication. Once the user separately authorizes publishing
+and the pull request actually merges or closes, run `speckit.delivery.close` with
+the observed outcome. A merged run becomes `delivered`; a PR closed without
+merging becomes `abandoned` and keeps one self-contained `evidence.md`
+retirement note; a replaced run becomes `superseded` with a resolvable reference.
+Delete only the run-workspace artifacts inside that run, never `evidence.md` or
+another run.
+
+One-off operational records (installation, upgrade, bootstrap, or manual
+governance action) are not delivery runs. Keep their authoritative record in the
+project's durable evidence root instead of maintaining a second copy under
+`.specify/delivery/`.
+
+Do not report a delivery as complete while its durable record still has no
+`status` or contradicts the actual pull-request outcome.
+
 ## Bugfix
 
 Run `doctor → decision.context (discover) → explore → bug.assess → assessment/scope
 approval → decision.context (resolve) → quality.brief → bug.fix → bug.test`, then
 the Bugfix workflow's quality, standards, simplification, bounded review/fix loop,
 review gate, decision check, review freshness check,
-evidence, and handoff steps. Reuse the assessment as the bounded repair contract;
+evidence, and handoff steps. After the authorized PR outcome, close the run with
+`speckit.delivery.close`. Reuse the assessment as the bounded repair contract;
 do not require a full Feature spec or a second root-cause report.
 
 ## Lightweight and completion
 
 For Lightweight, follow its existing YAML sequence:
 `doctor → quality.brief → delivery.lightweight → quality.check → review.standards
-→ bounded review/fix loop → final review gate → evidence.collect → delivery.handoff`.
-State the relevant paths and intended small scope;
+→ bounded review/fix loop → final review gate → evidence.collect → delivery.handoff`,
+then close the run after the authorized PR outcome. State the relevant paths and intended small scope;
 do not require full exploration, external research, or two approval rounds for a
 mechanical change. The command is complete only when its selected
-lane has no blocking finding, all durable records match repository HEAD, and
-the outgoing diff is supported by credible evidence.
+lane has no blocking finding, all durable records match repository HEAD, the
+run's recorded status matches the actual pull-request outcome, and the outgoing
+diff is supported by credible evidence.

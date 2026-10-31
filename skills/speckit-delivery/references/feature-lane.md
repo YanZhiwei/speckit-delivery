@@ -13,3 +13,4 @@
 11. Synchronize documentation when configured, then review Standards, Spec, architecture, correctness, security, tests, and simplicity. Final Review owns cross-slice integration.
 12. Convert blocking findings into tasks and repeat analyze → Ralph → converge → review.
 13. Finalize ADRs against repository HEAD, collect evidence, and render the slice or rollup PR handoff.
+14. After the authorized PR outcome, run `speckit.delivery.close` so the durable record says `delivered`, `abandoned`, or `superseded`.

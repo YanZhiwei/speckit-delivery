@@ -465,7 +465,7 @@ release-preparation PR is reviewed and merged, maintainers explicitly run
 | Quality gate | `speckit.quality.brief`, `speckit.quality.check` |
 | Standards closure | `speckit.review.standards` |
 | Documentation | `speckit.docs-sync.run` |
-| Exploration, slicing, routing, repair, doctor, and handoff | `speckit.delivery.explore`, `.slice`, `.doctor`, `.route`, `.review-fix`, `.handoff` |
+| Exploration, slicing, routing, repair, doctor, handoff, and close-out | `speckit.delivery.explore`, `.slice`, `.doctor`, `.route`, `.review-fix`, `.handoff`, `.close` |
 | Diagrams | `speckit.diagram.render` |
 | Code context | `speckit.delivery.context` |
 
@@ -480,6 +480,12 @@ prints `PR_BODY_PATH` plus a `gh pr create --body-file` hint. Installing the
 extension does not replace the target repository's `.github` PR template; GitHub
 UI still reads that repository file unless a body file is supplied.
 
+`speckit.delivery.close` records what actually happened to the PR. A merged run
+becomes `delivered`; a PR closed without merging becomes `abandoned` and keeps one
+self-contained `evidence.md` retirement note; a replaced run becomes `superseded`.
+Retirement removes that run's workspace artifacts only, never `evidence.md`.
+Installation and upgrade records are operational one-offs, not delivery runs.
+
 ## Durable and ephemeral artifacts
 
 The project chooses whether `spec.md`, `plan.md`, and `tasks.md` are committed. Durable records must remain understandable at repository HEAD:
@@ -489,6 +495,9 @@ The project chooses whether `spec.md`, `plan.md`, and `tasks.md` are committed. 
 - ADR: long-lived architectural decision and rationale
 - Source/tests/docs: implemented behavior
 - PR: final change summary, risk, and verification evidence
+- Delivery evidence: `.specify/delivery/<run>/evidence.md` and its recorded
+  `delivered`/`abandoned`/`superseded` outcome; other run files follow
+  `artifact_policy`
 
 When Spec Kit artifacts are ignored, Ralph must inject the assigned task and relevant artifact excerpts into each worker. Cross-worktree workers must never assume ignored files exist in their worktree.
 

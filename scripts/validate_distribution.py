@@ -390,6 +390,7 @@ def validate(root: Path, expected_version: str | None = None) -> list[str]:
                 "speckit.delivery.explore",
                 "speckit.delivery.review-fix",
                 "speckit.delivery.slice",
+                "speckit.delivery.close",
             ):
                 if required not in command_names:
                     errors.append(f"{manifest_path}: missing {required} command")
@@ -424,6 +425,18 @@ def validate(root: Path, expected_version: str | None = None) -> list[str]:
                         f"{doctor}: Doctor must not use an extension-relative "
                         "Reviewer path that the host rewrites to Delivery"
                     )
+            close = manifest_path.parent / "commands" / "speckit.delivery.close.md"
+            if close.is_file():
+                close_text = close.read_text(encoding="utf-8")
+                for needle in (
+                    "DELIVERY_STATUS:",
+                    "outcome=merged|closed|superseded",
+                    "never delete `evidence.md`",
+                ):
+                    if needle not in close_text:
+                        errors.append(
+                            f"{close}: close must define the outcome contract ({needle!r})"
+                        )
         if extension_id == "review":
             template = manifest_path.parent / "templates" / "reviewer.md"
             if not template.is_file():

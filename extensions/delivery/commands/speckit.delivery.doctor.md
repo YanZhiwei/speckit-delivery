@@ -57,6 +57,17 @@ not claim GitHub UI will use the extension fallback. Verify Handoff writes a rea
 `PR_BODY_PATH` and prints a `gh pr create --body-file` hint; chat-only output does
 not satisfy the handoff contract.
 
+Audit `.specify/delivery/*/evidence.md` when the delivery root exists. Absence of
+`status` means active. Report as blockers: a run with working artifacts but no
+durable `evidence.md`; a `delivered` record with no pull-request or merge
+reference; an `abandoned` record with no reason; a `superseded` record whose
+`superseded_by` does not resolve; and an operational one-off record (installation,
+upgrade, bootstrap) maintained under the delivery root instead of the project's
+durable evidence root. When the configured tracker is reachable, report an active
+record whose PR is already merged or closed without a recorded outcome. Report
+unverifiable remote state as `unverified` and name the limitation; never report it
+as a passing record.
+
 Verify Review ships `.specify/extensions/review/templates/reviewer.md` and
 supports task/final scopes, six dimension verdicts, independence/coverage, and
 content-bound findings; Delivery ships `speckit.delivery.review-fix`; Ralph
@@ -98,6 +109,8 @@ SLICE_POLICY:
 - gate: <present|missing>; merge: <slice/final/sync>
 BLOCKERS:
 - <id or none>: <remediation>
+RECORDS:
+- <run>: active | delivered | abandoned | superseded | unverified — <evidence>
 ```
 
 Do not edit source code or silently install components. The command is complete
