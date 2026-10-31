@@ -38,6 +38,8 @@ class DistributionContractTest(unittest.TestCase):
         root = Path(temporary.name)
         for relative in ("catalogs", "bundle", "extensions", "workflows"):
             shutil.copytree(ROOT / relative, root / relative)
+        for name in ("README.md", "README.en.md"):
+            shutil.copy2(ROOT / name, root / name)
         return root
 
     def test_repository_contract_is_valid(self) -> None:
@@ -166,6 +168,31 @@ class DistributionContractTest(unittest.TestCase):
                 errors = validator.validate(root)
                 self.assertTrue(
                     any("package-readme" in error for error in errors), errors
+                )
+
+    def test_readme_release_urls_must_match_version(self) -> None:
+        root = self.fixture()
+        version = yaml.safe_load(
+            (root / "bundle" / "bundle.yml").read_text(encoding="utf-8")
+        )["bundle"]["version"]
+        path = root / "README.md"
+        path.write_text(
+            path.read_text(encoding="utf-8").replace(
+                f"/v{version}/", "/v999.999.999/"
+            ),
+            encoding="utf-8",
+        )
+        errors = validator.validate(root)
+        self.assertTrue(any("release URL" in error for error in errors), errors)
+
+    def test_bilingual_readme_pair_must_ship(self) -> None:
+        for name in ("README.md", "README.en.md"):
+            with self.subTest(name=name):
+                root = self.fixture()
+                (root / name).unlink()
+                errors = validator.validate(root)
+                self.assertTrue(
+                    any("bilingual README" in error for error in errors), errors
                 )
 
     def test_delivery_fallback_template_is_chinese(self) -> None:

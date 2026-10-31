@@ -4,6 +4,15 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ## [Unreleased]
 
+### Changed
+
+- Restructured the README for both audiences: a Chinese default at `README.md`
+  and an English version at `README.en.md`. `README.zh-CN.md` is now a redirect
+  page. The new structure follows comparable Spec Kit ecosystem projects:
+  positioning, capability map, three-gate delivery flow, copy-ready quick start,
+  command reference, durable/ephemeral boundary, compatibility, maintainer
+  workflow, and a documentation map.
+
 ## [0.3.1] - 2026-11-01
 
 ### Added
