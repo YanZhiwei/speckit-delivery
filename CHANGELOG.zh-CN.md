@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-31
+
 ### 新增
 
 - `speckit.delivery.close`：记录 PR 的真实结果并退役交付运行。合并记为
