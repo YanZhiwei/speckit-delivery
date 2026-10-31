@@ -173,7 +173,7 @@
       "name": "Documentation Projection Sync",
       "id": "docs-sync",
       "version": "0.3.0",
-      "description": "Synchronize source documentation with configured generated projections and repair links.",
+      "description": "Synchronize source documentation with generated projections, repair links, and keep package READMEs true to their contents.",
       "author": "Yan Zhiwei",
       "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.3.0/docs-sync-0.3.0.zip",
       "repository": "https://github.com/YanZhiwei/speckit-delivery",
@@ -183,7 +183,7 @@
         "speckit_version": ">=0.16.4"
       },
       "provides": {
-        "commands": 1,
+        "commands": 2,
         "hooks": 0
       },
       "tags": [

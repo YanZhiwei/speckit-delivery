@@ -15,6 +15,7 @@ Spec Kit Delivery 是 Spec Kit 之上的分发层，不是 Spec Kit 的 Fork，�
 | Delivery Review Fix | 一次已核实、由 Lane 负责人执行的修复及持续轮次记录 | Review 判定或第二套执行队列 |
 | Delivery Slice | Slice 边界、Task 映射、trunk-safe 分类、合并策略与 Slice／Rollup 交接 | 需求、Task 生成、代码修改、Review 判定、分支或 PR 创建 |
 | Delivery Close | 记录 PR 真实结果并退役运行工作区 | 修改代码、变更远端 PR 或其他 Run 的记录 |
+| Package README | 面向使用者的安装／API／限制，以及面向维护者的开发／发布契约；内容取自真实包内容 | 代码行为、生成文档或发布动作 |
 | Ralph | 依赖就绪任务执行、Git Task 提交、Slice 边界验证和完成确认 | 规划或自行关闭任务 |
 | Diagram | 每次变更一张有证据的视图，默认 Mermaid | 测试证据、评审判断或安装器行为 |
 
@@ -50,6 +51,10 @@ Lightweight 不继承完整取证仪式。
 Delivery Close 只负责持久记录的结果和运行工作区，不发布、不合并，也不改写其他 Run；
 `evidence.md` 始终是唯一持久记录。安装、升级和初始化脚手架记录属于项目证据根目录的
 运维性一次性记录，不是交付 Run。
+
+Package README 由 Docs Sync 负责，在每条 Lane 的 Review 之前运行。内容取自包清单和
+公开面；同类项目研究只影响结构，不复制文案。生成文档仍归投影同步，正确性判断仍归
+Review。
 
 直接 Workflow 使用明确 `delivery_run`、固定磁盘取证包和前一 Gate 的真实选择跨宿主
 进程传递。只有同会话 Router 可暂存上下文；临时直接运行仍需本地忽略文件。消费者记录

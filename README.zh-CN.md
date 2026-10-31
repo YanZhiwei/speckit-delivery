@@ -179,6 +179,12 @@ Codex skills 模式会把已安装的 Delivery 扩展渲染成 `speckit-delivery
 退役只删除该 Run 的工作区文件，不删除 `evidence.md`。安装、升级记录属于运维性
 一次性记录，不是交付运行。
 
+`speckit.docs-sync.package-readme` 让包 README 与真实内容保持一致。新包会对比
+2–3 个同类公开项目，并记录采用或拒绝了什么；已有包按变更面判断 README 是
+`updated`、`unchanged-with-reason` 还是 `gap`。README 同时服务使用者（安装、快速
+开始、API／CLI／配置、限制、兼容性）和维护者（边界、依赖方向、开发与发布命令、
+归属）。不得编造命令或 API。
+
 路由器会选择 Feature、Bugfix 或 Lightweight，不会默认所有需求都走完整 Feature
 流程。也可以直接运行：
 

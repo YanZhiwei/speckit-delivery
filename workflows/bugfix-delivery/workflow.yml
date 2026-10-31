@@ -118,6 +118,11 @@ steps:
     integration: "{{ inputs.integration }}"
     input: { args: "scope=diff {{ inputs.report }}" }
 
+  - id: package-readme
+    command: speckit.docs-sync.package-readme
+    integration: "{{ inputs.integration }}"
+    input: { args: "delivery_run={{ inputs.delivery_run }} lane=bugfix scope=outgoing-diff {{ inputs.report }} Judge package README drift after the final fix; emit PACKAGE_README_VERDICT." }
+
   - id: review-loop
     type: do-while
     condition: "true"

@@ -250,6 +250,11 @@ steps:
         integration: "{{ inputs.integration }}"
         input: { args: "{{ inputs.spec }}" }
 
+  - id: package-readme
+    command: speckit.docs-sync.package-readme
+    integration: "{{ inputs.integration }}"
+    input: { args: "delivery_run={{ inputs.delivery_run }} scope=outgoing-diff {{ inputs.spec }} Derive from actual package contents and changed surfaces; emit PACKAGE_README_VERDICT." }
+
   # Safe no-op slots after a current pass; semantic verdicts are checked at the gate.
   - id: review-loop
     type: do-while

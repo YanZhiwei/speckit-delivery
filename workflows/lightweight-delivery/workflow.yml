@@ -50,6 +50,11 @@ steps:
     integration: "{{ inputs.integration }}"
     input: { args: "scope=outgoing-diff {{ inputs.change }}" }
 
+  - id: package-readme
+    command: speckit.docs-sync.package-readme
+    integration: "{{ inputs.integration }}"
+    input: { args: "delivery_run={{ inputs.delivery_run }} lane=lightweight scope=outgoing-diff {{ inputs.change }} Judge package README drift; emit PACKAGE_README_VERDICT and no-op when no package surface changed." }
+
   - id: review-loop
     type: do-while
     condition: "true"

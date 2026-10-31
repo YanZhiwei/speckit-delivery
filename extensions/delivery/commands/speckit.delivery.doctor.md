@@ -22,8 +22,9 @@ owns persistence of the external Delivery mapping and its approval receipt.
 Read `.specify/extensions.yml`, extension and workflow registries, installed
 component manifests, `delivery-config.yml`, `quality-config.yml`, and the
 active integration. Verify that Delivery, Decision, Ralph, Review, Simplify,
-Evidence, Quality, and Docs Sync are installed when their selected lane needs
-them. For Bugfix, also verify the official Bug extension and its assess/fix/test
+Evidence, and Quality are installed when their selected lane needs them, and that
+Docs Sync is installed for every lane because each one runs the package README
+node. For Bugfix, also verify the official Bug extension and its assess/fix/test
 commands. Verify that Feature, Bugfix, and Lightweight workflows reference the
 installed commands rather than an obsolete copy. Feature and Bugfix need the
 installed `speckit.delivery.explore` command and its
@@ -49,6 +50,13 @@ cannot name a provider or documented manual fallback. If `slice_requires_approva
 is true, require a recorded `SLICE_APPROVAL: approved` before Ralph. Verify
 `slices.md` is presented as boundary metadata, not as a second execution queue;
 `tasks.md` must remain the only source of task selection and ordering.
+
+Verify Docs Sync ships `speckit.docs-sync.run`,
+`speckit.docs-sync.package-readme`, and `templates/package-readme.md`, and that
+all three lane workflows place `package-readme` after the final code-affecting
+step and before `review-loop`. A workflow without it is stale for package
+changes. Check `package_readme` is `auto`, `required`, or `off`; a configured
+package README rule with no command or template is a blocker.
 
 Verify the configured `pull_request_template` exists when non-null. If
 `install_pull_request_template` is true, require the approved static template at

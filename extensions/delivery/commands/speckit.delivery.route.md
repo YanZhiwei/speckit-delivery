@@ -80,7 +80,7 @@ reopens scope/design approval; ordinary in-scope test additions do not.
 Run the installed Spec Kit commands in this sequence, honoring the scope,
 clarification, plan, and analysis gates just as the Feature YAML workflow does:
 
-`speckit.delivery.doctor → speckit.decision.context (discover) → speckit.delivery.explore → scope approval → speckit.specify → speckit.clarify → clarification approval → speckit.decision.context (resolve) → speckit.plan → speckit.decision.propose → plan approval → speckit.tasks → speckit.delivery.slice → slice approval → speckit.analyze → analysis approval → speckit.quality.brief → speckit.ralph.run → speckit.quality.check → speckit.review.standards → speckit.converge → speckit.simplify.scan → speckit.docs-sync.run (when configured) → bounded review/fix loop → final review gate → speckit.decision.finalize → speckit.decision.check → speckit.simplify.verify → review freshness check → speckit.evidence.collect → speckit.delivery.handoff → (after the authorized PR outcome) speckit.delivery.close`.
+`speckit.delivery.doctor → speckit.decision.context (discover) → speckit.delivery.explore → scope approval → speckit.specify → speckit.clarify → clarification approval → speckit.decision.context (resolve) → speckit.plan → speckit.decision.propose → plan approval → speckit.tasks → speckit.delivery.slice → slice approval → speckit.analyze → analysis approval → speckit.quality.brief → speckit.ralph.run → speckit.quality.check → speckit.review.standards → speckit.converge → speckit.simplify.scan → speckit.docs-sync.run (when configured) → speckit.docs-sync.package-readme → bounded review/fix loop → final review gate → speckit.decision.finalize → speckit.decision.check → speckit.simplify.verify → review freshness check → speckit.evidence.collect → speckit.delivery.handoff → (after the authorized PR outcome) speckit.delivery.close`.
 
 Slice planning runs after task generation so it binds real task IDs. It does not
 rewrite or replace `tasks.md`; `tasks.md` remains the only execution queue and
@@ -152,12 +152,23 @@ project's durable evidence root instead of maintaining a second copy under
 Do not report a delivery as complete while its durable record still has no
 `status` or contradicts the actual pull-request outcome.
 
+## Package README
+
+Before review, `speckit.docs-sync.package-readme` judges every package touched by
+the outgoing diff. It derives the README from the manifest, public exports, CLI,
+configuration, dependencies, and real test commands; for a new package it records
+two or three comparable public READMEs and what was adopted or rejected. It emits
+`PACKAGE_README_VERDICT` plus per-package `created | updated | unchanged |
+missing | blocked`. A README-affecting surface cannot be `unchanged` without the
+still-correct lines cited. Under `package_readme: required`, a missing section or
+unresolved fact gap blocks review; `auto` reports it. Internal-only changes no-op.
+
 ## Bugfix
 
 Run `doctor → decision.context (discover) → explore → bug.assess → assessment/scope
 approval → decision.context (resolve) → quality.brief → bug.fix → bug.test`, then
-the Bugfix workflow's quality, standards, simplification, bounded review/fix loop,
-review gate, decision check, review freshness check,
+the Bugfix workflow's quality, standards, simplification, package README,
+bounded review/fix loop, review gate, decision check, review freshness check,
 evidence, and handoff steps. After the authorized PR outcome, close the run with
 `speckit.delivery.close`. Reuse the assessment as the bounded repair contract;
 do not require a full Feature spec or a second root-cause report.
@@ -166,7 +177,7 @@ do not require a full Feature spec or a second root-cause report.
 
 For Lightweight, follow its existing YAML sequence:
 `doctor → quality.brief → delivery.lightweight → quality.check → review.standards
-→ bounded review/fix loop → final review gate → evidence.collect → delivery.handoff`,
+→ docs-sync.package-readme → bounded review/fix loop → final review gate → evidence.collect → delivery.handoff`,
 then close the run after the authorized PR outcome. State the relevant paths and intended small scope;
 do not require full exploration, external research, or two approval rounds for a
 mechanical change. The command is complete only when its selected

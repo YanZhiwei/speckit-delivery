@@ -50,6 +50,12 @@ def check_delivery_install(
         "quality": ("commands/speckit.quality.check.md", "config-template.yml"),
         "evidence": ("commands/speckit.evidence.collect.md",),
         "ralph": ("commands/speckit.ralph.run.md",),
+        "docs-sync": (
+            "commands/speckit.docs-sync.run.md",
+            "commands/speckit.docs-sync.package-readme.md",
+            "templates/package-readme.md",
+            "config-template.yml",
+        ),
     }
     for extension_id, relatives in resources.items():
         with zipfile.ZipFile(dist / f"{extension_id}-{version}.zip") as archive:
@@ -66,6 +72,7 @@ def check_delivery_install(
         ("speckit.delivery.slice", "SLICE_PLAN_VERDICT"),
         ("speckit.delivery.handoff", "PR_BODY_PATH"),
         ("speckit.delivery.close", "DELIVERY_STATUS"),
+        ("speckit.docs-sync.package-readme", "PACKAGE_README_VERDICT"),
         ("speckit.review.run", "REVIEW_VERDICT"),
         ("speckit.delivery.review-fix", "REVIEW_FIX_STATUS"),
         ("speckit.ralph.run", "REVIEW_VERDICT=pass"),

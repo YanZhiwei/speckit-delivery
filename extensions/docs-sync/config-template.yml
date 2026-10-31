@@ -5,3 +5,11 @@ manifest: null
 sync_command: null
 verify_command: null
 source_is_authoritative: true
+# Package README contract: auto | required | off.
+# auto: create or refresh a README when a package is new or its public surface
+# changes, and report gaps without blocking.
+# required: block when a changed package has no README or an unresolved fact gap.
+# off: do not run speckit.docs-sync.package-readme.
+package_readme: auto
+# Optional package roots; empty means detect package manifests from the diff.
+package_roots: []

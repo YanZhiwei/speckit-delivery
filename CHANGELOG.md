@@ -4,6 +4,41 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-01
+
+### Added
+
+- `speckit.docs-sync.package-readme` creates or refreshes a package README from
+  the package's real manifest, public exports, CLI, configuration, dependencies,
+  and test commands. It serves users (install, quick start, API/CLI/config,
+  limits, compatibility) and maintainers (boundaries, dependency direction,
+  development, release, ownership).
+- `extensions/docs-sync/templates/package-readme.md` is the packaged structure for
+  that contract.
+
+### Changed
+
+- All three lane workflows run the package README node after the final
+  code-affecting step and before review. For a new package, the node records two
+  or three comparable public READMEs and what was adopted or rejected; for a
+  changed package it reports `updated`, `unchanged-with-reason`, or `gap` per
+  changed surface.
+- Docs Sync configuration adds `package_readme: auto | required | off` and
+  `package_roots`. `required` blocks on a missing README or unresolved fact gap;
+  `auto` reports it.
+- `speckit.delivery.doctor` now requires Docs Sync for every lane and verifies
+  the package README command, template, and pre-review placement.
+- Route, lifecycle, architecture, READMEs, evals, and distribution checks cover
+  the new node.
+
+### Upgrade notes
+
+- Refresh Docs Sync (or the Bundle) to get the command, template, and workflow
+  steps. Existing package READMEs are not rewritten automatically; the node runs
+  on the next package change.
+- Projects that do not want the node can set `package_readme: off`, at the cost of
+  losing the explicit README-drift judgment.
+
 ## [0.3.0] - 2026-10-31
 
 ### Added

@@ -28,6 +28,12 @@ verified layer with `speckit.delivery.handoff slice=<id>`; the workflow's final
 handoff uses `mode=auto` for the release slice or integration rollup. Creating,
 pushing, or merging a PR still requires separate authorization.
 
+Before review, `speckit.docs-sync.package-readme` keeps every touched package
+README true to its manifest, public exports, CLI, configuration, dependencies, and
+real test commands. A new package also records two or three comparable public
+READMEs and what was adopted or rejected. A README-affecting change cannot be
+reported unchanged without citing the lines that remain correct.
+
 Version `0.1.x` uses explicit human gates and three safe no-op convergence
 iterations because command-step prose is not a machine-readable semantic result.
 Later versions will use a state protocol and custom result gate.
