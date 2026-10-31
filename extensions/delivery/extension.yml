@@ -35,6 +35,9 @@ provides:
     - name: speckit.delivery.handoff
       file: commands/speckit.delivery.handoff.md
       description: "Render a stable PR body from durable requirements, decisions, review, and evidence."
+    - name: speckit.delivery.close
+      file: commands/speckit.delivery.close.md
+      description: "Record the actual PR outcome, retire abandoned working artifacts, and keep one durable delivery record."
     - name: speckit.delivery.lightweight
       file: commands/speckit.delivery.lightweight.md
       description: "Implement a verified small change without creating full feature artifacts."

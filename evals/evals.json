@@ -253,6 +253,30 @@
         "Documents pull_request_template and .github as project-level overrides",
         "Does not overwrite an existing template or claim automatic GitHub UI installation"
       ]
+    },
+    {
+      "id": 30,
+      "prompt": "A delivery PR was closed without merging. Its .specify/delivery/007-llm-protocol-abstraction directory still contains exploration.md, slices.md, receipts/, task-verdicts.yml, and evidence.md. What should speckit.delivery.close do?",
+      "expected_output": "Runs close with outcome=closed and the actual PR. Verifies the PR is closed and unmerged, records status: abandoned, the PR reference, outcome date, and reason in evidence.md, then deletes only that run's exploration.md, slices.md, receipts/, task-verdicts.yml, and other listed workspace artifacts. Keeps one self-contained evidence.md retirement note, never deletes evidence.md or another run, and reports tracked changes without committing, pushing, or merging.",
+      "files": [],
+      "expectations": [
+        "Uses outcome=closed and verifies the PR is closed without a merge",
+        "Writes status: abandoned with the PR reference, outcome date, and reason",
+        "Keeps evidence.md and deletes only that run's listed workspace artifacts",
+        "Does not commit, push, merge, or touch another run"
+      ]
+    },
+    {
+      "id": 31,
+      "prompt": "A PR was merged, but evidence.md still has no status and its head_revision names the feature base instead of the reviewed head. When should the record be closed, and what should it bind to?",
+      "expected_output": "Explains that evidence binds to the reviewed head the PR published plus the PR reference, not a merge commit invented before publication. Runs speckit.delivery.close with outcome=merged after the merge is observed, records status: delivered, the PR or merge reference, merged revision, and outcome date, and does not delete delivered evidence. Reports unverifiable tracker state as a limitation instead of claiming a merge.",
+      "files": [],
+      "expectations": [
+        "Binds evidence to the reviewed head and PR reference before publication",
+        "Records status: delivered with the actual merge outcome when observed",
+        "Does not fabricate a merge revision or claim an unverified merge",
+        "Does not delete delivered evidence or working artifacts"
+      ]
     }
   ]
 }

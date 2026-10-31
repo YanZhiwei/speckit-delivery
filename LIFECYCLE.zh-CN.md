@@ -16,7 +16,7 @@
 | Review 修复检查点 | 编排器 | 与 Run 相同 | 跨恢复／新 HEAD 保留尝试次数、上限和未解决 ID |
 | Quality Verdict | Task/Ralph | 默认临时 | HEAD、范围、Profile、检查和结果 |
 | Standards Verdict | Task/Ralph | 默认临时 | HEAD、范围、语义规范判定和阻断项 |
-| Evidence 报告 | 交付运行/PR | 持久摘要 | 命令、结果和环境风险 |
+| Evidence 报告 | 交付运行/PR | 持久摘要 | 命令、结果、环境风险，以及实际记录的 PR 结果（`delivered`／`abandoned`／`superseded`） |
 | `.specify/delivery/<run>/pull-request.md` | Delivery Handoff | 遵循 `artifact_policy` | 渲染后的 PR 正文和 `gh pr create --body-file` 路径；不是 GitHub UI 模板 |
 | PR 正文 | Pull Request | 持久 | 变更、风险、决策和证据 |
 
@@ -40,6 +40,22 @@ Issue、ADR 和交接摘要不能依赖其路径或对话历史。
 上述仅上下文降级限于共享会话 Router。直接 YAML 入口先取得明确 `delivery_run`，在退出
 前将包保存到固定 Run 路径；临时策略也需要本地忽略文件。后续 Feature／Bug 身份只写入
 该包，不搬移路径。消费者接收确切引用与真实 Gate 选择，Gate 不编辑包，也不隐式批准 ready。
+
+## 交付记录结果与退役
+
+`evidence.md` 是持久记录；`.specify/delivery/<run>/` 下的其他文件都是运行工作区，
+遵循 `artifact_policy`。策略为临时时，exploration、slices、回执、verdict、Review 报告
+和渲染后的 PR 正文只保留在本地，通过 PR 正文发布。证据绑定 PR 实际发布的已审阅
+HEAD 与 PR 引用；合并版本在事后记录，不在发布前虚构。
+
+PR 合并或关闭后，由 `speckit.delivery.close` 记录真实结果。`merged` 记为
+`delivered`；未合并而关闭记为 `abandoned`，只保留一份自包含的退役说明；被替代的
+运行记为 `superseded`，并给出可解析的 `superseded_by`。没有 `status` 表示仍在进行；
+与实际 PR 结果矛盾的记录不算收口。退役只删除该 Run 的工作区文件，绝不删除
+`evidence.md` 或其他 Run。
+
+安装、升级、初始化脚手架和手工治理动作是运维性一次性记录，不是交付运行。其权威
+记录应放在项目持久证据根目录，不要在 `.specify/delivery/` 下维护第二份副本。
 
 ## Review 与修复记录
 

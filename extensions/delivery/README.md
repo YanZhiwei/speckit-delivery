@@ -20,6 +20,8 @@ Invoke commands through the active host, not as shell executables:
 - `speckit.delivery.lightweight`: perform a bounded mechanical change.
 - `speckit.delivery.review-fix`: coordinate one verified, lane-owned repair pass.
 - `speckit.delivery.handoff`: render an evidence-backed PR body locally.
+- `speckit.delivery.close`: record the actual PR outcome and retire abandoned
+  run-workspace artifacts.
 
 The `$sd` facade remains thin. The router owns lane transitions and approval;
 Explore owns investigation, not implementation or Bug assessment; Slice owns
@@ -103,6 +105,31 @@ a merge commit. Never squash the final rollup, never rebase a shared integration
 branch, and never merge the target into a stack branch. See the
 [slice command](commands/speckit.delivery.slice.md) and
 [plan template](templates/slices.md).
+
+## Delivery record lifecycle
+
+`evidence.md` is the durable, self-contained record. `exploration.md`,
+`decision-context.md`, `slices.md`, `receipts/`, `task-verdicts.yml`,
+`slice-verdicts.yml`, `reviews/`, and `pull-request*.md` are run workspace and
+follow `artifact_policy`; when it is ephemeral, keep them local instead of
+committing them. Bind evidence to the reviewed head the PR publishes plus the PR
+reference, not to a merge commit that does not exist before publication.
+
+After the PR merges or closes, run
+`speckit.delivery.close outcome=merged|closed|superseded`:
+
+- `merged` → `delivered`, with the PR or merge reference and outcome date;
+- `closed` without merge → `abandoned`, with the closed PR and reason; keep one
+  self-contained `evidence.md` retirement note and delete that run's workspace
+  artifacts;
+- `superseded` → `superseded`, with a resolvable `superseded_by` and reason.
+
+Absence of `status` means active. A record without an accurate status is not a
+closed delivery. Installation, upgrade, and bootstrap records are operational
+one-offs, not delivery runs; keep their authoritative copy in the project's
+durable evidence root instead of maintaining a second copy under
+`.specify/delivery/`. See the
+[close command](commands/speckit.delivery.close.md).
 
 ## Review closure
 

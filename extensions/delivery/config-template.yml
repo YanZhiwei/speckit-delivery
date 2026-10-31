@@ -1,4 +1,7 @@
 schema_version: "1.0"
+# Governs Spec artifacts and the delivery run workspace (exploration, slices,
+# receipts, verdicts, reviews, rendered PR body). `evidence.md` is always the
+# durable record and its outcome is governed by speckit.delivery.close.
 artifact_policy: tracked
 issue_tracker: github
 context_files: [AGENTS.md, CONTEXT.md]

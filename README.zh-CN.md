@@ -174,6 +174,11 @@ Codex skills 模式会把已安装的 Delivery 扩展渲染成 `speckit-delivery
 `PR_BODY_PATH` 和 `gh pr create --body-file` 提示。安装扩展不会替换目标仓库的
 `.github` PR 模板；GitHub UI 仍读取目标仓库文件，除非显式传入 body 文件。
 
+`speckit.delivery.close` 记录 PR 的真实结果：合并记为 `delivered`；未合并关闭记为
+`abandoned`，只保留一份自包含的 `evidence.md` 退役说明；被替代记为 `superseded`。
+退役只删除该 Run 的工作区文件，不删除 `evidence.md`。安装、升级记录属于运维性
+一次性记录，不是交付运行。
+
 路由器会选择 Feature、Bugfix 或 Lightweight，不会默认所有需求都走完整 Feature
 流程。也可以直接运行：
 
@@ -253,6 +258,8 @@ Quality 的复用依据是**原始执行时**的检查输入／配置身份；HE
 - ADR：长期架构决策
 - 代码、测试和文档：实际行为
 - PR：最终变化、风险和验证证据
+- 交付证据：`.specify/delivery/<run>/evidence.md` 及其记录的
+  `delivered`／`abandoned`／`superseded` 结果；其他 Run 文件遵循 `artifact_policy`
 
 最终 ADR 和 PR 不应引用临时 Task ID、Review 轮次或被忽略的 Plan 章节。
 

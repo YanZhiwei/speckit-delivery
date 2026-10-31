@@ -4,6 +4,41 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-31
+
+### Added
+
+- `speckit.delivery.close` records the actual pull-request outcome and retires a
+  delivery run. `merged` becomes `delivered`; a PR closed without merging becomes
+  `abandoned` with one self-contained `evidence.md` retirement note; a replaced
+  run becomes `superseded` with a resolvable reference.
+
+### Changed
+
+- Evidence now binds to the reviewed head the PR publishes plus the PR reference
+  instead of requiring a merge commit that does not exist before publication;
+  `speckit.delivery.close` records the outcome afterwards. This removes the
+  post-merge evidence-rewrite cycle.
+- Delivery commands now separate the durable `evidence.md` from run workspace
+  (`exploration.md`, `slices.md`, `receipts/`, verdicts, reviews, and the
+  rendered PR body). Under `artifact_policy: ephemeral` the workspace stays local.
+- `speckit.delivery.doctor` reports stale or contradictory delivery records:
+  workspace without evidence, an outcome missing a required reference or reason,
+  an unresolved `superseded_by`, and installation/upgrade records kept under the
+  delivery root instead of the project's durable evidence root.
+- Route, handoff, lane references, `LIFECYCLE`, and READMEs define close-out as
+  part of delivery completion; a record whose status contradicts the real PR
+  outcome is not closed.
+
+### Upgrade notes
+
+- Existing tracked run workspaces are not removed automatically. Run
+  `speckit.delivery.close` for runs whose PR already merged or closed, and let
+  `speckit.delivery.doctor` list records with a missing or contradictory outcome
+  before the next delivery.
+- Migrate installation/upgrade records to the project's durable evidence root
+  before retiring their `.specify/delivery/<id>/` copy.
+
 ## [0.2.2] - 2026-10-30
 
 ### Changed

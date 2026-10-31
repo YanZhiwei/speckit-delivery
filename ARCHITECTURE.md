@@ -15,6 +15,7 @@ existing workflow.
 | Code Review | Independent six-dimensional task/final analysis and finding reconciliation | Source edits, self-approved repairs, task closure |
 | Delivery Review Fix | One verified, lane-owned repair pass and persistent attempt accounting | Review verdicts or a second execution queue |
 | Delivery Slice | Slice boundaries, task mapping, trunk-safety classification, merge policy, and slice/rollup handoff | Requirements, task generation, source edits, review verdicts, branches, or PR creation |
+| Delivery Close | PR outcome recording and run-workspace retirement | Source edits, remote PR mutation, or another run's records |
 | Ralph | Dependency-ready task execution, Git task commits, slice-boundary verification, and task completion | Planning or self-authorized task closure |
 | Diagram | One evidence-backed view per change, in Mermaid by default | Test evidence, review judgment, or installer behavior |
 
@@ -50,6 +51,11 @@ candidate directory trees are shown before specification; finalized paths,
 responsibilities, interfaces, and tests are reviewed before tasks. See the
 [Delivery contract](extensions/delivery/README.md). Lightweight changes do not
 inherit the full exploration ceremony.
+
+Delivery Close owns only the durable record's outcome and the run workspace. It
+never publishes, merges, or rewrites another run; `evidence.md` remains the single
+durable record. Installation, upgrade, and bootstrap records are operational
+one-offs owned by the project's evidence root, not delivery runs.
 
 Direct workflows pass explicit `delivery_run`, a canonical on-disk packet path,
 and the actual gate choice across host processes. Only a shared-session router

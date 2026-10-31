@@ -16,7 +16,7 @@
 | Review repair checkpoint | Coordinator | Same run lifetime | Attempt count/cap and unresolved IDs preserved across resume/new HEAD |
 | Quality verdict | Task/Ralph run | Ephemeral by default | HEAD, scope, profiles, checks, pass/blocked |
 | Standards verdict | Task/Ralph run | Ephemeral by default | Snapshot/scope, semantic rules and blockers |
-| Evidence report | Delivery run/PR | Durable summary | Commands, results, caveats |
+| Evidence report | Delivery run/PR | Durable summary | Commands, results, caveats, and the recorded PR outcome (`delivered` / `abandoned` / `superseded`) |
 | `.specify/delivery/<run>/pull-request.md` | Delivery Handoff | Follows `artifact_policy` | Rendered PR body and body path for `gh pr create --body-file`; not the GitHub UI template |
 | PR body | Pull request | Durable | Change, risk, decisions, evidence |
 
@@ -49,6 +49,27 @@ canonical path before dispatch returns. Ephemeral policy still needs an ignored
 local file. Later Feature/bug identity is recorded in that packet, not a reason
 to relocate it. Consumers receive exact references and actual gate choices;
 gates do not edit the packet or implicitly approve ready output.
+
+## Delivery record outcome and retirement
+
+`evidence.md` is the durable record; every other file under
+`.specify/delivery/<run>/` is run workspace and follows `artifact_policy`. When
+the policy is ephemeral, exploration, slices, receipts, verdicts, review reports,
+and the rendered PR body stay local and are published only through the PR body.
+Evidence binds to the reviewed head the PR publishes plus the PR reference; the
+merge revision is recorded later, not invented before publication.
+
+After the pull request merges or closes, `speckit.delivery.close` records the
+actual outcome. `merged` becomes `delivered`; `closed` without merge becomes
+`abandoned` and keeps one self-contained retirement note; a replaced run becomes
+`superseded` with a resolvable `superseded_by`. Absence of `status` means active,
+and a record that contradicts the real PR outcome is not closed. Retirement
+deletes only that run's workspace artifacts and never `evidence.md` or another
+run.
+
+Installation, upgrade, bootstrap, and manual governance actions are operational
+one-offs, not delivery runs. Their authoritative record belongs to the project's
+durable evidence root; do not maintain a second copy under `.specify/delivery/`.
 
 ## Review and repair records
 
