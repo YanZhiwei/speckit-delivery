@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: docs-sync
   name: Documentation Projection Sync
-  version: "0.3.0"
+  version: "0.3.1"
   description: "Synchronize source documentation with generated projections, repair links, and keep package READMEs true to their contents."
   category: docs
   effect: read-write
