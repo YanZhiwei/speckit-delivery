@@ -45,6 +45,17 @@ def _stamp_yaml(path: Path, version: str) -> str:
     )
 
 
+README_TAG = re.compile(r"(speckit-delivery/)v\d+\.\d+\.\d+/")
+
+
+def _stamp_readme(path: Path, tag: str) -> str:
+    text = path.read_text(encoding="utf-8")
+    updated, count = README_TAG.subn(rf"\g<1>{tag}/", text)
+    if count == 0:
+        raise ValueError(f"{path}: no versioned release URL found")
+    return updated
+
+
 def _stamp_bundle(path: Path, version: str) -> str:
     """Stamp Bundle and owned components, but preserve the bundled Bug pin.
 
@@ -144,6 +155,10 @@ def plan(root: Path, version: str, tag: str) -> dict[Path, str]:
     for name in ("extensions.json", "workflows.json", "bundles.json"):
         path = root / "catalogs" / name
         updates[path] = _stamp_catalog(path, version, tag)
+    for name in ("README.md", "README.en.md"):
+        path = root / name
+        if path.is_file():
+            updates[path] = _stamp_readme(path, tag)
     return updates
 
 

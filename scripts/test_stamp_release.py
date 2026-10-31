@@ -6,6 +6,7 @@ from __future__ import annotations
 import importlib.util
 import json
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -44,6 +45,8 @@ class ReleaseStampTest(unittest.TestCase):
         root = Path(temporary.name)
         for relative in ("bundle", "extensions", "workflows", "catalogs"):
             shutil.copytree(ROOT / relative, root / relative)
+        for name in ("README.md", "README.en.md"):
+            shutil.copy2(ROOT / name, root / name)
         for changelog in ("CHANGELOG.md", "CHANGELOG.zh-CN.md"):
             content = (ROOT / changelog).read_text(encoding="utf-8")
             if with_changelog:
@@ -113,6 +116,19 @@ class ReleaseStampTest(unittest.TestCase):
         self.assertTrue(entry["download_url"].endswith(f"-{self.target}.zip"))
 
         self.assertEqual(validator.validate(root, self.target), [])
+
+    def test_stamp_updates_readme_release_urls(self) -> None:
+        root = self.fixture()
+        before = (root / "README.md").read_text(encoding="utf-8")
+        match = re.search(r"/v(\d+\.\d+\.\d+)/", before)
+        self.assertIsNotNone(match)
+        current = match.group(1)
+        result = self.run_stamp(root, "--version", self.target)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        for name in ("README.md", "README.en.md"):
+            text = (root / name).read_text(encoding="utf-8")
+            self.assertIn(f"/v{self.target}/", text)
+            self.assertNotIn(f"/v{current}/", text)
 
     def test_check_detects_unstamped_then_accepts_stamped(self) -> None:
         root = self.fixture()

@@ -53,6 +53,24 @@ def _list(value: object, label: str, errors: list[str]) -> list[Any]:
     return value
 
 
+def _check_readme_docs(root: Path, version: str, errors: list[str]) -> None:
+    """Require the bilingual README pair with release-pinned catalog URLs."""
+    expected = f"v{version}"
+    for name in ("README.md", "README.en.md"):
+        path = root / name
+        if not path.is_file():
+            errors.append(f"{name}: missing bilingual README")
+            continue
+        text = path.read_text(encoding="utf-8")
+        tags = sorted(set(re.findall(r"speckit-delivery/(v\d+\.\d+\.\d+)/", text)))
+        if not tags:
+            errors.append(f"{name}: no versioned release URL")
+            continue
+        for tag in tags:
+            if tag != expected:
+                errors.append(f"{name}: release URL {tag} != {expected}")
+
+
 def _check_exploration_workflow(
     workflow_id: str, workflow: dict[str, Any], errors: list[str]
 ) -> None:
@@ -371,6 +389,7 @@ def validate(root: Path, expected_version: str | None = None) -> list[str]:
             data.get("catalog_url"),
             version,
         )
+    _check_readme_docs(root, version, errors)
 
     extension_entries = _mapping(
         extension_catalog.get("extensions"),
