@@ -277,6 +277,30 @@
         "Does not fabricate a merge revision or claim an unverified merge",
         "Does not delete delivered evidence or working artifacts"
       ]
+    },
+    {
+      "id": 32,
+      "prompt": "A new Python package is added under packages/core/widgets. Its manifest, public exports, CLI, configuration keys, and test command exist, but the README is a two-line placeholder. What should speckit.docs-sync.package-readme produce?",
+      "expected_output": "Reads the manifest, exports, CLI, configuration defaults, dependency direction, and real test/quality commands to write the README from actual package contents. Compares two or three comparable public projects and records what was adopted or rejected. Covers user sections (install, quick start, public API/CLI/config, errors and limits, compatibility) and maintainer sections (boundaries, dependency direction, development, release, ownership). Emits PACKAGE_README_VERDICT with the package outcome and never invents commands or APIs.",
+      "files": [],
+      "expectations": [
+        "Derives content from the real manifest, exports, CLI, configuration, and test commands",
+        "Records comparable-project research and what was adopted or rejected",
+        "Covers both user and maintainer sections without boilerplate",
+        "Emits PACKAGE_README_VERDICT and invents no APIs or commands"
+      ]
+    },
+    {
+      "id": 33,
+      "prompt": "A package change only refactors an internal helper with no public export, CLI, configuration, dependency, or test-command change. Must the package README be edited before review?",
+      "expected_output": "Reports the change as not README-affecting and returns unchanged-with-reason for that package instead of fabricating edits. If the change did touch a public surface, it would require updated or an explicit gap; unchanged-with-reason must cite the lines that remain correct. Runs before review and emits PACKAGE_README_VERDICT; it does not modify generated projections or claim correctness review.",
+      "files": [],
+      "expectations": [
+        "Classifies an internal-only change as not README-affecting",
+        "Returns unchanged-with-reason without fabricating documentation edits",
+        "Requires updated or gap when a public surface changes",
+        "Runs before review and leaves projection sync and correctness review to their owners"
+      ]
     }
   ]
 }

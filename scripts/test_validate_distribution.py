@@ -114,6 +114,60 @@ class DistributionContractTest(unittest.TestCase):
             any("speckit.delivery.close" in error for error in errors), errors
         )
 
+    def test_package_readme_node_runs_before_review_in_every_lane(self) -> None:
+        for workflow_id in (
+            "feature-delivery",
+            "bugfix-delivery",
+            "lightweight-delivery",
+        ):
+            with self.subTest(workflow_id=workflow_id):
+                root = self.fixture()
+                path = root / "workflows" / workflow_id / "workflow.yml"
+                workflow = yaml.safe_load(path.read_text(encoding="utf-8"))
+                workflow["steps"] = [
+                    step
+                    for step in workflow["steps"]
+                    if step.get("id") != "package-readme"
+                ]
+                path.write_text(
+                    yaml.safe_dump(workflow, sort_keys=False, allow_unicode=True),
+                    encoding="utf-8",
+                )
+                errors = validator.validate(root)
+                self.assertTrue(
+                    any("package-readme" in error for error in errors), errors
+                )
+
+    def test_package_readme_must_not_run_after_review(self) -> None:
+        root = self.fixture()
+        path = root / "workflows" / "feature-delivery" / "workflow.yml"
+        workflow = yaml.safe_load(path.read_text(encoding="utf-8"))
+        steps = workflow["steps"]
+        node = next(step for step in steps if step.get("id") == "package-readme")
+        steps.remove(node)
+        steps.append(node)
+        path.write_text(
+            yaml.safe_dump(workflow, sort_keys=False, allow_unicode=True),
+            encoding="utf-8",
+        )
+        errors = validator.validate(root)
+        self.assertTrue(
+            any("before review-loop" in error for error in errors), errors
+        )
+
+    def test_package_readme_command_and_template_must_ship(self) -> None:
+        for relative in (
+            "extensions/docs-sync/commands/speckit.docs-sync.package-readme.md",
+            "extensions/docs-sync/templates/package-readme.md",
+        ):
+            with self.subTest(relative=relative):
+                root = self.fixture()
+                (root / relative).unlink()
+                errors = validator.validate(root)
+                self.assertTrue(
+                    any("package-readme" in error for error in errors), errors
+                )
+
     def test_delivery_fallback_template_is_chinese(self) -> None:
         text = (
             ROOT / "extensions/delivery/templates/pull-request.md"

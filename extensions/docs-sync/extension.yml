@@ -4,7 +4,7 @@ extension:
   id: docs-sync
   name: Documentation Projection Sync
   version: "0.3.0"
-  description: "Synchronize source documentation with configured generated projections and repair links."
+  description: "Synchronize source documentation with generated projections, repair links, and keep package READMEs true to their contents."
   category: docs
   effect: read-write
   author: Yan Zhiwei
@@ -20,6 +20,9 @@ provides:
     - name: speckit.docs-sync.run
       file: commands/speckit.docs-sync.run.md
       description: "Update documentation sources, manifests, links, and generated projections."
+    - name: speckit.docs-sync.package-readme
+      file: commands/speckit.docs-sync.package-readme.md
+      description: "Create or refresh a package README from real package contents for users and maintainers."
   config:
     - name: docs-sync-config.yml
       template: config-template.yml

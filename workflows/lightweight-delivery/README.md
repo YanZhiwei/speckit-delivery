@@ -10,5 +10,7 @@ surfaces need an explanation, not a full Feature Spec. Up to three safe
 review/repair slots honor the lower configured budget, retain attempts/findings
 across resume/new HEAD, and no-op after a current complete pass. Final review and
 an aborting gate reject blocked/incomplete results before evidence/handoff.
+Before that review, `speckit.docs-sync.package-readme` no-ops when no package
+surface changed; otherwise it refreshes or explicitly justifies the README.
 These are guided contracts, not automatic semantic branching. See the
 [Reviewer contract](../../extensions/review/templates/reviewer.md).

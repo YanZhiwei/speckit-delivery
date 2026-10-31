@@ -16,6 +16,7 @@ existing workflow.
 | Delivery Review Fix | One verified, lane-owned repair pass and persistent attempt accounting | Review verdicts or a second execution queue |
 | Delivery Slice | Slice boundaries, task mapping, trunk-safety classification, merge policy, and slice/rollup handoff | Requirements, task generation, source edits, review verdicts, branches, or PR creation |
 | Delivery Close | PR outcome recording and run-workspace retirement | Source edits, remote PR mutation, or another run's records |
+| Package README | User install/API/limits and maintainer development/release contract derived from real package contents | Code behavior, generated projections, or release publishing |
 | Ralph | Dependency-ready task execution, Git task commits, slice-boundary verification, and task completion | Planning or self-authorized task closure |
 | Diagram | One evidence-backed view per change, in Mermaid by default | Test evidence, review judgment, or installer behavior |
 
@@ -56,6 +57,11 @@ Delivery Close owns only the durable record's outcome and the run workspace. It
 never publishes, merges, or rewrites another run; `evidence.md` remains the single
 durable record. Installation, upgrade, and bootstrap records are operational
 one-offs owned by the project's evidence root, not delivery runs.
+
+Package README is owned by Docs Sync and runs before review in every lane. It
+derives content from the package manifest and public surface; comparable-project
+research informs structure, not copied prose. Projection sync still owns
+generated documentation, and review still owns correctness judgment.
 
 Direct workflows pass explicit `delivery_run`, a canonical on-disk packet path,
 and the actual gate choice across host processes. Only a shared-session router

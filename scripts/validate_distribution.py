@@ -291,6 +291,56 @@ def _check_slice_workflow(
         errors.append(f"{label}: handoff must resolve slice versus rollup mode")
 
 
+def _check_package_readme_workflow(
+    workflow_id: str, workflow: dict[str, Any], errors: list[str]
+) -> None:
+    """Require the package README judgment before review in every lane."""
+    prerequisites = {
+        "feature-delivery": "docs-sync",
+        "bugfix-delivery": "simplify",
+        "lightweight-delivery": "standards",
+    }
+    if workflow_id not in prerequisites:
+        return
+    label = f"workflows/{workflow_id}/workflow.yml"
+    steps = _list(workflow.get("steps"), f"{label}:steps", errors)
+    by_id: dict[str, list[tuple[int, dict[str, Any]]]] = {}
+    for index, step in enumerate(steps):
+        if isinstance(step, dict):
+            by_id.setdefault(str(step.get("id")), []).append((index, step))
+
+    matches = by_id.get("package-readme", [])
+    if len(matches) != 1:
+        errors.append(f"{label}: expected exactly one package-readme step")
+        return
+    index, step = matches[0]
+    if step.get("command") != "speckit.docs-sync.package-readme":
+        errors.append(
+            f"{label}: package-readme must invoke speckit.docs-sync.package-readme"
+        )
+    if step.get("continue_on_error"):
+        errors.append(f"{label}: package-readme cannot continue on error")
+    args = str(step.get("input", {}).get("args", ""))
+    for needle in ("delivery_run={{ inputs.delivery_run }}", "scope=outgoing-diff"):
+        if needle not in args:
+            errors.append(f"{label}: package-readme must pass {needle}")
+
+    reviews = by_id.get("review-loop", [])
+    if len(reviews) != 1:
+        errors.append(f"{label}: expected exactly one review-loop step")
+    elif index >= reviews[0][0]:
+        errors.append(f"{label}: package-readme must run before review-loop")
+
+    prerequisite = prerequisites[workflow_id]
+    before = by_id.get(prerequisite, [])
+    if len(before) != 1:
+        errors.append(f"{label}: expected exactly one {prerequisite} step")
+    elif index <= before[0][0]:
+        errors.append(
+            f"{label}: package-readme must run after {prerequisite} and the final code change"
+        )
+
+
 def validate(root: Path, expected_version: str | None = None) -> list[str]:
     """Return contract errors; an empty list means the distribution is coherent."""
     errors: list[str] = []
@@ -437,6 +487,22 @@ def validate(root: Path, expected_version: str | None = None) -> list[str]:
                         errors.append(
                             f"{close}: close must define the outcome contract ({needle!r})"
                         )
+        if extension_id == "docs-sync":
+            if "speckit.docs-sync.package-readme" not in command_names:
+                errors.append(
+                    f"{manifest_path}: missing speckit.docs-sync.package-readme command"
+                )
+            template = manifest_path.parent / "templates" / "package-readme.md"
+            if not template.is_file():
+                errors.append(f"{manifest_path}: missing templates/package-readme.md")
+            config_template = manifest_path.parent / "config-template.yml"
+            if (
+                config_template.is_file()
+                and "package_readme:" not in config_template.read_text(encoding="utf-8")
+            ):
+                errors.append(
+                    f"{config_template}: missing package_readme setting"
+                )
         if extension_id == "review":
             template = manifest_path.parent / "templates" / "reviewer.md"
             if not template.is_file():
@@ -464,6 +530,7 @@ def validate(root: Path, expected_version: str | None = None) -> list[str]:
         _check_exploration_workflow(workflow_id, workflow, errors)
         _check_review_workflow(workflow_id, workflow, errors)
         _check_slice_workflow(workflow_id, workflow, errors)
+        _check_package_readme_workflow(workflow_id, workflow, errors)
         definition = _mapping(
             workflow.get("workflow"), f"{workflow_path}:workflow", errors
         )

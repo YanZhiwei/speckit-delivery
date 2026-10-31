@@ -464,7 +464,7 @@ release-preparation PR is reviewed and merged, maintainers explicitly run
 | Evidence | `speckit.evidence.collect` |
 | Quality gate | `speckit.quality.brief`, `speckit.quality.check` |
 | Standards closure | `speckit.review.standards` |
-| Documentation | `speckit.docs-sync.run` |
+| Documentation | `speckit.docs-sync.run`, `speckit.docs-sync.package-readme` |
 | Exploration, slicing, routing, repair, doctor, handoff, and close-out | `speckit.delivery.explore`, `.slice`, `.doctor`, `.route`, `.review-fix`, `.handoff`, `.close` |
 | Diagrams | `speckit.diagram.render` |
 | Code context | `speckit.delivery.context` |
@@ -485,6 +485,14 @@ becomes `delivered`; a PR closed without merging becomes `abandoned` and keeps o
 self-contained `evidence.md` retirement note; a replaced run becomes `superseded`.
 Retirement removes that run's workspace artifacts only, never `evidence.md`.
 Installation and upgrade records are operational one-offs, not delivery runs.
+
+`speckit.docs-sync.package-readme` keeps a package README true to its actual
+contents. For a new package it compares two or three comparable public projects
+and records what was adopted or rejected; for a changed package it judges each
+changed surface and reports `updated`, `unchanged-with-reason`, or `gap`. Every
+README serves users (install, quick start, API/CLI/config, limits, compatibility)
+and maintainers (boundaries, dependency direction, development and release
+commands, ownership). It never invents commands or APIs.
 
 ## Durable and ephemeral artifacts
 

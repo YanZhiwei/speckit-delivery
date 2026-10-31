@@ -19,6 +19,7 @@
 | Evidence 报告 | 交付运行/PR | 持久摘要 | 命令、结果、环境风险，以及实际记录的 PR 结果（`delivered`／`abandoned`／`superseded`） |
 | `.specify/delivery/<run>/pull-request.md` | Delivery Handoff | 遵循 `artifact_policy` | 渲染后的 PR 正文和 `gh pr create --body-file` 路径；不是 GitHub UI 模板 |
 | PR 正文 | Pull Request | 持久 | 变更、风险、决策和证据 |
+| Package README | 包负责人／Docs Sync | 持久 | 面向使用者的安装／API／限制，以及面向维护者的开发／发布契约；内容取自真实包内容 |
 
 `slices.md` 是评审和合并边界计划。它绑定 `tasks.md` 的真实 Task ID，但不得增删或重排
 Task。Slice 回执只证明一个边界的检查，不能替代 Task 回执或最终集成 Review。范围、设计、

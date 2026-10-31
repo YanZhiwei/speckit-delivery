@@ -19,6 +19,7 @@
 | Evidence report | Delivery run/PR | Durable summary | Commands, results, caveats, and the recorded PR outcome (`delivered` / `abandoned` / `superseded`) |
 | `.specify/delivery/<run>/pull-request.md` | Delivery Handoff | Follows `artifact_policy` | Rendered PR body and body path for `gh pr create --body-file`; not the GitHub UI template |
 | PR body | Pull request | Durable | Change, risk, decisions, evidence |
+| Package README | Package owner / Docs Sync | Durable | User install/API/limits and maintainer development/release contract derived from real package contents |
 
 `slices.md` is a review and merge-boundary plan. It binds the real `tasks.md`
 IDs, but it never adds, removes, or reorders tasks. A slice receipt is evidence

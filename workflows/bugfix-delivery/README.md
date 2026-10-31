@@ -24,6 +24,11 @@ contract changes stop this workflow and resume Feature with the same evidence;
 multiple files alone do not require escalation. See the
 [Delivery contract](../../extensions/delivery/README.md).
 
+After the final fix and simplification, `speckit.docs-sync.package-readme` judges
+package README drift before review. Internal-only changes no-op; a changed public
+surface must be updated or cite the lines that remain correct. New packages also
+record comparable-project research.
+
 Final six-dimensional Review uses up to three safe review/repair slots, the lower
 configured repair budget, final review, and an aborting gate. Repair stays with
 the approved assessment, not forced Feature tasks. After the initial official

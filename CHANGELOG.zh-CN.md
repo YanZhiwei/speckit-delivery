@@ -5,6 +5,33 @@
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-01
+
+### 新增
+
+- `speckit.docs-sync.package-readme`：根据包的真实清单、公开导出、CLI、配置、
+  依赖和测试命令创建或刷新包 README。同时服务使用者（安装、快速开始、
+  API／CLI／配置、限制、兼容性）和维护者（边界、依赖方向、开发、发布、归属）。
+- `extensions/docs-sync/templates/package-readme.md`：该契约的随包结构模板。
+
+### 变更
+
+- 三条 Lane workflow 都在最后一步代码变更之后、Review 之前运行包 README 节点。
+  新包会记录 2–3 个同类公开 README 及采用／拒绝的内容；已有包按变更面输出
+  `updated`、`unchanged-with-reason` 或 `gap`。
+- Docs Sync 配置新增 `package_readme: auto | required | off` 和 `package_roots`。
+  `required` 在缺少 README 或存在未解决事实缺口时阻断；`auto` 只报告。
+- `speckit.delivery.doctor` 要求每条 Lane 都安装 Docs Sync，并校验包 README
+  命令、模板和 Review 前的位置。
+- Route、生命周期、架构、README、eval 和分发检查覆盖新节点。
+
+### 升级说明
+
+- 刷新 Docs Sync（或 Bundle）以获取命令、模板和 workflow 步骤。已有包 README
+  不会自动重写；下一次包变更时由该节点处理。
+- 不需要该节点的项目可设置 `package_readme: off`，代价是失去显式的 README
+  漂移判断。
+
 ## [0.3.0] - 2026-10-31
 
 ### 新增
