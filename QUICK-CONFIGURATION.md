@@ -88,7 +88,7 @@ specify workflow add --dev "$delivery\workflows\lightweight-delivery\workflow.ym
 
 When upgrading, add `--force` for changed extensions. Verify with `specify
 extension list` and `specify workflow list`; at minimum, see `quality` (2
-commands), `delivery` (8), and `review` (2).
+commands), `delivery` (11), and `review` (2).
 
 ## 2. Initialize project governance
 
@@ -104,6 +104,12 @@ Run `speckit.delivery.init`, then review manually:
 A common model ignores `.specify/` but tracks `docs/architecture/adr/`:
 Spec/Plan/Tasks remain personal working state; Accepted ADRs remain durable
 decisions retrievable by later SD work.
+
+`method_adapters` in `delivery-config.yml` defaults every phase to `builtin`, so
+no external skill is required. Only select `skill` for a project-reviewed local
+method; record its entrypoint, fixed revision, resource list, and SHA-256 digests.
+It returns analysis only and gains no plan, queue, commit, or review-closure
+authority. See the [method contract](extensions/delivery/templates/method-adapter.md).
 
 ## 3. Configure Quality Profiles
 

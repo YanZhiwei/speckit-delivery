@@ -140,6 +140,196 @@ class WorkflowHandoffTest(unittest.TestCase):
     def test_unexpected_assessment_cannot_be_guessed_from_other_bugs(self):
         self.probe("bugfix-delivery", wrong_bug_output=True)
 
+    def test_evidence_steps_bind_fresh_dispatch_to_canonical_run_records(self):
+        cases = {
+            "feature-delivery": {
+                "lane": "feature",
+                "request": "feature evidence transport",
+                "needs_exploration": True,
+            },
+            "bugfix-delivery": {
+                "lane": "bugfix",
+                "request": "bug evidence transport",
+                "needs_exploration": True,
+            },
+            "lightweight-delivery": {
+                "lane": "lightweight",
+                "request": "lightweight evidence transport",
+                "needs_exploration": False,
+            },
+        }
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+
+            def token(args: str, name: str) -> str | None:
+                match = re.search(rf"(?<!\S){re.escape(name)}=(\S+)", args)
+                return match.group(1) if match else None
+
+            def run_evidence(workflow_id: str, run_id: str) -> Path:
+                case = cases[workflow_id]
+                workflow = yaml.safe_load(
+                    (ROOT / "workflows" / workflow_id / "workflow.yml").read_text(
+                        encoding="utf-8"
+                    )
+                )
+                evidence_step = next(
+                    step for step in workflow["steps"] if step["id"] == "evidence"
+                )
+                inputs = {
+                    "delivery_run": run_id,
+                    "bug_slug": f"bug-{run_id}",
+                    "integration": "opencode",
+                    "spec": case["request"],
+                    "report": case["request"],
+                    "change": case["request"],
+                }
+                expected_relative = (
+                    Path(".specify") / "delivery" / run_id / "evidence.md"
+                ).as_posix()
+                expected_path = root / expected_relative
+
+                # Install a new consumer for every dispatch. It can recover only
+                # from the canonical disk record, never from this test's process
+                # state or a previous CommandStep result.
+                def fresh_consumer(
+                    command, integration, model, args, context, *extra, **kwargs
+                ):
+                    self.assertEqual(command, "speckit.evidence.collect")
+                    self.assertEqual(context.project_root, str(root))
+                    self.assertEqual(token(args, "lane"), case["lane"])
+                    self.assertEqual(token(args, "delivery_run"), run_id)
+                    self.assertEqual(token(args, "evidence"), expected_relative)
+                    if case["needs_exploration"]:
+                        self.assertEqual(
+                            token(args, "exploration"),
+                            f".specify/delivery/{run_id}/exploration.md",
+                        )
+                    else:
+                        self.assertIsNone(token(args, "exploration"))
+                        self.assertNotIn("spec=", args)
+                        self.assertNotIn("assessment=", args)
+                    if case["lane"] == "bugfix":
+                        self.assertNotIn("spec=", args)
+                        self.assertEqual(token(args, "bug_slug"), f"bug-{run_id}")
+                        self.assertEqual(
+                            token(args, "assessment"),
+                            f".specify/bugs/bug-{run_id}/assessment.md",
+                        )
+
+                    path = root / (token(args, "evidence") or "")
+                    if path != expected_path:
+                        return {
+                            "exit_code": 1,
+                            "stdout": "",
+                            "stderr": "non-canonical evidence path",
+                        }
+                    if path.exists():
+                        text = path.read_text(encoding="utf-8")
+                        self.assertIn(f"- **delivery_run**: {run_id}", text)
+                        self.assertIn(f"- **lane**: {case['lane']}", text)
+                        self.assertIn(f"- **evidence_path**: {expected_relative}", text)
+                        if case["lane"] == "bugfix":
+                            self.assertIn(f"- **bug_slug**: bug-{run_id}", text)
+                            self.assertIn(
+                                "- **assessment_path**: "
+                                f".specify/bugs/bug-{run_id}/assessment.md",
+                                text,
+                            )
+                        text += "\nUPDATE: same-run evidence refresh\n"
+                    else:
+                        path.parent.mkdir(parents=True)
+                        text = (
+                            f"- **delivery_run**: {run_id}\n"
+                            f"- **lane**: {case['lane']}\n"
+                            f"- **evidence_path**: {expected_relative}\n"
+                        )
+                        if case["lane"] == "bugfix":
+                            text += (
+                                f"- **bug_slug**: bug-{run_id}\n"
+                                "- **assessment_path**: "
+                                f".specify/bugs/bug-{run_id}/assessment.md\n"
+                            )
+                    path.write_text(text, encoding="utf-8")
+                    return {"exit_code": 0, "stdout": "", "stderr": ""}
+
+                context = StepContext(
+                    inputs=json.loads(json.dumps(inputs)),
+                    steps={},
+                    project_root=str(root),
+                    # Deliberately differ from delivery_run: transport must use
+                    # the substituted workflow input, not the engine run id.
+                    run_id=f"host-{run_id}",
+                )
+                with patch.object(CommandStep, "_try_dispatch", side_effect=fresh_consumer):
+                    result = CommandStep().execute(evidence_step, context)
+                self.assertEqual(result.status, StepStatus.COMPLETED)
+                self.assertTrue(expected_path.is_file())
+                return expected_path
+
+            for workflow_id, case in cases.items():
+                with self.subTest(workflow=workflow_id):
+                    first = run_evidence(workflow_id, f"{case['lane']}-run-a")
+                    resumed = run_evidence(workflow_id, f"{case['lane']}-run-a")
+                    second = run_evidence(workflow_id, f"{case['lane']}-run-b")
+                    self.assertEqual(first, resumed)
+                    self.assertNotEqual(first, second)
+                    self.assertIn(
+                        "UPDATE: same-run evidence refresh",
+                        first.read_text(encoding="utf-8"),
+                    )
+                    self.assertIn(
+                        f"- **delivery_run**: {case['lane']}-run-b",
+                        second.read_text(encoding="utf-8"),
+                    )
+
+
+    def test_slice_approval_writer_receives_gate_choice_in_fresh_process(self):
+        workflow = yaml.safe_load(
+            (ROOT / "workflows/feature-delivery/workflow.yml").read_text(encoding="utf-8")
+        )
+        step = next(
+            item for item in workflow["steps"] if item.get("id") == "slice-approval"
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            relative = ".specify/delivery/slice-run-1/slices.md"
+            slices = root / relative
+            slices.parent.mkdir(parents=True)
+            fingerprint = "sha256:presented-plan"
+            slices.write_text(
+                "SLICE_PLAN_FINGERPRINT: " + fingerprint + "\nSLICE_APPROVAL: pending\n",
+                encoding="utf-8",
+            )
+
+            def fresh_consumer(command, integration, model, args, context, *extra, **kwargs):
+                self.assertEqual(command, "speckit.delivery.slice")
+                self.assertIn("action=record-approval", args)
+                self.assertIn("delivery_run=slice-run-1", args)
+                self.assertIn(f"slices={relative}", args)
+                self.assertIn("slice_approval=approve", args)
+                text = slices.read_text(encoding="utf-8")
+                self.assertIn(fingerprint, text)
+                text += "SLICE_APPROVAL: approved\nApproved by: probe-user\n"
+                slices.write_text(text, encoding="utf-8")
+                return {"exit_code": 0, "stdout": "", "stderr": ""}
+
+            context = StepContext(
+                inputs={"delivery_run": "slice-run-1", "spec": "probe slices"},
+                steps={
+                    "plan-gate": {"output": {"choice": "approve"}},
+                    "slice-gate": {"output": {"choice": "approve"}},
+                },
+                project_root=str(root),
+                run_id="host-run",
+            )
+            with patch.object(CommandStep, "_try_dispatch", side_effect=fresh_consumer):
+                result = CommandStep().execute(step, context)
+            self.assertEqual(result.status, StepStatus.COMPLETED)
+            self.assertIn(
+                "SLICE_APPROVAL: approved", slices.read_text(encoding="utf-8")
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

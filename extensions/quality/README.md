@@ -36,7 +36,9 @@ Invoke `speckit.quality.brief task=T014 files=backend/services/api.py` before
 editing to give the worker the applicable rules. Invoke
 `speckit.quality.check task=T014` after the focused change, or without a task
 identifier for the outgoing-diff gate. Ralph uses the returned verdict before
-it closes a task.
+it closes a task. For an explicitly identified Bugfix/task, Brief can also carry
+the configured optional diagnosis/testing method; it remains analysis and does
+not replace official Bug assessment, test execution, or task closure.
 
 The [Quality Check command](commands/speckit.quality.check.md) owns execution
 identity and original check receipts. Staged-only hooks must have checked bytes

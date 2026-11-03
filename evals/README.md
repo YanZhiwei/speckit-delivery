@@ -6,7 +6,14 @@ Review's defect analysis, finding reconciliation, and stale task closure. Cases
 24–27 probe slice planning, stacked versus integration selection, failed prefix
 checks, and linear-history merge-policy conflicts. Case 28 probes PR-body output
 and the distinction between the extension fallback and GitHub's UI template; case
-29 covers the Chinese fallback and project-level language overrides.
+29 covers the Chinese fallback and project-level language overrides. Cases 34–37
+probe architecture skill methods under project governance, policy reachability
+without filename assumptions, honest planned/unsupported constraint coverage,
+and plan mutation across a paused design gate. Cases 38–40 probe verified method
+providers, explicit fallback behavior, and documentation refresh inside a reserved
+repair attempt. Cases 41–42 probe stale slice approval after analysis and missing
+slices context in an outgoing Feature repair. These new cases have not been
+executed as live baseline/updated model comparisons.
 
 ## Review fixtures
 

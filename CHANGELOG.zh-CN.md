@@ -3,7 +3,26 @@
 所有重要变更遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)
 和语义化版本规范。
 
-## [Unreleased]
+## [0.3.2] - 2026-11-04
+
+### 新增
+
+- `speckit.delivery.method` 与共享方法契约：在既有阶段内可选接入经过校验的设计、
+  诊断测试和评审方法。默认 `builtin`；显式本地提供者必须固定来源并校验 SHA-256，
+  只返回分析，不获得计划、队列、提交或评审关闭权。
+- Plan 检查点记录带来源的架构约束、设计响应、验证负责人／机制和真实证据缺口，
+  约束 ID 贯穿 Tasks、Brief、Standards 与 Review。
+- Feature 在切片 Gate 前先分析并解决阻塞的 Task 映射／覆盖问题；Gate 后由 Delivery
+  写回步骤记录真实选择和未变计划指纹，供 Ralph 消费。
+- Package README／投影刷新改在最终 Quality／Standards 之前执行，使检查回执覆盖
+  Review 实际看到的文档。
+- 方法适配器区分“配置无效”（始终阻断）与“有效但资源不可用”（仅显式 builtin 回退），
+  并在 Review 中保留结构化方法回执。
+- Review 修复在同一个已保留轮次内刷新受影响的包 README／投影证据，不再沿用修复前结论。
+- Ralph 随包提供切片执行契约，使直接切片调用与 Workflow 运行遵循相同的分支、
+  边界检查和回执顺序。
+- Evidence 要求显式 lane／run 与规范输出路径，校验同 Run 身份，并保留受限的
+  活跃 Feature 兼容回退。
 
 ### 变更
 
@@ -11,6 +30,8 @@
   `README.en.md`；`README.zh-CN.md` 保留为跳转页。新结构参考同类 Spec Kit 生态项目：
   定位、能力地图、三道 Gate 的交付闭环、可直接复制的快速开始、命令参考、
   持久/临时工件边界、兼容性、维护者流程和文档地图。
+- Workflow 向 Brief、Standards、Quality、Docs Sync 和 Evidence 显式传递 lane／run
+  上下文，并在 Tasks 接受真实 Gate 选择前保留设计批准快照。
 
 ## [0.3.1] - 2026-11-01
 

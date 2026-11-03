@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "lightweight-delivery"
   name: "Spec Kit Lightweight Delivery"
-  version: "0.3.1"
+  version: "0.3.2"
   author: "Yan Zhiwei"
   description: "Proportional delivery for mechanical, documentation-only, or behavior-preserving changes."
 
@@ -33,27 +33,27 @@ steps:
   - id: quality-brief-before-implement
     command: speckit.quality.brief
     integration: "{{ inputs.integration }}"
-    input: { args: "scope=lightweight {{ inputs.change }}" }
+    input: { args: "lane=lightweight delivery_run={{ inputs.delivery_run }} scope=lightweight {{ inputs.change }} Use this request and applicable project policy; do not infer a Feature plan from another run." }
 
   - id: implement
     command: speckit.delivery.lightweight
     integration: "{{ inputs.integration }}"
     input: { args: "{{ inputs.change }}" }
 
+  - id: package-readme
+    command: speckit.docs-sync.package-readme
+    integration: "{{ inputs.integration }}"
+    input: { args: "delivery_run={{ inputs.delivery_run }} lane=lightweight repair=0 scope=outgoing-diff {{ inputs.change }} Judge package README drift; emit PACKAGE_README_VERDICT and INPUT_IDENTITY; no-op when no package surface changed." }
+
   - id: quality
     command: speckit.quality.check
     integration: "{{ inputs.integration }}"
-    input: { args: "scope=outgoing-diff {{ inputs.change }}" }
+    input: { args: "lane=lightweight delivery_run={{ inputs.delivery_run }} scope=outgoing-diff {{ inputs.change }}" }
 
   - id: standards
     command: speckit.review.standards
     integration: "{{ inputs.integration }}"
-    input: { args: "scope=outgoing-diff {{ inputs.change }}" }
-
-  - id: package-readme
-    command: speckit.docs-sync.package-readme
-    integration: "{{ inputs.integration }}"
-    input: { args: "delivery_run={{ inputs.delivery_run }} lane=lightweight scope=outgoing-diff {{ inputs.change }} Judge package README drift; emit PACKAGE_README_VERDICT and no-op when no package surface changed." }
+    input: { args: "lane=lightweight delivery_run={{ inputs.delivery_run }} scope=outgoing-diff {{ inputs.change }} Use this request and applicable project policy; do not load or create a Feature plan." }
 
   - id: review-loop
     type: do-while
@@ -83,7 +83,7 @@ steps:
   - id: evidence
     command: speckit.evidence.collect
     integration: "{{ inputs.integration }}"
-    input: { args: "delivery_run={{ inputs.delivery_run }} lane=lightweight {{ inputs.change }}" }
+    input: { args: "lane=lightweight delivery_run={{ inputs.delivery_run }} evidence=.specify/delivery/{{ inputs.delivery_run }}/evidence.md {{ inputs.change }} Read and update only this run's canonical evidence record; bind actual reviewed content, the bounded request, and PR identity. No Feature artifacts or exploration are required." }
 
   - id: handoff
     command: speckit.delivery.handoff

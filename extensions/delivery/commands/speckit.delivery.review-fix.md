@@ -33,26 +33,45 @@ existing report/checkpoint is a recovery blocker, not permission to reset state.
    record false positives with evidence, never silently drop findings. Design
    defects, new public contracts, migrations, or material scope expansion return
    to scope/Plan/ADR approval. Do not use review as authority for new features.
-4. Respect `max_review_fix_rounds` from Delivery configuration (default 3).
-   The portable YAML supplies `repair_slots=<n>` (1–3): use the lower bound of
-   configured rounds and that actual slot ceiling, not an assumed 3. Task-scoped
-   Ralph repair uses the configured bound.
+4. Read `max_review_fix_rounds` from Delivery configuration. It must be an
+   integer from 1 through 3, and `repair_slots` must be the same range; a
+   malformed, zero, negative, or out-of-range value returns `blocked` rather than
+   silently using 3. The portable YAML supplies `repair_slots=<n>`: use the lower
+   bound of configured rounds and that actual slot ceiling, not an assumed 3.
+   Task-scoped Ralph repair uses the configured bound.
    A round is one attempted repair pass, not one finding or one no-op call.
    Preserve attempts across resume and reviewer reruns for the same run/scope;
    a new HEAD does not reset the budget. Record the next attempt before editing.
    At the cap, leave blockers open and return `blocked`; never downgrade to pass,
    invent an approval, or start a hidden loop inside this command.
-5. Apply/dispatch only authorized confirmed repairs through the lane owner:
-   - **Feature, task scope:** return the verified findings to the active Ralph
-     implementer for this same open task. Do not invoke Ralph recursively, change
-     its checkbox, or create its closure commit. Ralph owns checks and re-review.
-   - **Feature, outgoing-diff:** add/reopen repair tasks in `tasks.md`, retaining
-     finding-ID references; run analyze and then Ralph. Preserve Ralph's clean
-     preflight: if tracked queue changes need a planning-state commit, follow
-     existing project Git authorization and commit only this run's declared
-     planning paths before Ralph. If that is not authorized or unrelated work
-     prevents a clean entry, stop with recovery instructions; never stash/reset,
-     auto-commit production code, or stage pre-existing changes to bypass it.
+5. Apply/dispatch only authorized confirmed repairs through the lane owner. When
+   a repair changes any README-affecting surface defined by package-readme
+   (purpose, install/setup, public API/CLI/config/default, compatibility,
+   dependencies, error behavior, development/test commands, release/versioning,
+   ownership), follow `templates/repair-docs.md` before refreshing checks. Pass the already reserved attempt as `attempt=<n>`; do not allocate a
+   second counter. An internal-only repair records `DOCS_REFRESH: not-applicable`
+   with a reason. Preserve the caller's existing `with_docs_sync` choice for
+   nested Feature repairs; never infer or re-enable disabled optional sync, or
+   edit generated projections directly.
+   - **Feature, task scope:** return the verified findings, including affected
+     documentation work and the `templates/repair-docs.md` contract path, to the
+     active Ralph implementer for this same open task. Require its `DOCS_REFRESH`
+     in the task packet/receipt before closure checks. Do not invoke Ralph recursively,
+     change its checkbox, or create its closure commit. Ralph owns checks and
+     re-review.
+   - **Feature, outgoing-diff:** require the explicit canonical `slices` path and
+     recorded `SLICE_APPROVAL: approved` snapshot; missing context is blocked, not
+     a reason to fall back to a non-sliced Ralph run. Add/reopen repair tasks in
+     `tasks.md`, retaining finding-ID references, and map them to the currently
+     approved slices. If a new slice is required or the task mapping/fingerprint
+     changes, stop for a renewed slice gate and approval. Otherwise run analyze
+     and then Ralph with the same `lane`, `delivery_run`, `exploration`, `slices`,
+     actual approval, and `with_docs_sync`. Preserve Ralph's clean preflight: if
+     tracked queue changes need a planning-state commit, follow existing project
+     Git authorization and commit only this run's declared planning paths before
+     Ralph. If that is not authorized or unrelated work prevents a clean entry,
+     stop with recovery instructions; never stash/reset, auto-commit production
+     code, or stage pre-existing changes to bypass it.
    - **Bugfix:** follow the installed
      `.specify/extensions/delivery/templates/bugfix-review-repair.md` continuation
      adapter. The initial official fix/test commands refuse automated overwrite
@@ -62,15 +81,21 @@ existing report/checkpoint is a recovery blocker, not permission to reset state.
      re-review. Do not require Feature spec/tasks to track review findings.
    - **Lightweight:** use `speckit.delivery.lightweight` for the same mechanical
      scope. Escalate rather than silently changing behavior or architecture.
-6. After repairs, refresh the affected task/lane verification plus Quality and
-   Standards for the new contents. Reuse unchanged evidence only when exact
-   contents/scope/requirements match. Update findings to `fixed-pending-review`,
+6. After repairs, have the lane owner refresh the affected task/lane verification
+   plus Quality and Standards for the new contents (Ralph for a Feature task;
+   the Bugfix continuation/Lightweight owner otherwise). Reuse unchanged evidence
+   only when exact contents/scope/requirements match. Update findings to `fixed-pending-review`,
    preserve unresolved IDs, and return control for independent `review.run`.
    A fixer cannot mark its own changes resolved or return REVIEW_VERDICT: pass.
+   Keep the documentation refresh inside the same reserved attempt and existing
+   lane/run artifacts; do not add a repair round or a second queue.
 
 Return `REVIEW_FIX_STATUS: no-op | re-review-required | blocked`, actual attempt
-count/cap, scope, report location, changed/task paths, evidence, and unresolved
-IDs. No-op alone is not a pass verdict. On blocked/incomplete/cap exhaustion the
+count/cap, scope, report location, changed/task paths, evidence, unresolved IDs,
+`DOCS_REFRESH_REQUIRED: true | false` (with reason when false), and
+`DOCS_REFRESH: refreshed | unchanged | not-applicable | blocked` with its affected
+surfaces, actual results, reused identity, and gaps. No-op alone is not a pass
+verdict. On blocked/incomplete/cap exhaustion the
 workflow may finish its safe no-op slots, but the final review gate must stop
 delivery. Reviewer, model, and shell exit success are not authority to publish,
 merge, create tracker resources, or silently waive findings.

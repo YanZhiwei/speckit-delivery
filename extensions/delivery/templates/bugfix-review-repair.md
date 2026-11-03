@@ -36,13 +36,17 @@ of their approved assessment, not an invocation that bypasses their precondition
    failures/limitations. An unchanged old `test.md` cannot validate the new repair.
    Discover and execute applicable mandatory `after_bug_test` hooks with the
    current round's test/fix reports; wait and record results before completion.
-   Refresh affected Quality/Standards through their owners, then verify the three
-   original report hashes are unchanged. Any unauthorized original-report change
+   Refresh affected Quality/Standards through their owners. When the repair changes
+   any README-affecting surface defined by package-readme (purpose, install/setup,
+   public API/CLI/config/default, compatibility, dependencies, error behavior,
+   development/test commands, release/versioning, ownership), follow Delivery's
+   `templates/repair-docs.md` before completion and record its `DOCS_REFRESH` in
+   this round; an internal-only repair states why it does not apply. Then verify the three original report hashes are unchanged. Any unauthorized original-report change
    blocks continuation; preserve work and report it, do not silently undo it.
-6. Update the coordinator's run checkpoint with the round record references and
-   snapshot. Findings are `fixed-pending-review` only, not resolved. Return
-   `re-review-required` when validation succeeds or `blocked` with exact evidence
-   otherwise. Only an independent reviewer may verify resolution on current code.
+6. Update the coordinator's run checkpoint with the round record references,
+   documentation-refresh outcome, and snapshot. Findings are `fixed-pending-review`
+   only, not resolved. Return `re-review-required` when validation succeeds or
+   `blocked` with exact evidence otherwise. Only an independent reviewer may verify resolution on current code.
 
 ## Hook lifecycle and current-round context
 

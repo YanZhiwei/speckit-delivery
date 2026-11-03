@@ -67,9 +67,24 @@ Pass the latest exploration packet to assessment; pass the scope-approved packet
 clarify, plan, and task generation.
 Persist the packet once the real feature/run location is known, honoring
 `artifact_policy`; do not invent a feature path before specify creates one.
-At the existing plan gate, use the plan-checkpoint section of the installed
-`delivery/templates/exploration.md`: present the finalized tree, file
-responsibilities, interfaces, test paths/commands, risks, and scope differences.
+Before choosing the Feature design, follow the plan-checkpoint section of the
+installed `delivery/templates/exploration.md`. It owns architecture constraint
+sources, optional skill methods, comparison, and verification coverage. Keep the
+`Architecture constraints` table in the actual feature's `plan.md`; present it
+with the finalized tree, file responsibilities, interfaces, test paths/commands,
+risks, and scope differences at the existing plan gate. Pass its applicable IDs
+and verification work into Tasks, check coverage in Analyze, and carry those rows
+into the pre-edit brief and task/final review. After Decision Propose, record the
+presented snapshot before the plan gate; verify it before consuming that gate's
+choice, using the shared checkpoint contract. Pass explicit lane/run context and
+the canonical Feature packet or exact plan excerpts to Brief/Standards consumers;
+do not infer an active Feature from historical files. A changed constraint or verification
+mechanism changes the reviewed design; refresh affected approval and receipts.
+Optional `method_adapters` for design, diagnosis/testing, or review run inside
+those existing phases, not as new lanes or approval rounds. The default is
+builtin; an explicit external provider must pass the shared method contract's
+local-resource and provenance checks. It returns analysis only and cannot take
+over Plan/Tasks, official Bug assessment, review closure, or execution.
 Scope approval does not approve this detailed design. Reuse an explicit prior
 approval only when it covers the unchanged evidence and design; do not ask the
 same question after every command. Material expansion during planning or execution
@@ -80,14 +95,18 @@ reopens scope/design approval; ordinary in-scope test additions do not.
 Run the installed Spec Kit commands in this sequence, honoring the scope,
 clarification, plan, and analysis gates just as the Feature YAML workflow does:
 
-`speckit.delivery.doctor → speckit.decision.context (discover) → speckit.delivery.explore → scope approval → speckit.specify → speckit.clarify → clarification approval → speckit.decision.context (resolve) → speckit.plan → speckit.decision.propose → plan approval → speckit.tasks → speckit.delivery.slice → slice approval → speckit.analyze → analysis approval → speckit.quality.brief → speckit.ralph.run → speckit.quality.check → speckit.review.standards → speckit.converge → speckit.simplify.scan → speckit.docs-sync.run (when configured) → speckit.docs-sync.package-readme → bounded review/fix loop → final review gate → speckit.decision.finalize → speckit.decision.check → speckit.simplify.verify → review freshness check → speckit.evidence.collect → speckit.delivery.handoff → (after the authorized PR outcome) speckit.delivery.close`.
+`speckit.delivery.doctor → speckit.decision.context (discover) → speckit.delivery.explore → scope approval → speckit.specify → speckit.clarify → clarification approval → speckit.decision.context (resolve) → speckit.plan → speckit.decision.propose → plan approval → speckit.tasks → speckit.delivery.slice → speckit.analyze → analysis approval → slice approval → slice approval record → speckit.quality.brief → speckit.ralph.run → speckit.quality.check → speckit.review.standards → speckit.converge → speckit.simplify.scan → speckit.docs-sync.run (when configured) → speckit.docs-sync.package-readme → final speckit.quality.check → final speckit.review.standards → bounded review/fix loop → final review gate → speckit.decision.finalize → speckit.decision.check → speckit.simplify.verify → review freshness check → speckit.evidence.collect → speckit.delivery.handoff → (after the authorized PR outcome) speckit.delivery.close`.
 
 Slice planning runs after task generation so it binds real task IDs. It does not
 rewrite or replace `tasks.md`; `tasks.md` remains the only execution queue and
 `slices.md` only supplies review/merge boundaries. Present the slice table,
 trunk-safety evidence, merge mode, and any exception or open decision at
-`slice-gate`. A `needs_decision` result is not approval: present bounded options
-with a recommendation and stop until the user chooses. If a task spans slices,
+`slice-gate` after analysis has resolved blocking task-map/coverage findings.
+After the gate, the Delivery-owned `action=record-approval` writer records the
+actual choice and unchanged fingerprint; Ralph consumes that record, not a
+context-only or pre-analysis approval. A `needs_decision` result is not approval:
+present bounded options with a recommendation and stop until the user chooses.
+If a task spans slices,
 return to `speckit.tasks`; do not hand-edit the queue. Material scope or design
 changes reopen the relevant approval and slice planning.
 

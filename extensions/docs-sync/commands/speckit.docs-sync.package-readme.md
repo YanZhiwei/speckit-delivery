@@ -5,15 +5,22 @@ description: "Keep package READMEs true to their package contents for both users
 # Package README
 
 Run after `speckit.docs-sync.run` and before review, or directly when a package
-is created or its public surface changes. This command owns the package-level
-README contract; `speckit.docs-sync.run` still owns manifests, generated
-projections, and inbound links. It edits documentation only.
+is created or its public surface changes. Inside an already reserved Review Fix
+attempt, `repair=1 attempt=<n>` refreshes only affected surfaces before that
+attempt's re-review; it is not a new review round. This command owns the
+package-level README contract; `speckit.docs-sync.run` still owns manifests,
+generated projections, and inbound links. It edits documentation only.
 
 ## Input
 
 `scope=outgoing-diff` (default) inspects the change against the repository base.
 `package=<path>` limits the run to one package. `delivery_run=<id>` may be
-supplied for traceability but does not create a new durable record.
+supplied for traceability but does not create a new durable record. `lane` may be
+`feature`, `bugfix`, or `lightweight`; `repair=1` marks a call made inside an
+already reserved Review Fix attempt, with `attempt=<n>` identifying that reserved
+round. It refreshes only affected package surfaces at that attempt and does not
+add a repair round. `with_docs_sync=false` governs projection sync only; it does
+not by itself suppress the package README policy (`package_readme` controls that).
 
 Read `.specify/extensions/docs-sync/docs-sync-config.yml` when present. Honor
 `package_readme: auto | required | off` (default `auto`) and `package_roots`.
@@ -75,6 +82,8 @@ text is still accurate and you cite the lines that remain correct.
 
 ```text
 PACKAGE_README_VERDICT: pass | updated | blocked | not-applicable
+LANE / SCOPE / REPAIR: <supplied lane, package/outgoing scope, repair flag and attempt>
+INPUT_IDENTITY: <actual base/head/content/config identity and method used>
 PACKAGES:
 - <package>: created | updated | unchanged | missing | blocked — <reason> — <README path>
 RESEARCH:

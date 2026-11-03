@@ -60,7 +60,7 @@ It builds on Spec Kit's Extension, Workflow, and Bundle mechanisms. It **does no
 ```text
 route → doctor → decision discovery → explore code/history/references
       → current + candidate trees → scope approval
-      → specify → clarify → ADR resolution → plan → design approval
+      → specify → clarify → ADR resolution → plan (architecture constraints + verification) → design approval
       → tasks → slice → slice approval → analyze
       → quality brief → Ralph → quality → standards → review
       → converge → simplify → docs / package README
@@ -69,6 +69,10 @@ route → doctor → decision discovery → explore code/history/references
 ```
 
 Three gates separate "think it through" from "write code": **scope approval** before the Spec, **design approval** after the Plan, and **slice approval** after tasks. `tasks.md` is always the only execution queue; `slices.md` supplies review and merge boundaries only.
+
+The Feature Plan records architecture constraint sources, affected paths, design responses, verification owners, and evidence gaps, carrying IDs into Tasks, Brief, and Review. Optional open-source skill methods inform alternatives, interfaces, and failure modes under project governance; see the pinned [method review](REFERENCE-REVIEW.md#architecture-skill-methods).
+
+`method_adapters` in `delivery-config.yml` can select design, diagnosis/testing, and review methods separately. The default `builtin` needs no external skill or extra model round. An explicit external method must bind a local entrypoint, fixed revision, resource manifest, and SHA-256 digests, and returns analysis only to the existing phase: no second plan, queue, commit, or review-closure authority. See the [method contract](extensions/delivery/templates/method-adapter.md).
 
 Three lanes keep the process proportional:
 
@@ -116,15 +120,15 @@ Initialization creates `.specify/` and the host command surface; it does not rep
 
 ```bash
 specify extension catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.3.1/catalogs/extensions.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.3.2/catalogs/extensions.json \
   --name speckit-delivery --install-allowed
 
 specify workflow catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.3.1/catalogs/workflows.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.3.2/catalogs/workflows.json \
   --name speckit-delivery
 
 specify bundle catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.3.1/catalogs/bundles.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.3.2/catalogs/bundles.json \
   --id speckit-delivery --policy install-allowed
 
 specify bundle install speckit-delivery
@@ -161,7 +165,7 @@ specify workflow run feature-delivery \
 
 | Capability | Commands |
 | --- | --- |
-| Routing and delivery | `speckit.delivery.route`, `.doctor`, `.explore`, `.slice`, `.context`, `.lightweight`, `.review-fix`, `.handoff`, `.close` |
+| Routing and delivery | `speckit.delivery.route`, `.doctor`, `.explore`, `.method`, `.slice`, `.context`, `.lightweight`, `.review-fix`, `.handoff`, `.close` |
 | Decision memory | `speckit.decision.context`, `.propose`, `.finalize`, `.check` |
 | Task execution | `speckit.ralph.run` |
 | Defect handling | `speckit.bug.assess`, `.fix`, `.test` (Spec Kit's official Bug extension) |

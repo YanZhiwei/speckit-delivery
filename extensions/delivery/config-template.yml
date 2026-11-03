@@ -6,9 +6,28 @@ artifact_policy: tracked
 issue_tracker: github
 context_files: [AGENTS.md, CONTEXT.md]
 adr_directories: [docs/architecture/decisions]
+# Both bounds must be integers from 1 through 3. Malformed/out-of-range values
+# block; the portable workflows also cap their fixed slots at three.
 max_convergence_rounds: 3
 max_review_fix_rounds: 3
 docs_sync: auto
+# Optional methods inside existing phases. Builtin requires no external skills or
+# extra model round. Explicit skill providers use reviewed local resources only;
+# templates/method-adapter.md owns the source/hash/fallback contract.
+method_adapters:
+  design: {provider: builtin}
+  diagnose: {provider: builtin}
+  review: {provider: builtin}
+# Example replacement for one entry (never resolve a mutable latest version):
+# design:
+#   provider: skill
+#   entrypoint: .agents/skills/example/SKILL.md
+#   origin: owner/repository
+#   revision: <fixed Git SHA or released version>
+#   resources:
+#     - path: .agents/skills/example/SKILL.md
+#       sha256: <64 lowercase hex characters for exact local bytes>
+#   fallback: block # block | builtin; block when omitted
 # Delivery slicing: off | auto | stacked | integration. `auto` derives the mode
 # from trunk-safety evidence; `off` uses one PR. `stacked` and `integration` pin
 # the mode and still require the slice gate.

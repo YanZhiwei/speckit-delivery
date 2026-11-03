@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "bugfix-delivery"
   name: "Spec Kit Bugfix Delivery"
-  version: "0.3.1"
+  version: "0.3.2"
   author: "Yan Zhiwei"
   description: "Evidence-first structure/history exploration, bug assessment and scope approval, repair, regression validation, review, and handoff."
 
@@ -91,7 +91,7 @@ steps:
   - id: quality-brief-before-fix
     command: speckit.quality.brief
     integration: "{{ inputs.integration }}"
-    input: { args: "scope=bugfix {{ inputs.report }}" }
+    input: { args: "lane=bugfix delivery_run={{ inputs.delivery_run }} bug_slug={{ inputs.bug_slug }} assessment=.specify/bugs/{{ inputs.bug_slug }}/assessment.md exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md scope=bugfix {{ inputs.report }} Use this run's approved assessment; do not infer a Feature plan from other runs." }
 
   - id: fix
     command: speckit.bug.fix
@@ -103,25 +103,25 @@ steps:
     integration: "{{ inputs.integration }}"
     input: { args: "slug={{ inputs.bug_slug }} {{ inputs.report }} delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md Read the coordinator-verified assessment reference; stop on a slug mismatch, not a single-candidate guess." }
 
+  - id: package-readme
+    command: speckit.docs-sync.package-readme
+    integration: "{{ inputs.integration }}"
+    input: { args: "delivery_run={{ inputs.delivery_run }} lane=bugfix repair=0 scope=outgoing-diff {{ inputs.report }} Judge package README drift after the final fix; emit PACKAGE_README_VERDICT and INPUT_IDENTITY." }
+
   - id: quality
     command: speckit.quality.check
     integration: "{{ inputs.integration }}"
-    input: { args: "scope=outgoing-diff {{ inputs.report }}" }
+    input: { args: "lane=bugfix delivery_run={{ inputs.delivery_run }} scope=outgoing-diff {{ inputs.report }}" }
 
   - id: standards
     command: speckit.review.standards
     integration: "{{ inputs.integration }}"
-    input: { args: "scope=outgoing-diff {{ inputs.report }}" }
+    input: { args: "lane=bugfix delivery_run={{ inputs.delivery_run }} bug_slug={{ inputs.bug_slug }} assessment=.specify/bugs/{{ inputs.bug_slug }}/assessment.md exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md scope=outgoing-diff {{ inputs.report }} Use this run's approved assessment; do not load a Feature plan from another run." }
 
   - id: simplify
     command: speckit.simplify.scan
     integration: "{{ inputs.integration }}"
-    input: { args: "scope=diff {{ inputs.report }}" }
-
-  - id: package-readme
-    command: speckit.docs-sync.package-readme
-    integration: "{{ inputs.integration }}"
-    input: { args: "delivery_run={{ inputs.delivery_run }} lane=bugfix scope=outgoing-diff {{ inputs.report }} Judge package README drift after the final fix; emit PACKAGE_README_VERDICT." }
+    input: { args: "lane=bugfix delivery_run={{ inputs.delivery_run }} scope=diff {{ inputs.report }}" }
 
   - id: review-loop
     type: do-while
@@ -161,7 +161,7 @@ steps:
   - id: evidence
     command: speckit.evidence.collect
     integration: "{{ inputs.integration }}"
-    input: { args: "{{ inputs.report }}" }
+    input: { args: "lane=bugfix delivery_run={{ inputs.delivery_run }} bug_slug={{ inputs.bug_slug }} evidence=.specify/delivery/{{ inputs.delivery_run }}/evidence.md exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md assessment=.specify/bugs/{{ inputs.bug_slug }}/assessment.md {{ inputs.report }} Read and update only this run's canonical evidence record; use the explicit assessment and original fix/test receipts, bind actual reviewed content and PR identity, and do not require Feature artifacts." }
 
   - id: handoff
     command: speckit.delivery.handoff

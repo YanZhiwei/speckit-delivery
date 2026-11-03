@@ -62,7 +62,8 @@ PR 合并或关闭后，由 `speckit.delivery.close` 记录真实结果。`merge
 
 [Reviewer 契约](extensions/review/templates/reviewer.md) 统一拥有问题和快照规则。
 报告绑定 base／HEAD／merge-base、实际内容和需求，不能只看 HEAD；未提交和相关未跟踪文件
-都计入。只能排除声明的记账内容；ADR／Spec／测试／源码变化会使旧结论失效。问题保留
+都计入。只能排除声明的记账内容；ADR／Spec／测试／源码变化会使旧结论失效。所选可选
+方法的配置／资源身份也属于需求与策略身份，切换提供者同样使旧结论失效。问题保留
 `open → fixed-pending-review → resolved` 或有证据的 `dismissed` 状态；遗漏、新快照和
 修复者声明都不能自动关闭问题。
 

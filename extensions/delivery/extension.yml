@@ -3,8 +3,8 @@ schema_version: "1.0"
 extension:
   id: delivery
   name: Spec Kit Delivery Core
-  version: "0.3.1"
-  description: "Explore and scope delivery work, slice large changes into reviewable increments, initialize local policy, and render a durable pull-request handoff from final evidence."
+  version: "0.3.2"
+  description: "Explore and scope delivery work, select optional design/diagnosis/review methods, slice large changes into reviewable increments, initialize local policy, and render a durable pull-request handoff from final evidence."
   category: process
   effect: read-write
   author: Yan Zhiwei
@@ -23,6 +23,9 @@ provides:
     - name: speckit.delivery.explore
       file: commands/speckit.delivery.explore.md
       description: "Investigate code, history, and open-source references; present current and candidate directory trees for scope review."
+    - name: speckit.delivery.method
+      file: commands/speckit.delivery.method.md
+      description: "Apply a configured design, diagnosis/testing, or review method within the existing phase and return scope-bound analysis."
     - name: speckit.delivery.slice
       file: commands/speckit.delivery.slice.md
       description: "Plan independently reviewable delivery slices, classify trunk safety, and select the merge mode."

@@ -28,10 +28,21 @@ an implementer's self-review or a checklist of test successes.
    requirements/design/exploration, applicable governance/ADRs, real diff and
    caller context, verification evidence, and previous finding state. A Bugfix
    uses its assessment; Lightweight uses its bounded request, not a forced Spec.
+   An absent `method_adapters.review` or builtin selection uses this native
+   contract directly, with no additional review/model round or Delivery dependency.
+   For an explicitly configured external method, read the installed
+   `.specify/extensions/delivery/templates/method-adapter.md` to validate selection,
+   local resources, and fallback/block policy before dispatch. A missing helper
+   uses only the explicit fallback/block policy; never install it automatically.
 3. Prefer a fresh reviewer context independent of the implementer. Pass the
    packet and source paths, not the entire implementation conversation or
    instructions to suppress particular defects. A task needs one scoped reviewer,
    not a fan-out of nested reviewers. Final review remains broad across tasks.
+   When an external method is selected, give that same reviewer the installed
+   `speckit.delivery.method phase=review`, native Reviewer contract, and verified
+   resource/config packet. It applies the method inside this context and returns
+   the native report plus its method receipt; do not run an extra provider review
+   in the coordinator or dispatch another reviewer from inside the helper.
    If independent execution is unavailable, report `independence: self-review`;
    it is incomplete unless the user explicitly accepted that degradation for
    this scope. Do not silently equate self-review with independent review.
@@ -40,17 +51,29 @@ an implementer's self-review or a checklist of test successes.
    or tracker resources. Do not dispatch additional reviewers from the reviewer.
    Reuse valid Quality/Standards evidence for exactly the same code and scope;
    independently judge all six dimensions instead of skipping quality/design.
+   When a repair affected any README-affecting surface defined by package-readme
+   (public API/CLI/config/default, compatibility, dependencies, error behavior,
+   development/test commands, release/versioning, ownership), verify its
+   `DOCS_REFRESH` result against current contents and configured Docs Sync
+   policy; a required blocked or stale refresh is a compatibility/documentation
+   coverage gap.
 5. The coordinator checks the report, records it, and presents findings and
-   per-dimension verdicts to the user. Keep one current report and stable finding
+   per-dimension verdicts to the user. Validate the `method_receipt` when an
+   external method was selected: status/provider, entrypoint, origin/revision,
+   resource hashes, fallback reason, restrictions, and input identity must match
+   the verified selection; a missing or mismatched receipt is an incomplete
+   report, not a pass. Keep one current report and stable finding
    IDs at `.specify/delivery/<feature-or-run>/reviews/<scope>/review.yml` when an
    actual run location exists, honoring artifact policy; otherwise preserve it
    explicitly in context. Exclude only declared review/receipt bookkeeping from
    the reviewed-content fingerprint, not source/tests/spec/policy changes.
 6. Reconcile every earlier unresolved finding explicitly. Missing from this
    output does not mean resolved. A changed HEAD, worktree content, requirements,
-   or relevant caller invalidates reuse; same-HEAD reruns can still review new
-   uncommitted contents. A malformed report, missing axis, coverage gap, stale
-   snapshot, or required evidence/independence gap cannot return pass.
+   relevant caller, or selected method/config resource identity invalidates reuse;
+   same-HEAD reruns can still review new uncommitted contents. A method receipt
+   alone never supplies the native verdict, coverage, or independence evidence.
+   A malformed report, missing axis, coverage gap, stale snapshot, or required
+   evidence/independence gap cannot return pass.
 ## Discipline checks
 
 Apply these discipline checks to the changed code:

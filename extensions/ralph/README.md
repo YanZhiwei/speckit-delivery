@@ -9,17 +9,23 @@ time until the task queue is complete.
 The portable mode is deliberately sequential because each completed task owns
 one Git commit in the shared worktree:
 
-1. Before task selection or editing, require a clean Git worktree, create or
-   reuse `ralph/<feature-slug>`, and verify that it is the active branch.
+1. Before task selection or editing, require a clean Git worktree, resolve the
+   configured `branch_prefix` (default `ralph/`), create or reuse the ordinary
+   `<branch_prefix><feature-slug>` branch, and verify that it is active. A sliced
+   `single` plan keeps this branch; `stacked` and `integration` use
+   `<branch_prefix><feature-slug>/<slice-id>` from their approved bases.
 2. Report the applicable governance sources, closure gates, and stop conditions.
-3. Select exactly one dependency-ready task and emit its task governance packet.
+3. Select exactly one dependency-ready task from `tasks.md` and emit its task
+   governance packet.
 4. Read the task's Spec/Plan/ADR context and run `speckit.quality.brief`.
 5. Implement the task and run its checks.
 6. Run `speckit.quality.check`, `speckit.review.standards`, and independent
    `speckit.review.run scope=task task=<id>` across six dimensions.
 7. Before changing `[ ]` to `[X]`, verify acceptance evidence, all three current
    passing verdicts, unchanged code/requirements snapshot (not HEAD alone), allowed
-   paths, and available required checks.
+   paths, available required checks, and — when the task changes a README-affecting
+   package surface or a repair requires it — a current non-blocked `DOCS_REFRESH`
+   (otherwise an explicit not-applicable reason).
 8. When the task gate passes, mark `[X]` and write the receipt, then immediately
    commit the verified task paths with
    `feat(ralph): <task-id> - <task-title>`.
@@ -27,8 +33,22 @@ one Git commit in the shared worktree:
 10. Emit `<promise>ALL_TASKS_DONE</promise>` only when every task is committed
    and has a passing snapshot-bound receipt associated with its verified commit.
 
+For a direct sliced invocation, pass the workflow's exact
+`delivery_run`, `exploration`, `slices`, and `slice_approval` arguments. The
+command requires the canonical `.specify/delivery/<delivery_run>/slices.md`, an
+unchanged approved snapshot, and `SLICE_APPROVAL: approved`; `slices.md` remains
+boundary metadata, never another queue. The packaged
+[Slice execution template](templates/slice-execution.md) owns the detailed
+`single`/`stacked`/`integration` branch and boundary sequence. Ralph stops after
+the current slice's task commits, records target-prefix, flag, or integration
+checkpoint evidence in that run's `slice-verdicts.yml`, and starts another slice
+only after `SLICE_READY: <slice-id>`. A failed or unknown check blocks the next
+slice. A no-slice invocation keeps the ordinary task contract above.
+
 Workers report their results; the orchestrator owns task closure and commits.
-It never stashes, resets, cleans, or stages unrelated pre-existing changes.
+It never stashes, resets, cleans, or stages unrelated pre-existing changes. It
+also never creates, pushes, or merges a PR; Handoff and the separately authorized
+PR outcome own those transitions.
 
 Confirmed review findings return through `delivery.review-fix` to the same open
 task, without recursive Ralph. Repairs use Delivery's configured budget and keep

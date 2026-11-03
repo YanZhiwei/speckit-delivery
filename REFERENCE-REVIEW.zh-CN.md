@@ -42,3 +42,44 @@ Code Review 与 Standards Review 从
 它“最后推送到主线”和按频率提交的建议与本分发明确的授权边界和任务门禁冲突；其
 CRAP/重复度/变异工具只输出报告、不会让进程失败，必须先有项目自有 wrapper 才能成为
 Quality Gate 命令。
+
+## 架构 Skill 方法参考
+
+2026-11-03 按固定提交读取了以下 MIT 开源方法，源码链接见
+[英文调研表](REFERENCE-REVIEW.md#architecture-skill-methods)。这些来源不作为必装依赖；
+实际执行契约由 Delivery 取证模板中的 [Plan 检查点](extensions/delivery/templates/exploration.md#architecture-constraints)
+统一维护。
+
+- Jeffallan `architecture-designer`：借鉴非功能需求、方案取舍、运维成本和失败模式检查；
+  示例指标不成为项目要求，示例 Accepted ADR 不绕过 SD 的 Proposed／评审／定稿流程。
+- Matt Pocock `codebase-design` 和 `Design It Twice`：借鉴接口方案比较、调用方认知负担、
+  状态／复杂度归属和接口测试；保留项目术语，不强制三 Agent 并行或全仓架构扫描。
+- Superpowers `brainstorming`：借鉴先读现状、比较方案、明确约束；复用 SD 已有确认点，
+  不引入另一轮问答、设计文档和规划队列。
+- wshobson `architecture-patterns`：后端场景可参考依赖方向、数据归属和测试边界；
+  Clean／Hexagonal／DDD 按需要选择，不强迫所有项目分层。
+
+Architecture Guard 3.5.0 已是相邻的完整编排方案，其独立安装器为主入口，旧 Spec Kit
+扩展仅接收安全与故障修复。SD 不将其设为前置依赖，也不继承默认不阻断的违规策略。
+
+共享 [方法适配器契约](extensions/delivery/templates/method-adapter.md) 把上述来源规则
+落实为设计、诊断测试、评审三个可选提供者流程：校验本地资源摘要，默认 builtin，只向
+现有 owner 返回分析；不继承来源 Skill 的计划、队列、修复预算、提交或评审关闭权。
+
+可选诊断与评审 profile 采用同一来源规则，固定快照与取舍：
+
+- Superpowers `systematic-debugging`：借鉴稳定复现、跨边界取证、正常／故障路径对比、
+  单一假设与最小实验；其修复／TDD／完成循环不替代官方 Bug 与 SD 修复预算。
+- Superpowers `writing-good-tests`：借鉴有意义的接口行为、独立推导期望值和可命名的
+  真实缺陷；不把“所有改动必须先写测试”变成通用闸门，测试策略仍由项目决定。
+- Superpowers `requesting-code-review`：借鉴新上下文、精确 scope、带位置和证据的问题；
+  其提交／Worktree 假设及预算耗尽后搁置问题不能替代 SD 关闭规则。
+- Matt Pocock `tdd`：借鉴公共接口行为测试、单条纵向红绿循环、重构留给评审；用户确认
+  seam 与仓库命令不是通用默认值。
+- Matt Pocock `code-review`：借鉴规范与需求分轴、仓库规则优先；两轴报告不能替代 SD
+  六维、快照和问题生命周期。
+
+固定源码链接见 [英文参考评审](REFERENCE-REVIEW.md#workflow-method-references)。已可用
+Skill 的额外方法仍需记录版本／内容哈希、资源路径和采纳／拒绝理由，先作为候选建议。
+项目治理和已批准设计决定约束，Quality 运行项目自有检查；隐式导入或运行时 DI 等无法
+读取的图覆盖范围必须如实报告，不能以绿色结果代替未执行的验证。

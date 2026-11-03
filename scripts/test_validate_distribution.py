@@ -108,6 +108,124 @@ class DistributionContractTest(unittest.TestCase):
                 errors = validator.validate(root)
                 self.assertTrue(any("slice" in error for error in errors), errors)
 
+    def test_method_command_and_templates_must_ship(self) -> None:
+        for relative in (
+            "extensions/delivery/commands/speckit.delivery.method.md",
+            "extensions/delivery/templates/method-adapter.md",
+            "extensions/delivery/templates/method-design.md",
+            "extensions/delivery/templates/method-diagnose.md",
+            "extensions/delivery/templates/method-review.md",
+        ):
+            with self.subTest(relative=relative):
+                root = self.fixture()
+                (root / relative).unlink()
+                errors = validator.validate(root)
+                self.assertTrue(
+                    any("method" in error for error in errors), errors
+                )
+
+    def test_method_config_defaults_to_builtin(self) -> None:
+        root = self.fixture()
+        path = root / "extensions/delivery/config-template.yml"
+        config = yaml.safe_load(path.read_text(encoding="utf-8"))
+        self.assertEqual(
+            config["method_adapters"],
+            {
+                "design": {"provider": "builtin"},
+                "diagnose": {"provider": "builtin"},
+                "review": {"provider": "builtin"},
+            },
+        )
+        path.write_text(
+            path.read_text(encoding="utf-8").replace("method_adapters:", "methods:"),
+            encoding="utf-8",
+        )
+        errors = validator.validate(root)
+        self.assertTrue(any("method_adapters" in error for error in errors), errors)
+
+    def test_review_fix_must_wire_repair_docs(self) -> None:
+        root = self.fixture()
+        path = root / "extensions/delivery/commands/speckit.delivery.review-fix.md"
+        path.write_text(
+            path.read_text(encoding="utf-8").replace("templates/repair-docs.md", "templates/other.md"),
+            encoding="utf-8",
+        )
+        errors = validator.validate(root)
+        self.assertTrue(any("documentation refresh" in error for error in errors), errors)
+
+    def test_package_readme_repair_contract_must_ship(self) -> None:
+        root = self.fixture()
+        path = root / "extensions/docs-sync/commands/speckit.docs-sync.package-readme.md"
+        path.write_text(
+            path.read_text(encoding="utf-8").replace("INPUT_IDENTITY", "IDENTITY"),
+            encoding="utf-8",
+        )
+        errors = validator.validate(root)
+        self.assertTrue(any("INPUT_IDENTITY" in error for error in errors), errors)
+
+    def test_repair_docs_template_must_ship(self) -> None:
+        root = self.fixture()
+        (root / "extensions/delivery/templates/repair-docs.md").unlink()
+        errors = validator.validate(root)
+        self.assertTrue(any("repair-docs" in error for error in errors), errors)
+
+    def test_package_readme_must_carry_lane(self) -> None:
+        root = self.fixture()
+        path = root / "workflows/bugfix-delivery/workflow.yml"
+        workflow = yaml.safe_load(path.read_text(encoding="utf-8"))
+        node = next(step for step in workflow["steps"] if step.get("id") == "package-readme")
+        node["input"]["args"] = node["input"]["args"].replace("lane=bugfix ", "")
+        path.write_text(
+            yaml.safe_dump(workflow, sort_keys=False, allow_unicode=True),
+            encoding="utf-8",
+        )
+        errors = validator.validate(root)
+        self.assertTrue(any("package-readme must pass lane=bugfix" in error for error in errors), errors)
+
+    def test_slice_approval_writer_must_follow_the_gate(self) -> None:
+        root = self.fixture()
+        path = root / "workflows/feature-delivery/workflow.yml"
+        workflow = yaml.safe_load(path.read_text(encoding="utf-8"))
+        workflow["steps"] = [
+            step for step in workflow["steps"] if step.get("id") != "slice-approval"
+        ]
+        path.write_text(
+            yaml.safe_dump(workflow, sort_keys=False, allow_unicode=True),
+            encoding="utf-8",
+        )
+        errors = validator.validate(root)
+        self.assertTrue(any("slice-approval" in error for error in errors), errors)
+
+    def test_slice_approval_contract_must_ship(self) -> None:
+        root = self.fixture()
+        path = root / "extensions/delivery/commands/speckit.delivery.slice.md"
+        path.write_text(
+            path.read_text(encoding="utf-8").replace("SLICE_APPROVAL_RECORD", "APPROVAL"),
+            encoding="utf-8",
+        )
+        errors = validator.validate(root)
+        self.assertTrue(any("approval contract" in error for error in errors), errors)
+
+    def test_ralph_task_closure_must_carry_docs_gate(self) -> None:
+        root = self.fixture()
+        path = root / "extensions/ralph/commands/speckit.ralph.run.md"
+        path.write_text(
+            path.read_text(encoding="utf-8").replace("DOCS_REFRESH", "DOCS_STATUS"),
+            encoding="utf-8",
+        )
+        errors = validator.validate(root)
+        self.assertTrue(any("documentation gate" in error for error in errors), errors)
+
+    def test_reviewer_report_must_carry_method_receipt(self) -> None:
+        root = self.fixture()
+        path = root / "extensions/review/templates/reviewer.md"
+        path.write_text(
+            path.read_text(encoding="utf-8").replace("method_receipt:", "method:"),
+            encoding="utf-8",
+        )
+        errors = validator.validate(root)
+        self.assertTrue(any("method_receipt" in error for error in errors), errors)
+
     def test_close_command_must_ship(self) -> None:
         root = self.fixture()
         (root / "extensions/delivery/commands/speckit.delivery.close.md").unlink()
@@ -139,6 +257,27 @@ class DistributionContractTest(unittest.TestCase):
                 self.assertTrue(
                     any("package-readme" in error for error in errors), errors
                 )
+
+    def test_package_readme_must_precede_quality_checks(self) -> None:
+        root = self.fixture()
+        path = root / "workflows/lightweight-delivery/workflow.yml"
+        workflow = yaml.safe_load(path.read_text(encoding="utf-8"))
+        steps = workflow["steps"]
+        node = next(step for step in steps if step.get("id") == "package-readme")
+        steps.remove(node)
+        quality_index = next(
+            index for index, step in enumerate(steps) if step.get("id") == "quality"
+        )
+        steps.insert(quality_index + 1, node)
+        path.write_text(
+            yaml.safe_dump(workflow, sort_keys=False, allow_unicode=True),
+            encoding="utf-8",
+        )
+        errors = validator.validate(root)
+        self.assertTrue(
+            any("package-readme must run before quality" in error for error in errors),
+            errors,
+        )
 
     def test_package_readme_must_not_run_after_review(self) -> None:
         root = self.fixture()

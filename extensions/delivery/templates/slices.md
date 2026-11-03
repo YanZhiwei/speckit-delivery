@@ -74,12 +74,16 @@ plan, not an execution queue.
 ## Approval record
 
 - SLICE_PLAN_VERDICT: ready | blocked | needs_decision
-- SLICE_APPROVAL: pending
-- Approved by: <recorded by the gate, not this template>
+- SLICE_PLAN_FINGERPRINT: <method and digest of the presented plan>
+- SLICE_APPROVAL: pending | approved | rejected
+- Approved by: <human user; recorded by the post-gate writer, not this template>
 - Choice / accepted risks: <actual user decision>
 - Approved mode / snapshot: <mode and HEAD/content fingerprint>
+- Approved at: <gate decision time>
 
-The gate records the actual approval here or in preserved context. A ready plan,
-a successful command, or an agent recommendation is not approval. Re-run slice
-planning when material scope, task mapping, a prefix check, or the merge policy
-changes.
+The gate displays this exact plan. After the gate, Delivery's
+`action=record-approval` writer records the actual choice and current snapshot
+here; the gate itself does not edit this file. A ready plan, a successful
+command, or an agent recommendation is not approval, and context-only approval
+cannot authorize Ralph. Re-run slice planning when material scope, task mapping,
+a prefix check, or the merge policy changes.

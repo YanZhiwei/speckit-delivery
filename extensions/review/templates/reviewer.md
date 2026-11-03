@@ -37,8 +37,12 @@ Report each dimension separately, with evidence or a reason no surface applies:
    resource ownership/lifecycle, unnecessary abstraction, dead code, and maintainability.
 3. **architecture**: directory/module ownership, dependency direction, interfaces,
    data ownership, cohesion/coupling, project design standards, and Plan/ADR
-   consistency. Check both compliance and whether the design itself has a concrete
-   defect. Label plan-mandated defects; return them for scope/Plan/ADR decisions
+   consistency. For Feature, trace applicable approved Plan architecture
+   constraint IDs to implementation and verification evidence, including gaps
+   marked planned, semantic-only, or unsupported; these labels do not prove a
+   pass. External skill preferences alone do not establish a violation. Check
+   both compliance and whether the design itself has a concrete defect.
+   Label plan-mandated defects; return them for scope/Plan/ADR decisions
    instead of silently redesigning the system.
 4. **correctness**: input boundaries, state transitions, concurrency, ordering,
    retries, idempotency, partial failure, timeouts, and degradation paths.
@@ -114,13 +118,23 @@ snapshot:
   head: <sha>
   merge_base: <sha>
   content_fingerprint: <hash and method>
-  requirements_fingerprint: <hash and method>
+  requirements_fingerprint: <hash and method> # includes selected method/config/resource identity
   bookkeeping_exclusions: []
 coverage:
   reviewed: [] # repository-relative paths and critical consumers
   partial: []
   unreviewed: []
   excluded: [] # reason for genuinely outside-scope/generated paths
+method_receipt:
+  status: builtin | applied | fallback | blocked
+  provider: builtin | skill
+  origin: <owner/repository or not-applicable>
+  revision: <fixed revision or not-applicable>
+  entrypoint: <repository-relative path or not-applicable>
+  resources: [] # path + sha256 pairs actually verified
+  fallback_reason: <exact reason or none>
+  restrictions: host-enforced | instructions-only | unavailable
+  input_identity: <method/config/resource identity or not-applicable>
 dimensions:
   requirements: { verdict: pass | blocked | incomplete, evidence: [] }
   code_quality: { verdict: pass | blocked | incomplete, evidence: [] }
@@ -137,8 +151,10 @@ limitations: []
 Aggregation: any confirmed unresolved blocker makes the overall verdict blocked.
 Otherwise any incomplete dimension, missing required evidence/axis, stale
 snapshot, partial/unreviewed required coverage, unresolved high-impact question,
-or unaccepted self-review degradation makes it incomplete. Only complete current
-coverage, supported dimension verdicts, and no unresolved blockers allow pass.
+or unaccepted self-review degradation makes it incomplete. A missing or mismatched
+`method_receipt` when an external method was selected also makes it incomplete.
+Only complete current coverage, supported dimension verdicts, and no unresolved
+blockers allow pass.
 Non-applicable dimensions still appear with an evidence-backed explanation;
 do not silently omit them or label an unexamined dimension pass.
 

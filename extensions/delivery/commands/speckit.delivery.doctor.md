@@ -31,16 +31,25 @@ installed `speckit.delivery.explore` command and its
 `templates/exploration.md` resource. Check that Feature places exploration and
 scope approval before specify, and that Bugfix consumes exploration before its
 assessment/scope gate. The existing Feature plan gate must require presentation
-of the finalized tree, responsibilities, interfaces, and tests. Report an old
+of the finalized tree, responsibilities, interfaces, tests, and the template's
+Architecture constraints coverage. Verify the final presented plan/input identity
+is recorded after Decision Propose and before the plan gate, Tasks validates it
+before binding the actual choice, and the workflow carries the exact packet/plan
+reference, constraint IDs, and verification work into later consumers. Brief and
+Standards invocations must carry explicit lane/run context; Feature supplies its
+canonical exploration reference. Report an old
 installation missing these contracts as stale; do not modify it silently.
 
 Also verify Delivery ships `speckit.delivery.slice` and
-`templates/slices.md`, and that the Feature workflow places a `slice` plan and
-`slice-gate` after plan approval/task generation and before analysis/Ralph. The
-slice step must receive the canonical `delivery_run`, the approved design choice,
-and the exact `slices.md` path; Ralph, final Review, and Handoff must consume that
-path. A Feature workflow that still goes from tasks directly to analysis/Ralph
-without slice planning is stale for large changes.
+`templates/slices.md`, and that the Feature workflow places a `slice` plan,
+`slice-gate`, and post-gate `slice-approval` writer after plan approval/task
+generation and before analysis/Ralph. The slice step must receive the canonical
+`delivery_run`, the approved design choice, and the exact `slices.md` path; the
+post-gate writer must receive the real gate choice and write
+`SLICE_APPROVAL: approved|rejected` plus the unchanged plan fingerprint. Ralph,
+final Review, and Handoff must consume that path. A Feature workflow that still
+goes from tasks directly to analysis/Ralph without slice planning, or lacks the
+post-gate approval record, is stale for large changes.
 
 Validate `pr_slicing`, `slice_warn_files`, `slice_warn_lines`,
 `slice_requires_approval`, `stack_provider`, and `merge_policy`. Reject an
@@ -81,14 +90,31 @@ supports task/final scopes, six dimension verdicts, independence/coverage, and
 content-bound findings; Delivery ships `speckit.delivery.review-fix`; Ralph
 requires `REVIEW_VERDICT` before closing a task. All three lane workflows need
 bounded review/repair slots, a final review,
-and an aborting review gate before delivery. Verify configured repair bounds are
-positive integers and explain the portable three-slot ceiling. A stale two-verdict
-Ralph or report-less review path is a blocker, not compatibility by assumption.
+and an aborting review gate before delivery. Verify `max_review_fix_rounds` and
+`max_convergence_rounds` are integers from 1 through 3, and explain the portable
+three-slot/loop ceiling. A malformed, zero, negative, or out-of-range bound is a
+blocker, not permission to default silently. A stale two-verdict Ralph or
+report-less review path is a blocker, not compatibility by assumption.
 
 Verify the Bugfix continuation adapter ships; initial official fix/test reports
 must not be overwritten or their automated refusal bypassed during re-review.
 Quality must emit original checked-input/configuration receipts; HEAD/path-only
 hook reuse is stale, not compatible with snapshot-bound task closure.
+
+Validate `method_adapters` when present. Only `design`, `diagnose`, and `review`
+are valid keys; each must be an object with `provider: builtin|skill`; an absent
+key defaults to builtin, while an unknown phase key is invalid. For `skill`, require
+a project-relative/absolute `entrypoint` in a non-empty `resources` list, `origin`,
+immutable `revision`, and one well-formed `sha256` digest per unique path; verify
+exact local bytes and that all needed profile guidance is manifested. A `builtin`
+entry must not claim external resources. Malformed/unknown fields, duplicate paths,
+bad digests, or a missing entrypoint are invalid and always block. A valid
+selection whose resource is missing/unreadable or whose host capability is
+unavailable may use `fallback: builtin` only when explicitly configured; otherwise
+it blocks. `fallback` defaults to `block`. Do not require or install an external
+skill for the builtin default. Record phase/provider and either `skill-verified`,
+`builtin-fallback`, or `blocked` with concrete remediation. A missing optional
+method map is not a gap.
 
 CodeGraph, network access, and GitHub credentials are investigation capabilities,
 not unconditional installation prerequisites. Exploration reports fallback or
@@ -100,6 +126,22 @@ owner and credible mechanism. Mechanical rules belong to Quality; semantic
 rules such as DRY, ownership, and architecture must name Standards Review,
 Simplify, or ADR as their owner. A rule with no mechanism is a governance gap,
 not a passing rule.
+
+For the known target area, follow architecture-policy references from agent
+instructions, Constitution, active ADRs, Delivery context, Quality policy sources,
+and owning-module docs. Do not require a file named `ARCHITECTURE.md` or every
+source in every configuration list. A policy already reachable through a verified
+reference is discovered. Report `architecture-context-unwired` when an applicable
+authoritative source is missing/unreadable or will not reach its Plan/Brief/Review
+consumer; cite the source, affected paths, and missing link. Report
+`architecture-policy-uncovered` when a discovered binding architecture rule lacks
+a verification owner or credible mechanism for those paths. Distinguish existing
+executable enforcement from semantic review and planned enforcement; no checker
+means no automated coverage. An empty source list alone proves neither a gap nor
+coverage. When scope is not yet known, state what must be resolved during
+exploration/planning instead of claiming architectural coverage. Missing optional
+external skills do not block installation. Never generate policy, install skills,
+or waive binding rules to make Doctor pass.
 
 Return:
 
@@ -115,6 +157,8 @@ POLICY_COVERAGE:
 SLICE_POLICY:
 - mode: <off|auto|stacked|integration>; provider: <verified|manual|missing>
 - gate: <present|missing>; merge: <slice/final/sync>
+METHOD_ADAPTERS:
+- <design|diagnose|review>: builtin | skill-verified | builtin-fallback | blocked — <origin/revision/entrypoint, resource status, fallback reason>
 BLOCKERS:
 - <id or none>: <remediation>
 RECORDS:

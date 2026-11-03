@@ -203,9 +203,13 @@ def _check_review_workflow(
             "speckit.delivery.doctor", "speckit.delivery.explore",
             "speckit.delivery.slice", "speckit.ralph.run", "speckit.review.run",
             "speckit.delivery.review-fix", "speckit.delivery.handoff",
+            "speckit.delivery.method",
         }:
-            if "delivery_run={{ inputs.delivery_run }}" not in str(step.get("input", {}).get("args", "")):
+            args = str(step.get("input", {}).get("args", ""))
+            if "delivery_run={{ inputs.delivery_run }}" not in args:
                 errors.append(f"{label}: {step.get('id')} must forward the canonical delivery_run")
+            if f"lane={workflow_id.removesuffix('-delivery')}" not in args:
+                errors.append(f"{label}: {step.get('id')} must forward the actual lane")
         for key in ("steps", "then", "else"):
             for child in step.get(key, []):
                 if isinstance(child, dict):
@@ -256,7 +260,15 @@ def _check_slice_workflow(
         if isinstance(step, dict):
             by_id.setdefault(str(step.get("id")), []).append((index, step))
 
-    ordered = ("tasks", "slice", "slice-gate", "analyze", "ralph")
+    ordered = (
+        "tasks",
+        "slice",
+        "analyze",
+        "analyze-gate",
+        "slice-gate",
+        "slice-approval",
+        "ralph",
+    )
     positions: dict[str, int] = {}
     for step_id in ordered:
         matches = by_id.get(step_id, [])
@@ -265,10 +277,20 @@ def _check_slice_workflow(
             continue
         index, step = matches[0]
         positions[step_id] = index
-        if step_id in {"slice", "slice-gate", "ralph"} and step.get("continue_on_error"):
+        if step_id in {"slice", "slice-gate", "slice-approval", "ralph"} and step.get("continue_on_error"):
             errors.append(f"{label}: {step_id} cannot continue on error")
-        if step_id == "slice" and step.get("command") != "speckit.delivery.slice":
-            errors.append(f"{label}: slice must invoke speckit.delivery.slice")
+        if step_id in {"slice", "slice-approval"} and step.get("command") != "speckit.delivery.slice":
+            errors.append(f"{label}: {step_id} must invoke speckit.delivery.slice")
+        if step_id == "slice-approval":
+            approval_args = str(step.get("input", {}).get("args", ""))
+            for needle in (
+                "action=record-approval",
+                "delivery_run={{ inputs.delivery_run }}",
+                "slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md",
+                "slice_approval={{ steps.slice-gate.output.choice }}",
+            ):
+                if needle not in approval_args:
+                    errors.append(f"{label}: slice-approval must pass {needle}")
         if step_id == "slice-gate":
             expected_file = ".specify/delivery/{{ inputs.delivery_run }}/slices.md"
             if step.get("show_file") != expected_file:
@@ -302,9 +324,8 @@ def _check_slice_workflow(
         args = args_by_id.get(step_id, "")
         if "slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md" not in args:
             errors.append(f"{label}: {step_id} must consume the exact slices path")
-    for step_id in ("analyze", "ralph"):
-        if "slice_approval={{ steps.slice-gate.output.choice }}" not in args_by_id.get(step_id, ""):
-            errors.append(f"{label}: {step_id} must forward the actual slice-gate choice")
+    if "slice_approval={{ steps.slice-gate.output.choice }}" not in args_by_id.get("ralph", ""):
+        errors.append(f"{label}: ralph must forward the actual slice-gate choice")
     if "mode=auto" not in args_by_id.get("handoff", ""):
         errors.append(f"{label}: handoff must resolve slice versus rollup mode")
 
@@ -315,8 +336,8 @@ def _check_package_readme_workflow(
     """Require the package README judgment before review in every lane."""
     prerequisites = {
         "feature-delivery": "docs-sync",
-        "bugfix-delivery": "simplify",
-        "lightweight-delivery": "standards",
+        "bugfix-delivery": "regression-test",
+        "lightweight-delivery": "implement",
     }
     if workflow_id not in prerequisites:
         return
@@ -339,7 +360,12 @@ def _check_package_readme_workflow(
     if step.get("continue_on_error"):
         errors.append(f"{label}: package-readme cannot continue on error")
     args = str(step.get("input", {}).get("args", ""))
-    for needle in ("delivery_run={{ inputs.delivery_run }}", "scope=outgoing-diff"):
+    lane = workflow_id.removesuffix("-delivery")
+    for needle in (
+        "delivery_run={{ inputs.delivery_run }}",
+        f"lane={lane}",
+        "scope=outgoing-diff",
+    ):
         if needle not in args:
             errors.append(f"{label}: package-readme must pass {needle}")
 
@@ -348,6 +374,17 @@ def _check_package_readme_workflow(
         errors.append(f"{label}: expected exactly one review-loop step")
     elif index >= reviews[0][0]:
         errors.append(f"{label}: package-readme must run before review-loop")
+    for step_id in (
+        "quality",
+        "standards",
+        "quality-after-simplify",
+        "standards-after-simplify",
+    ):
+        for later_index, _ in by_id.get(step_id, []):
+            if later_index < index:
+                errors.append(
+                    f"{label}: package-readme must run before {step_id} so docs are covered by current checks"
+                )
 
     prerequisite = prerequisites[workflow_id]
     before = by_id.get(prerequisite, [])
@@ -460,16 +497,48 @@ def validate(root: Path, expected_version: str | None = None) -> list[str]:
                 "speckit.delivery.review-fix",
                 "speckit.delivery.slice",
                 "speckit.delivery.close",
+                "speckit.delivery.method",
             ):
                 if required not in command_names:
                     errors.append(f"{manifest_path}: missing {required} command")
             template = manifest_path.parent / "templates" / "exploration.md"
             if not template.is_file():
                 errors.append(f"{manifest_path}: missing templates/exploration.md")
-            if not (manifest_path.parent / "templates" / "slices.md").is_file():
+            slices_template = manifest_path.parent / "templates" / "slices.md"
+            if not slices_template.is_file():
                 errors.append(f"{manifest_path}: missing templates/slices.md")
-            if not (manifest_path.parent / "templates" / "bugfix-review-repair.md").is_file():
-                errors.append(f"{manifest_path}: missing templates/bugfix-review-repair.md")
+            elif "SLICE_PLAN_FINGERPRINT" not in slices_template.read_text(encoding="utf-8"):
+                errors.append(f"{slices_template}: missing slice plan fingerprint record")
+            slice_command = manifest_path.parent / "commands" / "speckit.delivery.slice.md"
+            if slice_command.is_file():
+                slice_text = slice_command.read_text(encoding="utf-8")
+                for needle in (
+                    "action=record-approval",
+                    "SLICE_PLAN_FINGERPRINT",
+                    "SLICE_APPROVAL_RECORD",
+                ):
+                    if needle not in slice_text:
+                        errors.append(f"{slice_command}: missing {needle!r} approval contract")
+            for required_template in (
+                "bugfix-review-repair.md",
+                "repair-docs.md",
+                "method-adapter.md",
+                "method-design.md",
+                "method-diagnose.md",
+                "method-review.md",
+            ):
+                if not (
+                    manifest_path.parent / "templates" / required_template
+                ).is_file():
+                    errors.append(
+                        f"{manifest_path}: missing templates/{required_template}"
+                    )
+            method_config = manifest_path.parent / "config-template.yml"
+            if (
+                method_config.is_file()
+                and "method_adapters:" not in method_config.read_text(encoding="utf-8")
+            ):
+                errors.append(f"{method_config}: missing method_adapters settings")
             handoff = manifest_path.parent / "commands" / "speckit.delivery.handoff.md"
             if handoff.is_file():
                 handoff_text = handoff.read_text(encoding="utf-8")
@@ -494,6 +563,14 @@ def validate(root: Path, expected_version: str | None = None) -> list[str]:
                         f"{doctor}: Doctor must not use an extension-relative "
                         "Reviewer path that the host rewrites to Delivery"
                     )
+            review_fix = manifest_path.parent / "commands" / "speckit.delivery.review-fix.md"
+            if review_fix.is_file():
+                text = review_fix.read_text(encoding="utf-8")
+                for needle in ("templates/repair-docs.md", "DOCS_REFRESH"):
+                    if needle not in text:
+                        errors.append(
+                            f"{review_fix}: repair must handle documentation refresh ({needle!r})"
+                        )
             close = manifest_path.parent / "commands" / "speckit.delivery.close.md"
             if close.is_file():
                 close_text = close.read_text(encoding="utf-8")
@@ -511,6 +588,16 @@ def validate(root: Path, expected_version: str | None = None) -> list[str]:
                 errors.append(
                     f"{manifest_path}: missing speckit.docs-sync.package-readme command"
                 )
+            package_readme = (
+                manifest_path.parent / "commands" / "speckit.docs-sync.package-readme.md"
+            )
+            if package_readme.is_file():
+                text = package_readme.read_text(encoding="utf-8")
+                for needle in ("repair=1", "INPUT_IDENTITY"):
+                    if needle not in text:
+                        errors.append(
+                            f"{package_readme}: package README repair contract missing {needle!r}"
+                        )
             template = manifest_path.parent / "templates" / "package-readme.md"
             if not template.is_file():
                 errors.append(f"{manifest_path}: missing templates/package-readme.md")
@@ -522,10 +609,24 @@ def validate(root: Path, expected_version: str | None = None) -> list[str]:
                 errors.append(
                     f"{config_template}: missing package_readme setting"
                 )
+        if extension_id == "ralph":
+            template = manifest_path.parent / "templates" / "slice-execution.md"
+            if not template.is_file():
+                errors.append(f"{manifest_path}: missing templates/slice-execution.md")
+            ralph_command = manifest_path.parent / "commands" / "speckit.ralph.run.md"
+            if ralph_command.is_file():
+                text = ralph_command.read_text(encoding="utf-8")
+                for needle in ("DOCS_REFRESH", "with_docs_sync"):
+                    if needle not in text:
+                        errors.append(
+                            f"{ralph_command}: missing task-closure documentation gate {needle!r}"
+                        )
         if extension_id == "review":
             template = manifest_path.parent / "templates" / "reviewer.md"
             if not template.is_file():
                 errors.append(f"{manifest_path}: missing templates/reviewer.md")
+            elif "method_receipt:" not in template.read_text(encoding="utf-8"):
+                errors.append(f"{template}: missing method_receipt report field")
 
     workflow_entries = _mapping(
         workflow_catalog.get("workflows"),
