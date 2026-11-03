@@ -14,6 +14,7 @@ existing workflow.
 | Standards Review | Task or batch semantic standards verdict | Re-running mechanical quality checks |
 | Code Review | Independent six-dimensional task/final analysis and finding reconciliation | Source edits, self-approved repairs, task closure |
 | Delivery Review Fix | One verified, lane-owned repair pass and persistent attempt accounting | Review verdicts or a second execution queue |
+| Delivery Method Adapter | Verified selection and provenance for optional design/diagnosis/review methods | Core Plan/Assessment/Review ownership, task closure, approvals, or another execution chain |
 | Delivery Slice | Slice boundaries, task mapping, trunk-safety classification, merge policy, and slice/rollup handoff | Requirements, task generation, source edits, review verdicts, branches, or PR creation |
 | Delivery Close | PR outcome recording and run-workspace retirement | Source edits, remote PR mutation, or another run's records |
 | Package README | User install/API/limits and maintainer development/release contract derived from real package contents | Code behavior, generated projections, or release publishing |
@@ -53,6 +54,19 @@ responsibilities, interfaces, and tests are reviewed before tasks. See the
 [Delivery contract](extensions/delivery/README.md). Lightweight changes do not
 inherit the full exploration ceremony.
 
+The plan-checkpoint section of Delivery's exploration template owns the Feature
+architecture-constraint format and optional external skill-method contract.
+Constraints live in Core's actual `plan.md`; the existing design gate approves
+them, Tasks/Analyze retain coverage, and Brief/Standards/Review consume applicable
+rows. Doctor checks applicable policy reachability and ownership/mechanisms.
+External methods remain recommendations under project governance, not another
+orchestrator, ADR authority, or required skill dependency. The shared
+[method contract](extensions/delivery/templates/method-adapter.md) binds optional
+design/diagnosis/review providers to verified local resources and returns
+analysis-only receipts to the existing owner. Builtin is the default and needs no
+external skill or extra model round. See the
+[pinned method review](REFERENCE-REVIEW.md#architecture-skill-methods).
+
 Delivery Close owns only the durable record's outcome and the run workspace. It
 never publishes, merges, or rewrites another run; `evidence.md` remains the single
 durable record. Installation, upgrade, and bootstrap records are operational
@@ -89,7 +103,8 @@ Delivery Slice runs after task generation so it binds real task IDs. It derives
 `single`, `stacked`, or `integration` from evidence rather than preference:
 `standalone`/`flagged` slices with a linear order may stack; any
 `integration-only` slice forces an integration branch; unknown evidence or a
-policy conflict returns `needs_decision`. The gate records actual approval. A
+policy conflict returns `needs_decision`. A post-gate Delivery writer records the
+actual choice and unchanged fingerprint. A
 failed slice prefix check reopens slicing instead of silently extending the
 stack. Handoff owns per-slice and rollup PR bodies, never PR creation or merges.
 The merge policy is explicit: squash slice layers by default, use a merge commit

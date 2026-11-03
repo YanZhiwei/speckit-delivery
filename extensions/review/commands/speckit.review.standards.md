@@ -16,6 +16,18 @@ the applicable policy sources configured in
 changed code's owning-module documentation. Do not repeat executable checks
 owned by `speckit.quality.check`.
 
+Honor the supplied lane and run; do not infer Feature from unrelated files or
+branch state. For an explicitly identified Feature, resolve the exact plan from
+the supplied canonical exploration packet or scope-bound plan/excerpts and
+validate its recorded approved identity. Read applicable `Architecture constraints`,
+follow the cited binding sources, and report findings by constraint ID. Check only the task's applicable rows at task scope;
+final review must cover the outgoing change's full set. Include these plan rows
+in the policy fingerprint. Missing required context, ownership, verification
+work, or evidence blocks the relevant scope. A planned check is not a passing
+receipt; semantic-only or unsupported automation stays explicit. External skill
+preferences alone are not binding rules. Bugfix/Lightweight use their existing
+contracts without creating a Feature plan.
+
 Bind this semantic verdict to the actual reviewed contents (including staged,
 unstaged, deleted, and relevant untracked paths) and applicable policy inputs.
 Record deterministic fingerprint methods/manifests. Reuse only an original
@@ -40,6 +52,13 @@ Include these discipline checks:
   preference.
 - **Verifiable units.** The task must be checkable on its own at the reported
   HEAD; work that only succeeds together with a later task is not closable.
+
+A completed repair reports `DOCS_REFRESH` for its README-affecting surface
+(public API/CLI/config/default, compatibility, dependencies, error behavior,
+development/test commands, release/versioning, ownership). A required refresh
+that is `blocked`, missing, or covers different contents is a blocking evidence
+gap; a not-applicable result needs a concrete reason. Do not
+claim documentation correctness from an internal-only or stale result.
 
 Treat a documented project rule as blocking unless an approved, durable
 exception applies. Treat a heuristic finding as blocking only when its impact

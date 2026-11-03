@@ -5,7 +5,7 @@ Keeps architectural decisions durable while Spec Kit feature artifacts evolve. C
 ## Commands
 
 - `speckit.decision.context`: retrieve governing decisions before specification and planning.
-- `speckit.decision.propose`: establish a Proposed implementation baseline after planning.
+- `speckit.decision.propose`: establish a Proposed implementation baseline after planning; in the Feature workflow it also records Delivery's pre-gate design snapshot without accepting the ADR.
 - `speckit.decision.finalize`: reconcile the final decision with reviewed code at HEAD.
 - `speckit.decision.check`: detect broken links, stale citations, contradictory active decisions, and implementation drift.
 

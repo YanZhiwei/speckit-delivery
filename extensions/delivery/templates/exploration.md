@@ -99,6 +99,68 @@ Keep exact design in `plan.md`; reference this packet instead of duplicating it.
 At the existing plan gate, present the finalized change tree with file
 responsibilities, interfaces/data flow, test paths and verification commands,
 compatibility/migration/security risks, and differences from the approved scope.
-Record plan approval against the shown design, not the earlier candidate tree.
-Reopen scope approval for material expansion; ordinary in-scope test additions
-do not require restarting the workflow.
+Include the architecture checkpoint below in the same plan and approval. Plan
+records its actual path in the canonical exploration packet. After Decision
+Propose establishes the Proposed ADR baseline, the pre-gate coordinator records
+the final presented content fingerprint there: hash method, input manifest, and
+digest covering the plan, clarified requirements, cited governing policy/ADRs,
+and Proposed ADR baseline. Present that final design/ADR/constraint snapshot for
+the existing gate. Do not freeze the approval baseline before Propose can change
+its inputs. A shared-session router may preserve the same exact reference and
+identity in context. The receiving Tasks consumer recomputes that identity before
+recording the actual plan-gate choice against it. Missing baseline, changed inputs, or missing choice
+stops progression for refreshed presentation/approval; never rewrite the presented
+fingerprint to make an old choice fit. Later consumers preserve the approved
+snapshot and apply current content/requirements freshness checks. Substantive
+constraint/design changes reopen approval. Expected later ADR status finalization
+uses Decision reconciliation and fresh Review: preserve the original approval
+identity and record the comparison instead of relabeling it. Record approval
+against the shown design, including constraints and verification gaps, not the
+earlier candidate tree. Reopen scope approval for material expansion; ordinary
+in-scope test additions do not restart the workflow.
+
+### Architecture constraints
+
+Before choosing the implementation design, read applicable root/scoped agent
+instructions, Constitution, active ADRs, configured architecture policy sources,
+and owning-module documentation. Follow their relevant links; do not infer rules
+from a filename or silently adopt another project's architecture. Reuse Explore's
+code/history/reference evidence and distinguish binding project rules from new
+recommendations. In `plan.md`, include an `Architecture constraints` section:
+
+| ID | Source and authority | Constraint and affected paths | Design response | Owner and verification | Evidence state / gap |
+| --- | --- | --- | --- | --- | --- |
+| AC-01 | <path/section; binding rule or proposed choice> | <ownership, dependency, interface, state, or failure constraint> | <how this design satisfies it> | <project command/test path or named semantic review> | <existing, planned, semantic-only, unsupported; evidence or next action> |
+
+Cover relevant component/data ownership, dependency direction, public interfaces,
+compatibility, failure/degradation behavior, and non-functional requirements.
+Explain why a concern does not apply; do not invent performance targets or force
+layers, interfaces, or infrastructure with no evidenced need. Compare viable
+approaches on these constraints, including extending/reusing the current design.
+For a small understood extension, a short comparison is enough; record why no
+additional architecture decision or research is needed.
+
+Every applicable binding rule needs a design response, a verification owner, and
+a credible mechanism. Distinguish a planned test/check from one that already ran,
+and semantic review from automated enforcement. Record unsupported checks and
+open decisions with their impact and resolution owner. Decision-critical gaps
+block design approval. Accepting a limitation does not waive a binding rule or
+its mandated enforcement; an exception follows that rule's governance process.
+Keep durable choices in Proposed ADRs through the existing Decision lifecycle.
+
+### Optional skill methods
+
+`method_adapters.design` in Delivery configuration defaults to `builtin`: use this
+checkpoint directly without another helper/model round. When an external method
+is configured, use the installed `speckit.delivery.method phase=design` with this
+run's exact exploration, clarified requirements, constraints, and plan references.
+Its shared `templates/method-adapter.md` owns verified local resource selection,
+identity, fallback/block behavior, and the result contract. The design profile
+returns analysis to Core Plan; it does not write another plan or approve an ADR.
+
+Record the receipt, adopted/rejected guidance, and any fallback reason in the
+plan's sources. Include selected configuration/resource identity in the presented
+input manifest and subsequent freshness checks. A blocked required method or
+owner evidence gap stops the checkpoint. Missing optional configuration keeps
+the builtin path available. External guidance remains a recommendation under
+project governance; do not install skills or run their whole workflow/scripts.

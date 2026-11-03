@@ -24,8 +24,8 @@ contract changes stop this workflow and resume Feature with the same evidence;
 multiple files alone do not require escalation. See the
 [Delivery contract](../../extensions/delivery/README.md).
 
-After the final fix and simplification, `speckit.docs-sync.package-readme` judges
-package README drift before review. Internal-only changes no-op; a changed public
+After the final fix and before Quality/Standards/review,
+`speckit.docs-sync.package-readme` judges package README drift. Internal-only changes no-op; a changed public
 surface must be updated or cite the lines that remain correct. New packages also
 record comparable-project research.
 
@@ -34,7 +34,10 @@ configured repair budget, final review, and an aborting gate. Repair stays with
 the approved assessment, not forced Feature tasks. After the initial official
 `bug.fix/test`, the [continuation adapter](../../extensions/delivery/templates/bugfix-review-repair.md)
 preserves those reports and appends versioned per-round repair/regression records;
-it does not re-invoke their automated-overwrite refusal paths. Current
+it does not re-invoke their automated-overwrite refusal paths. A repair that
+changes a package or public surface also refreshes affected documentation before
+its current Quality/Standards/re-review evidence; an internal-only repair records
+why no refresh applies. Current
 complete pass makes remaining slots no-ops; blocked/incomplete stop delivery.
 Attempts and finding IDs persist across resume/new HEAD; decision checks require
 a freshness review before evidence/handoff. YAML gates are guided checkpoints,

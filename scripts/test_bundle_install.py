@@ -36,6 +36,7 @@ def check_delivery_install(
             "commands/speckit.delivery.route.md",
             "commands/speckit.delivery.doctor.md",
             "commands/speckit.delivery.explore.md",
+            "commands/speckit.delivery.method.md",
             "commands/speckit.delivery.slice.md",
             "commands/speckit.delivery.review-fix.md",
             "commands/speckit.delivery.handoff.md",
@@ -44,12 +45,24 @@ def check_delivery_install(
             "templates/exploration.md",
             "templates/slices.md",
             "templates/bugfix-review-repair.md",
+            "templates/repair-docs.md",
+            "templates/method-adapter.md",
+            "templates/method-design.md",
+            "templates/method-diagnose.md",
+            "templates/method-review.md",
             "templates/pull-request.md",
         ),
         "review": ("commands/speckit.review.run.md", "commands/speckit.review.standards.md", "templates/reviewer.md"),
-        "quality": ("commands/speckit.quality.check.md", "config-template.yml"),
+        "quality": (
+            "commands/speckit.quality.brief.md",
+            "commands/speckit.quality.check.md",
+            "config-template.yml",
+        ),
         "evidence": ("commands/speckit.evidence.collect.md",),
-        "ralph": ("commands/speckit.ralph.run.md",),
+        "ralph": (
+            "commands/speckit.ralph.run.md",
+            "templates/slice-execution.md",
+        ),
         "docs-sync": (
             "commands/speckit.docs-sync.run.md",
             "commands/speckit.docs-sync.package-readme.md",
@@ -69,6 +82,7 @@ def check_delivery_install(
 
     for name, marker in (
         ("speckit.delivery.explore", "EXPLORATION_VERDICT"),
+        ("speckit.delivery.method", "METHOD_STATUS"),
         ("speckit.delivery.slice", "SLICE_PLAN_VERDICT"),
         ("speckit.delivery.handoff", "PR_BODY_PATH"),
         ("speckit.delivery.close", "DELIVERY_STATUS"),
@@ -76,6 +90,7 @@ def check_delivery_install(
         ("speckit.review.run", "REVIEW_VERDICT"),
         ("speckit.delivery.review-fix", "REVIEW_FIX_STATUS"),
         ("speckit.ralph.run", "REVIEW_VERDICT=pass"),
+        ("speckit.quality.brief", "QUALITY_BRIEF"),
         ("speckit.quality.check", "CHECK_RECEIPTS:"),
         ("speckit.review.standards", "POLICY_FINGERPRINT:"),
     ):

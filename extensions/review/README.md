@@ -29,6 +29,10 @@ intent, and ADR impact explicit before Ralph may close a task.
 Quality owns executable checks; Standards owns documented semantic rules. Reuse
 current exact-scope receipts instead of repeating suites, but green checks cannot
 replace the six-dimensional analysis or excuse a concrete Plan-mandated defect.
+An optional configured review method runs inside the same reviewer context and
+returns the native report plus provenance; it cannot dispatch a second reviewer
+or replace snapshot/coverage/independence. A repair that changes a public/package
+surface must supply current `DOCS_REFRESH` evidence before it can pass.
 
 Install with `specify extension add --dev /absolute/path/to/extensions/review`
 in a clean Spec Kit project or use the pinned Bundle. Invoke through the active

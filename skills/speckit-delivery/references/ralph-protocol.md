@@ -19,33 +19,26 @@ blocker.
 
 ## Slice boundaries
 
-An approved `slices.md` is boundary metadata, not a second queue. Require a
-recorded `SLICE_APPROVAL: approved` for the unchanged plan; pending, rejected, or
-stale approval blocks slice execution. Select and order tasks only from
-`tasks.md`; never add, remove, or reorder tasks because a slice needs them. A
-task that spans slices blocks the boundary and returns to slice planning/task
-generation.
+The installed `speckit.ralph.run` command owns sliced execution and must read the
+Ralph extension's packaged [`slice-execution.md`](../../../extensions/ralph/templates/slice-execution.md)
+when `slices=<path>` is supplied. That template is the sole detailed owner of
+canonical run/path validation, approval snapshots, `branch_prefix` composition,
+mode-specific bases, boundary checks, and slice receipts. Do not duplicate its
+sequence in another workflow reference.
 
-After every task in the current slice has a passing snapshot-bound receipt, run
-the slice closure before starting the next slice:
+The durable invariants are: use the exact
+`.specify/delivery/<delivery_run>/slices.md` and its persisted approved snapshot;
+accept only `single`, `stacked`, or `integration`; keep `tasks.md` as the sole
+queue; select one dependency-ready task at a time; require a clean worktree and
+per-task Quality, Standards, independent six-dimensional Review, and Git commit;
+write the existing run `slice-verdicts.yml`; and emit `SLICE_READY` only after
+classification-specific evidence passes. A failed, stale, or unknown boundary
+never advances to the next slice. `single` preserves the ordinary Ralph branch
+contract, while the template governs slice branches for the other modes.
 
-- `standalone`: create a temporary worktree or throwaway branch from the target,
-  apply the slice's verified commits, and run the declared target-branch
-  build/test commands. A failure is `SLICE_PREFIX_CHECK: blocked`; stop, do not
-  continue stacking, and return to slice planning for a flag/abstraction or an
-  integration reclassification.
-- `flagged`: verify the named flag's default, kill switch, flag-off behavior,
-  and flag-off regression test, then the flag-on path. Missing flag evidence is
-  a blocker, not a warning.
-- `integration-only`: run the declared checkpoint checks on the integration
-  branch; do not claim target-branch safety from a slice that is not trunk-safe.
-- `unknown`: never start the slice under an approved mode; re-open the gate.
-
-Write a slice receipt under the actual run's `slice-verdicts.yml` with slice id,
-base/head, task IDs, checks and results, merge mode, and verdict. Emit
-`SLICE_READY: <id>` only when the boundary passes. Do not create, push, or merge
-a PR; handoff and user authorization own that transition. `ALL_TASKS_DONE` is
-valid only after every task is closed and every slice is `ready`.
+`ALL_TASKS_DONE` is valid only after every task is closed and every approved
+slice is ready. Ralph never creates, pushes, or merges a PR; Handoff and the
+separately authorized PR outcome own that transition.
 
 After the branch gate, Ralph emits a concise run-level governance summary
 before task selection. It names the active feature, branch, base `HEAD`,
@@ -68,8 +61,10 @@ orchestrator runs the task checks, Quality, Standards, and independent task Revi
 the checkbox changes, it verifies acceptance evidence, all declared checks,
 current `QUALITY_VERDICT: pass`, `STANDARDS_VERDICT: pass`, and `REVIEW_VERDICT: pass`,
 unchanged code/requirements snapshot including uncommitted and relevant untracked
-contents, unchanged `HEAD`, allowed paths, and availability of required checks and policy
-sources. It reports `RALPH_TASK_GATE: PASS` only when every item passes. Only
+contents, unchanged `HEAD`, allowed paths, availability of required checks and policy
+sources, and a current non-blocked `DOCS_REFRESH` when the task changes a
+README-affecting package surface or a repair requires it (otherwise an explicit
+not-applicable reason). It reports `RALPH_TASK_GATE: PASS` only when every item passes. Only
 then may the orchestrator mark `[X]` and persist the receipt.
 That state transition is immediately followed by staging the verified task
 paths and declared state files and creating exactly one commit; no next-task

@@ -14,6 +14,7 @@ Invoke commands through the active host, not as shell executables:
 - `speckit.delivery.init`: discover and draft project-local policy.
 - `speckit.delivery.doctor`: detect missing/stale components, profiles, and rule owners.
 - `speckit.delivery.explore`: investigate code, history, and references; show candidate scope.
+- `speckit.delivery.method`: apply a configured design, diagnosis/testing, or review method inside the existing phase.
 - `speckit.delivery.slice`: plan reviewable slices, classify trunk safety, and select the merge mode.
 - `speckit.delivery.context`: optionally assemble an implementation-context brief.
 - `speckit.delivery.route`: orchestrate the selected lane and user approvals.
@@ -55,6 +56,37 @@ scope differences before task generation. A scope decision is not detailed
 design approval. Material expansion renews approval rather than silently growing
 the task queue.
 
+The [Plan checkpoint](templates/exploration.md#architecture-constraints) also owns
+an `Architecture constraints` table in the actual feature's `plan.md`: source and
+authority, affected paths, design response, verification owner/mechanism, and
+existing/planned/semantic-only/unsupported coverage. The same design gate reviews
+it; Tasks/Analyze carry its IDs and verification work, and Brief/Standards/Review
+consume the applicable rows. Binding-rule exceptions follow project governance;
+accepting a check limitation does not waive a rule. Doctor reports unreachable
+applicable policy sources and rules with no owner/mechanism, rather than requiring
+a particular architecture filename or treating an empty source list as coverage.
+
+## Optional method adapters
+
+`method_adapters` in `delivery-config.yml` can select external design, diagnosis,
+and review methods for the existing Core Plan, worker, or reviewer context. The
+default is `builtin`: no extra skill, model round, or artifact is required, and
+SD works fully without an external method. An explicit `skill` provider must name
+a reviewed local entrypoint, immutable revision, resource list, and SHA-256 digests;
+the shared [method contract](templates/method-adapter.md) validates selection and
+returns scope-bound analysis with provenance. Invalid configuration always blocks;
+an unavailable valid resource may use `fallback: builtin` only when explicitly
+chosen, otherwise it blocks.
+
+Adapters return analysis only. They do not write a second plan/report, add an
+approval or queue, edit tasks/ADRs/Git/tracker state, dispatch reviewers, or
+decide closure. The owning phase persists the receipt and applies its normal
+verification. Profile guidance is in
+[design](templates/method-design.md), [diagnosis](templates/method-diagnose.md),
+and [review](templates/method-review.md). The checkpoint remains usable without
+them. See the pinned [method review](../../REFERENCE-REVIEW.md#architecture-skill-methods)
+for adopted and rejected guidance; external skills are not automatically installed.
+
 Bugfix runs the same structural exploration before official `bug.assess`, which
 retains ownership of reproduction, diagnosis, and red evidence. Its existing
 assessment gate reviews fault path, both trees, repair/test scope, and limitations.
@@ -83,8 +115,12 @@ preference:
 - any integration-only slice → `integration`;
 - insufficient evidence or a policy conflict → `needs_decision`.
 
-The slice gate approves boundaries, order, classification, merge method, and
-accepted risks. Ralph stops at each slice boundary and verifies the declaration:
+Analyze runs against the planned slices before the slice gate so blocking task
+map/coverage findings are resolved first. The slice gate approves boundaries,
+order, classification, merge method, and accepted risks; a Delivery-owned
+`action=record-approval` writer then records the actual choice and unchanged
+fingerprint in `slices.md`. Ralph stops at each slice boundary and verifies the
+declaration:
 a standalone slice gets a target-branch prefix build/test, a flagged slice gets
 flag-off and flag-on evidence, and an integration-only slice gets its declared
 checkpoint. A failed check returns to slice planning for reclassification.

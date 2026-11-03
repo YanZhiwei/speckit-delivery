@@ -78,9 +78,9 @@ Bundle's minimum; individual extensions and workflows remain installable on
 in a second clean project. A release is ready only when catalogs, manifests,
 workflow requirements, packaged roots, README commands, and versions agree.
 
-The local Bundle test also checks that Explore/Review templates, review-fix,
-and Ralph resources survive packaging/installation, the active host renders the commands, and all
-three installed workflows match source. Its default host is OpenCode; the Codex
+The local Bundle test also checks that Explore/Review/Plan, method-adapter,
+repair-docs, review-fix, and Ralph slice resources survive packaging/installation,
+the active host renders the commands, and all three installed workflows match source. Its default host is OpenCode; the Codex
 variant verifies Skills-mode rendering. Structural checks do not prove semantic
 research quality or user approval; behavioral prompts live in `evals/evals.json`.
 

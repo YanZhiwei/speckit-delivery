@@ -14,6 +14,13 @@ Discover the project's existing GitHub PR template (`pull_request_template`), if
 
 Create or update `quality-config.yml` as a project-local draft. Discover candidate profiles in this order: existing quality policy, repository build/tool configuration, CI commands, local hooks, then documented developer commands. For each changed-code family, record only commands that were found and verified, plus the policy-source paths for architecture and style. For every documented rule, record an owner and credible mechanism: executable checks belong to Quality; DRY, ownership, and architecture belong to Standards Review, Simplify, or ADR. Leave unknown profiles or checks explicitly unset; do not guess a language toolchain. Set `unprofiled_changed_paths: block` unless the project deliberately reviews and changes that policy.
 
+Draft `method_adapters` for `design`, `diagnose`, and `review` only when the project
+already has a corresponding skill/method it wants to use. Default a missing phase
+to `builtin` and preserve any existing explicit provider; do not reset a configured
+entry to builtin. For an explicit external provider, record origin, fixed revision,
+local entrypoint/resources, SHA-256 digests, and fallback only from verified files.
+Never install or fetch a skill during initialization, and never invent hashes.
+
 When Constitution is missing, propose principles derived from existing project rules; require review before treating them as governance. When Spec artifacts are ephemeral, record local-only resume and cross-worktree injection requirements.
 
 The command is complete when every configured path and command was verified or explicitly left unset with a reason, every policy has an owner and mechanism or an explicit governance gap, and the owner has a reviewable quality-profile gap list.

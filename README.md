@@ -60,7 +60,7 @@ Spec Kit 负责把需求变成 `Spec → Plan → Tasks`。Spec Kit Delivery 负
 ```text
 route → doctor → 决策发现 → explore 代码/历史/参考
       → 现状 + 候选目录树 → 范围确认
-      → specify → clarify → ADR 解析 → plan → 设计确认
+      → specify → clarify → ADR 解析 → plan（架构约束 + 验证映射）→ 设计确认
       → tasks → slice → 切片确认 → analyze
       → quality brief → Ralph → quality → standards → review
       → converge → simplify → docs / package README
@@ -69,6 +69,10 @@ route → doctor → 决策发现 → explore 代码/历史/参考
 ```
 
 三道 Gate 把“想清楚”和“写代码”分开：**范围确认**发生在 Spec 之前，**设计确认**发生在 Plan 之后，**切片确认**发生在 Task 生成之后。`tasks.md` 始终是唯一执行队列，`slices.md` 只提供评审与合并边界。
+
+Feature 的 Plan 会列出架构约束来源、适用路径、设计响应、验证负责人和证据缺口，并把约束 ID 传给 Tasks、Brief 和 Review。可选开源 Skill 提供方案比较、接口与失败模式等方法，按项目治理采纳；方法取舍和固定版本见 [参考评审](REFERENCE-REVIEW.zh-CN.md#架构-skill-方法参考)。
+
+`delivery-config.yml` 的 `method_adapters` 可分别选择设计、诊断测试和评审方法。默认 `builtin`，不需要外部 Skill 或额外模型轮次；显式外部方法必须绑定本地入口、固定版本、资源清单和 SHA-256 摘要，只向现有阶段返回分析回执，不新增计划、队列、提交或评审关闭权。见 [方法契约](extensions/delivery/templates/method-adapter.md)。
 
 三条 Lane 保持比例感：
 
@@ -116,15 +120,15 @@ specify init . --integration codex --integration-options="--skills" --script ps
 
 ```bash
 specify extension catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.3.1/catalogs/extensions.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.3.2/catalogs/extensions.json \
   --name speckit-delivery --install-allowed
 
 specify workflow catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.3.1/catalogs/workflows.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.3.2/catalogs/workflows.json \
   --name speckit-delivery
 
 specify bundle catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.3.1/catalogs/bundles.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.3.2/catalogs/bundles.json \
   --id speckit-delivery --policy install-allowed
 
 specify bundle install speckit-delivery
@@ -161,7 +165,7 @@ specify workflow run feature-delivery \
 
 | 能力 | 命令 |
 | --- | --- |
-| 路由与交付 | `speckit.delivery.route`、`.doctor`、`.explore`、`.slice`、`.context`、`.lightweight`、`.review-fix`、`.handoff`、`.close` |
+| 路由与交付 | `speckit.delivery.route`、`.doctor`、`.explore`、`.method`、`.slice`、`.context`、`.lightweight`、`.review-fix`、`.handoff`、`.close` |
 | 决策记忆 | `speckit.decision.context`、`.propose`、`.finalize`、`.check` |
 | 任务执行 | `speckit.ralph.run` |
 | 缺陷处理 | `speckit.bug.assess`、`.fix`、`.test`（Spec Kit 官方 Bug 扩展） |

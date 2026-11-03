@@ -301,6 +301,114 @@
         "Requires updated or gap when a public surface changes",
         "Runs before review and leaves projection sync and correctness review to their owners"
       ]
+    },
+    {
+      "id": 34,
+      "prompt": "Plan a model-metadata synchronizer using an already available architecture-designer skill and codebase-design guidance. Explore already compared upstream implementations. Constitution requires one metadata writer and an active ADR forbids core depending on host adapters. The skill examples use an Accepted ADR, a separate design document, and sample availability targets. How should SD combine these inputs?",
+      "expected_output": "Uses only relevant optional skill methods to compare interfaces, trade-offs, non-functional requirements and failure modes, reusing Explore evidence. Writes sourced Architecture constraints with stable IDs, affected paths, design responses, owners/mechanisms and honest evidence states in the actual feature plan. Distinguishes project rules from proposed choices; records fixed skill origins/resource paths and adopted/rejected guidance. Does not copy numeric targets, accept ADRs early, start a second planning workflow, install skills, or invent a separate constraints artifact/gate. Records the actual plan path in the canonical packet, uses the existing plan gate, and carries IDs and verification work through Tasks/Analyze/Brief/Review.",
+      "files": [],
+      "expectations": [
+        "Uses skill methods under Constitution and active ADRs, reusing exploration evidence",
+        "Keeps sourced constraint IDs, design responses, mechanisms and evidence gaps in the actual plan",
+        "Preserves Proposed ADR lifecycle and the existing design gate without automatic installs or copied targets",
+        "Carries the exact plan reference and applicable constraints into task and review consumers"
+      ]
+    },
+    {
+      "id": 35,
+      "prompt": "Doctor runs for a change under backend/catalog. AGENTS.md links to docs/design/catalog-policy.md and the path exists. The policy's writer-ownership rule has a named Standards Review mechanism. quality-config.yml has policy_sources.architecture: [] and no external architecture skill is installed. Should Doctor block? What changes if the linked file is missing or its binding rule has no owner/mechanism?",
+      "expected_output": "Follows the verified reference and checks the relevant consumers actually receive the policy; empty source lists and missing optional skills alone are not blockers. Does not require ARCHITECTURE.md or duplicate every path in every config. If a policy is unreadable or unreachable to a required consumer, reports architecture-context-unwired with exact source/path/remediation. If a binding rule has no credible owner/mechanism, reports architecture-policy-uncovered. Distinguishes semantic coverage from executable enforcement, states unknown target-scope coverage honestly, and does not generate rules or install skills to make the report green.",
+      "files": [],
+      "expectations": [
+        "Accepts a verified policy link without requiring a filename or duplicate configuration",
+        "Does not block solely on an empty architecture list or absent optional skill",
+        "Reports concrete missing-source and missing-mechanism gaps when present",
+        "Does not label semantic review as automated coverage"
+      ]
+    },
+    {
+      "id": 36,
+      "prompt": "A Feature task changes the model-sync adapter. The approved plan's AC-02 requires preserving cached metadata during an offline refresh and names a planned regression test. AC-03 mandates an executable dependency check, but the available checker cannot read runtime DI edges. Happy-path tests pass. The worker says the plan gate already accepted these gaps, so both constraints pass. What should Brief, Standards, and final Review report?",
+      "expected_output": "Brief loads the exact active plan or its applicable excerpts and carries AC-02/AC-03 with sources, mechanisms and gaps before edits. Standards/final Review trace the IDs to actual implementation and evidence; planned tests and unreadable graph edges cannot become passing receipts. Requires offline-failure evidence and resolution of mandated enforcement, keeping the relevant scope blocked/incomplete until addressed through the governing design process. Existing plan approval does not waive binding rules. Includes plan rows in policy/requirements identity, refreshes affected receipts on design changes, and does not fetch another feature's plan, invent a check, or force full Feature artifacts onto Bugfix/Lightweight.",
+      "files": [],
+      "expectations": [
+        "Carries the active plan's applicable constraint IDs and unresolved gaps into the worker/reviewer packet",
+        "Does not treat planned tests or unreadable graph coverage as a pass",
+        "Does not let ordinary plan approval waive binding enforcement",
+        "Requires relevant failure evidence and honest coverage without inventing checks or unrelated Feature artifacts"
+      ]
+    },
+    {
+      "id": 37,
+      "prompt": "A direct Feature run presented its plan and Proposed ADR baseline, stored their input manifest/fingerprint in the canonical exploration packet, and paused at the plan gate. While it was paused, a binding offline-refresh constraint was deleted from plan.md. The gate then returned approve. In another directory there is an older approved Feature plan. How should Tasks and subsequent Standards proceed?",
+      "expected_output": "Tasks reads this run's exact packet/plan and recomputes the presented identity before attaching the actual gate choice. The changed constraint makes the baseline stale, so it stops for refreshed presentation/approval instead of fingerprinting today's plan as if it had been shown. Never selects the older approved plan. After valid approval, Feature Brief/Standards/Review receive explicit lane/run and canonical packet context; Bugfix/Lightweight receive their own lane/request or assessment without ambient Feature inference. The pre-gate fingerprint is recorded after Decision Propose; ordinary later ADR status finalization uses Decision reconciliation and fresh Review while preserving the original approval identity.",
+      "files": [],
+      "expectations": [
+        "Detects mutation against the saved presented identity before accepting the actual gate choice",
+        "Does not replace the baseline hash, infer approval, or fall back to another Feature plan",
+        "Carries lane/run and canonical Feature packet into later consumers",
+        "Captures Proposed ADRs before the gate and preserves approval history through later status reconciliation"
+      ]
+    },
+    {
+      "id": 38,
+      "prompt": "A project sets method_adapters.design to provider: skill with an entrypoint, origin, revision, and two resource paths, but one configured SHA-256 is empty and another does not match the local file. fallback is omitted. The worker asks to continue with the external method anyway and then propose an Accepted ADR. What should the adapter do?",
+      "expected_output": "Resolves design through Delivery's method contract, rejects the malformed and mismatched resource receipts, and returns METHOD_STATUS: blocked without applying unverified guidance. Does not silently default to builtin because fallback was omitted, does not fetch a newer copy or invent a hash, and does not accept an ADR. Reports the exact phase, entrypoint/path, digest problem, and remediation. The owner keeps the existing Plan/design gate and Proposed ADR lifecycle; no second plan, queue, or approval round is created.",
+      "files": [],
+      "expectations": [
+        "Rejects malformed and mismatched local resource digests before using external guidance",
+        "Blocks instead of silently falling back when fallback is omitted",
+        "Keeps ADR/design approval and existing plan ownership with the native phase",
+        "Reports a concrete provenance/remediation receipt without remote fetching"
+      ]
+    },
+    {
+      "id": 39,
+      "prompt": "method_adapters.review explicitly selects an external review method with fallback: builtin, but its local resource file is missing. The reviewer context is already prepared and the user asks for the normal six-dimensional result, not another review. What should happen?",
+      "expected_output": "The same reviewer context records the unavailable external method, uses the configured builtin fallback exactly once, and applies the native Reviewer contract without dispatching another reviewer or adding a report/queue. The receipt states the fallback reason, missing resource, selected revision, actual independence, and current snapshot. A missing optional map or builtin default would have required no helper call. The final verdict remains owned by native Review aggregation; the method receipt cannot replace coverage or evidence.",
+      "files": [],
+      "expectations": [
+        "Uses the explicitly configured builtin fallback once with the actual missing-resource reason",
+        "Does not dispatch a second reviewer or add another review artifact/queue",
+        "Keeps the native six-dimensional verdict, coverage, and independence evidence authoritative",
+        "Records provenance and input identity without claiming the external method ran"
+      ]
+    },
+    {
+      "id": 40,
+      "prompt": "A Feature review repair changes a package's public CLI flag during the first reserved repair attempt. The earlier Package README result still names the old flag. An internal helper in the same package also changed. What refresh is required before re-review, and what if the same repair were internal-only?",
+      "expected_output": "The same reserved attempt follows Delivery's repair-docs contract: the changed CLI/default is a README-affecting surface, so it refreshes affected package documentation and projection inputs through Docs Sync owners with repair=1, then reruns affected checks and returns for independent re-review. It reuses the earlier README result only if the exact surface/input/config identity still matches. If the repair were internal-only, it records DOCS_REFRESH: not-applicable with the reason and does not fabricate edits or a new repair round. It does not edit generated projections directly, add a second queue, or resolve the review finding itself.",
+      "files": [],
+      "expectations": [
+        "Treats the public CLI change as README-affecting and refreshes documentation in the same attempt",
+        "Rejects the stale pre-repair README result for changed public contents",
+        "Records an explicit not-applicable result for an internal-only change",
+        "Preserves independent re-review and avoids a new repair round or generated-projection edits"
+      ]
+    },
+    {
+      "id": 41,
+      "prompt": "A Feature run plans slices, then analyze finds that two tasks are mapped to the wrong slice. The user edits slices.md and approves slice-gate immediately, then asks Ralph to start. The recorded SLICE_PLAN_FINGERPRINT still names the pre-edit plan. What should happen?",
+      "expected_output": "Analyze must run before the slice gate and the post-gate writer must verify the unchanged fingerprint. The changed plan invalidates the old approval, so the run stops for a fresh analyze and slice gate instead of recording the stale choice or starting Ralph. A context-only approval, a pre-analyze approval, or a fingerprint relabel is not sufficient. After re-approval, Ralph consumes the recorded approved snapshot; tasks.md remains the only queue.",
+      "files": [],
+      "expectations": [
+        "Runs analysis before slice approval and blocks on changed slice mapping",
+        "Rejects a stale fingerprint instead of relabeling it",
+        "Requires a fresh slice gate/record before Ralph",
+        "Keeps the approved snapshot and sole task queue authoritative"
+      ]
+    },
+    {
+      "id": 42,
+      "prompt": "An outgoing-diff Review Fix on a stacked Feature run receives a valid repair finding but no slices path or recorded slice approval. The coordinator can see the old slices.md in the run directory. Should it run analyze and Ralph directly?",
+      "expected_output": "No. The Feature outgoing-diff repair requires explicit canonical slices context and the recorded approved snapshot; missing context is blocked, not an invitation to infer the newest plan or fall back to a non-sliced Ralph run. If repair tasks need a different slice mapping, stop for a renewed slice gate. Otherwise pass the same lane/run/exploration/slices/approval and with_docs_sync through analyze and Ralph, preserving the existing task queue and review budget.",
+      "files": [],
+      "expectations": [
+        "Requires explicit slices and recorded approval for outgoing Feature repairs",
+        "Does not infer a newest plan or start a non-sliced Ralph run",
+        "Stops for renewed slice approval when the mapping changes",
+        "Preserves lane/run context, task queue, and repair budget"
+      ]
     }
   ]
 }

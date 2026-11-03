@@ -1,5 +1,5 @@
 ---
-description: "Plan independently reviewable delivery slices, classify trunk safety, and select the merge mode"
+description: "Plan independently reviewable delivery slices, classify trunk safety, select the merge mode, and record the actual slice approval"
 ---
 
 # Delivery Slice
@@ -31,6 +31,20 @@ infer design approval from a command exit status.
 If `pr_slicing: off`, write one slice covering the full task queue with
 `merge_mode: single` and return `SLICE_PLAN_VERDICT: ready`; the gate is still a
 quick confirmation, not a second design review.
+
+## Record the gate choice
+
+`action=record-approval` is the Delivery-owned post-gate writer for the actual
+`slice-gate` decision. It does not replan or re-approve. Require the exact
+canonical `slices.md`, the real `slice_approval=approve|reject` value, and the
+unchanged `SLICE_PLAN_FINGERPRINT` written before the gate. Record
+`SLICE_APPROVAL: approved|rejected`, the actual choice, `Approved by` (the human
+user, not the agent), `Approved at`, and the current approved mode/content
+snapshot in that same file. A missing fingerprint, changed plan, missing choice,
+or context-only approval is `SLICE_APPROVAL_RECORD: blocked`; never infer
+approval or rewrite the plan to match a stale choice. A rejected choice records
+rejection and stops the lane. This post-gate write is the only approval record
+Ralph may consume; it does not edit tasks, source, branches, or PRs.
 
 ## 1. Derive slices from the approved design
 
@@ -135,7 +149,10 @@ rename may be one slice; a small concurrency change may need its own slice.
 
 Use `.specify/extensions/delivery/templates/slices.md` from the installed
 extension (or `templates/slices.md` under its resolved root). Write the complete
-plan to `.specify/delivery/<run>/slices.md`, honoring `artifact_policy`.
+plan to `.specify/delivery/<run>/slices.md`, honoring `artifact_policy`. Compute
+`SLICE_PLAN_FINGERPRINT` over the presented plan content (including task mapping,
+mode, merge policy, and required evidence) with a recorded method/manifest before
+the gate; the post-gate writer consumes it and never relabels it.
 
 Present a compact table in the conversation before the gate:
 
@@ -154,7 +171,9 @@ merge method, sync method, queue/freeze policy, and every open decision.
 
 - Do not edit `tasks.md`, `spec.md`, `plan.md`, source, tests, branches, or PRs.
 - Do not implement, review, approve, merge, push, or create a tracker resource.
-- Do not replace the slice gate or record approval yourself.
+- In planning mode, do not replace the slice gate or record approval yourself.
+  The separate `action=record-approval` mode only records the actual post-gate
+  user choice and unchanged snapshot; it cannot approve on the user's behalf.
 - Do not claim a prefix is safe without the declared check; a failed check
   returns to this command for reclassification, not to an ad-hoc patch.
 - Do not cite internal task IDs in durable PR text as the requirement source;
@@ -169,9 +188,14 @@ SLICE_PLAN_VERDICT: ready | blocked | needs_decision
 MERGE_MODE: single | stacked | integration | undecided
 SLICE_COUNT: <n>
 SLICES_PATH: <actual path or preserved context>
+SLICE_PLAN_FINGERPRINT: <method and digest of the presented plan>
 SLICE_APPROVAL: pending
 OPEN_DECISIONS: <none or bounded list with recommended options>
 ```
+
+For `action=record-approval`, return `SLICE_APPROVAL_RECORD: approved | rejected |
+blocked`, the actual gate choice, approver/time, and the recorded snapshot. Never
+report `pending` as approval.
 
 `ready` means the plan is coherent enough for the slice gate, not that the user
 approved it. A blocked plan must name the exact task, evidence, or policy gap and

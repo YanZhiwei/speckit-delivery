@@ -13,6 +13,7 @@ Spec Kit Delivery 是 Spec Kit 之上的分发层，不是 Spec Kit 的 Fork，�
 | Standards Review | Task 或批次的语义规范判定 | 重跑机械质量检查 |
 | Code Review | 独立六维 Task／最终评审和问题核对 | 修改代码、自批修复或关闭任务 |
 | Delivery Review Fix | 一次已核实、由 Lane 负责人执行的修复及持续轮次记录 | Review 判定或第二套执行队列 |
+| Delivery Method Adapter | 可选设计／诊断／评审方法的受验选择与来源记录 | Core Plan／Assess／Review 所有权、任务关闭、批准或另一套执行链 |
 | Delivery Slice | Slice 边界、Task 映射、trunk-safe 分类、合并策略与 Slice／Rollup 交接 | 需求、Task 生成、代码修改、Review 判定、分支或 PR 创建 |
 | Delivery Close | 记录 PR 真实结果并退役运行工作区 | 修改代码、变更远端 PR 或其他 Run 的记录 |
 | Package README | 面向使用者的安装／API／限制，以及面向维护者的开发／发布契约；内容取自真实包内容 | 代码行为、生成文档或发布动作 |
@@ -48,6 +49,15 @@ Spec Kit 继续负责 spec/plan/tasks。Spec 前展示现状和候选改动目�
 确定版目录、文件职责、接口和测试。详见 [Delivery 契约](extensions/delivery/README.md)。
 Lightweight 不继承完整取证仪式。
 
+Delivery 取证模板的 Plan 检查点负责 Feature 架构约束表及可选开源 Skill 方法的契约。
+约束保留在 Core 的真实 `plan.md` 中，由现有设计 Gate 一并确认；Tasks／Analyze 保持
+覆盖关系，Brief／Standards／Review 消费适用条目。Doctor 检查适用策略是否可达、规则
+是否有负责人和验证机制。外部方法作为项目治理之下的建议，不成为另一套编排、ADR 决策
+来源或必装 Skill。共享 [方法契约](extensions/delivery/templates/method-adapter.md)
+将可选设计／诊断／评审提供者绑定到受验本地资源，只向现有 owner 返回分析回执；默认
+builtin 无需外部 Skill 或额外模型轮次。方法取舍见
+[固定版本调研](REFERENCE-REVIEW.md#architecture-skill-methods)。
+
 Delivery Close 只负责持久记录的结果和运行工作区，不发布、不合并，也不改写其他 Run；
 `evidence.md` 始终是唯一持久记录。安装、升级和初始化脚手架记录属于项目证据根目录的
 运维性一次性记录，不是交付 Run。
@@ -73,7 +83,8 @@ integration Slice 基于集成分支。并行执行必须使用隔离 Worktree �
 Delivery Slice 在 Tasks 生成后运行，把真实 Task ID 绑定到可独立评审的 Slice。合并方式
 由证据推导而非偏好：`standalone`／`flagged` 且顺序线性时可用 `stacked`；存在
 `integration-only` 时使用 `integration`；证据不足或策略冲突返回 `needs_decision`。
-Slice Gate 记录用户实际批准；prefix check 失败时回到切片重新分类，不继续堆叠。Handoff
+Slice Gate 后的 Delivery 写回步骤记录用户实际选择与未变快照；prefix check 失败时回到
+切片重新分类，不继续堆叠。Handoff
 负责单 Slice 与 Rollup PR 文本，不创建或合并 PR。合并策略明确：Slice 默认 squash，
 integration Rollup 使用 merge commit，禁止 squash 最终 Rollup、rebase 共享集成分支，
 或把目标分支 merge 进 stack 分支。

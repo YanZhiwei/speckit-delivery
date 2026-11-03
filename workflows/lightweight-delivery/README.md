@@ -11,6 +11,8 @@ review/repair slots honor the lower configured budget, retain attempts/findings
 across resume/new HEAD, and no-op after a current complete pass. Final review and
 an aborting gate reject blocked/incomplete results before evidence/handoff.
 Before that review, `speckit.docs-sync.package-readme` no-ops when no package
-surface changed; otherwise it refreshes or explicitly justifies the README.
+surface changed; otherwise it refreshes or explicitly justifies the README. If a
+review repair changes a package/public surface, the same reserved attempt refreshes
+affected documentation before its current checks and re-review.
 These are guided contracts, not automatic semantic branching. See the
 [Reviewer contract](../../extensions/review/templates/reviewer.md).

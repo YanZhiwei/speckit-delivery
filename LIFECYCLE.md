@@ -78,7 +78,8 @@ The [Reviewer contract](extensions/review/templates/reviewer.md) owns finding an
 snapshot rules. A report is bound to base/HEAD/merge-base plus actual contents and
 requirements, not HEAD alone. Uncommitted and relevant untracked files count.
 Only declared bookkeeping may be excluded; ADR/spec/test/source changes invalidate
-reuse. Preserve `open → fixed-pending-review → resolved` or evidence-backed
+reuse. A selected optional method's configuration/resource identity is part of the
+requirements/policy identity; changing that provider also invalidates reuse. Preserve `open → fixed-pending-review → resolved` or evidence-backed
 `dismissed` dispositions. Omission, a new snapshot, or a fixer's claim closes nothing.
 
 Task receipts identify pre-commit review and may associate it with the resulting

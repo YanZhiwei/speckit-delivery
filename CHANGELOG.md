@@ -2,7 +2,32 @@
 
 All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and Semantic Versioning.
 
-## [Unreleased]
+## [0.3.2] - 2026-11-04
+
+### Added
+
+- `speckit.delivery.method` and the shared method-adapter contract add optional,
+  verified design, diagnosis/testing, and review methods inside existing phases.
+  Builtin remains the default; explicit local providers require fixed provenance
+  and SHA-256 resource receipts and return analysis only.
+- Delivery's Plan checkpoint now records sourced architecture constraints, design
+  responses, verification owners/mechanisms, and honest evidence gaps, with
+  stable IDs carried into Tasks, Brief, Standards, and Review.
+- Feature analysis now resolves blocking slice-map/coverage findings before the
+  slice gate; a Delivery-owned post-gate writer records the actual choice and
+  unchanged plan fingerprint in `slices.md` for Ralph.
+- Package README/projection refresh now runs before final Quality/Standards, so
+  those receipts cover the documentation that Review sees.
+- Method adapters distinguish invalid configuration (always blocked) from an
+  unavailable valid resource (explicit builtin fallback only), and Review carries
+  a structured method receipt.
+- Review repairs refresh affected package README/projection evidence inside the
+  same reserved attempt instead of relying on a pre-repair result.
+- Ralph ships a packaged slice-execution contract so direct sliced invocations
+  follow the same branch, boundary-check, and receipt sequence as workflow runs.
+  Its task-closure gate also carries the applicable documentation-refresh receipt.
+- Evidence requires an explicit lane/run and canonical output path, with a
+  same-run identity check and a narrow legacy active-Feature fallback.
 
 ### Changed
 
@@ -12,6 +37,9 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
   positioning, capability map, three-gate delivery flow, copy-ready quick start,
   command reference, durable/ephemeral boundary, compatibility, maintainer
   workflow, and a documentation map.
+- Workflows now pass explicit lane/run context to Brief, Standards, Quality,
+  Docs Sync, and Evidence consumers, and preserve the design approval snapshot
+  through Tasks before accepting the real gate choice.
 
 ## [0.3.1] - 2026-11-01
 
