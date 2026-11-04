@@ -123,15 +123,15 @@ specify init . --integration codex --integration-options="--skills" --script ps
 
 ```bash
 specify extension catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.0/catalogs/extensions.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.1/catalogs/extensions.json \
   --name speckit-delivery --install-allowed
 
 specify workflow catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.0/catalogs/workflows.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.1/catalogs/workflows.json \
   --name speckit-delivery
 
 specify bundle catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.0/catalogs/bundles.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.1/catalogs/bundles.json \
   --id speckit-delivery --policy install-allowed
 
 specify bundle install speckit-delivery
@@ -145,7 +145,7 @@ Bundle 会安装 Delivery、Decision、Ralph、Review、Simplify、Evidence、Qu
 下面示例假定三类旧 Catalog 均名为 `speckit-delivery`，其中 Workflow 来源索引为 `0`；按实际列表替换索引，保留其他来源。
 
 ```powershell
-$base = 'https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.0/catalogs'
+$base = 'https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.1/catalogs'
 specify extension catalog remove speckit-delivery
 specify extension catalog add "$base/extensions.json" --name speckit-delivery --install-allowed
 specify workflow catalog remove 0
