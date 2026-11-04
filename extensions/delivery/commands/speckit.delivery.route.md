@@ -10,6 +10,95 @@ description: "Route and orchestrate a complete Spec Kit delivery across feature,
 $ARGUMENTS
 ```
 
+## Operational actions
+
+The router also owns the small `/sd` control surface. An empty `/sd` or
+`/sd help` maps to `action=help`; `/sd status [run]`, `/sd resume <run>`, and
+`/sd checkpoint <run> stage=initial|converge|simplify|outgoing-repair` map to the
+corresponding actions below. Use an explicit
+`delivery_run=<id>` to disambiguate a request containing those ordinary words.
+Operational actions return after their own completion; do not fall through into
+new delivery routing. They must not start a lane implicitly:
+
+- `action=help` prints the selected lane commands, required durable records,
+  runtime location, approval gates, and the next safe action; it does not invoke
+  a model or mutate the project.
+- `action=status delivery_run=<id>` runs the installed standard-library helper
+  from the project root:
+  `<verified-python> .specify/extensions/delivery/scripts/delivery_runtime.py status --run <id> --json`.
+  With no run, use the same command without `--run` to list runs. Report pending
+  owner tickets, stale results, reserved attempts, phase, and the exact next
+  action; do not infer a different run from recency.
+- `action=resume delivery_run=<id>` runs `resume --run <id> --json`, then resumes
+  only the reported owner/action with the same run identity. A pending result,
+  reservation, or approval is recovered explicitly; it is never reset or
+  allocated again. If the run is legacy/corrupt, report the recovery blocker.
+- `action=checkpoint delivery_run=<id> stage=initial|converge|simplify|outgoing-repair`
+  reads `.specify/extensions/delivery/templates/core-adapter.md` and the central
+  runtime contract in full. Verify the current passing Analyze result, actual
+  unchanged scope/design/slice approvals, exact approved planning paths, branch,
+  base, and project Git authorization. When project policy or an earlier actual
+  user decision already authorizes the exact planning commit, stage only those
+  planning paths and create that commit; do not ask again. When the project's
+  artifact policy intentionally keeps some approved planning files ignored and no
+  commit is required, record `planning_commit: none` with that authorization and
+  do not force-add ignored files. If those exact paths are
+  already present at the current HEAD with the approved identity and the worktree
+  is clean (for example after an interrupted retry), record the existing commit
+  instead of creating a duplicate. Declared run operational records (runtime,
+  reviews, receipts, verdicts, evidence, PR bodies) and Spec Kit's workflow-run
+  ledger may remain local; any source, planning, test, policy, or unrelated dirty
+  path blocks. A missing authorization, changed design/mapping, or branch/base
+  conflict blocks with the adapter's concrete recovery. Never stash/reset or stage a broad glob.
+  Write the exact native planning-input manifest at
+  `.specify/delivery/<delivery_run>/runtime/planning-inputs-<checkpoint-ticket>.json`
+  (the ticket from `input-checkpoint.json`, or an explicit stable
+  `checkpoint_id` for a native nested outgoing-repair checkpoint; one immutable
+  file per checkpoint) with
+  `schema_version: 1`, this run/lane, the actual authorization statement/evidence,
+  and every exact path plus `source_owner` (`core`, `decision`, or `adr`). Only
+  bound Spec/Plan/Tasks, actual Core outputs (research/data-model/quickstart/
+  contracts/checklist), this run's canonical planning files (`exploration.md`,
+  `code-context.md`, `decision-context.md`, `slices.md`), or a Proposed ADR under
+  the configured ADR directory may appear; no wildcard or unrelated path.
+  Save the native `SD_CORE_HANDOFF: PASS|BLOCKED` at exactly
+  `.specify/delivery/<delivery_run>/runtime/core-handoff.md` and, when runtime
+  arguments are supplied, reference that file from the `checkpoint` result with the
+  actual planning stage, approved paths, entry base, branch, and authorization
+  citation. The helper verifies the manifest, commit range, and unchanged Analyze
+  content, then associates it with the resulting HEAD. It never commits or grants
+  permission itself.
+- `action=bind-assessment lane=bugfix delivery_run=<id> bug_slug=<slug>` is the
+  Delivery-owned post-gate writer. Verify the exact bound official assessment,
+  actual `assessment_approval` choice, and runtime presentation bytes; append its
+  path/hash, approved repair scope, and accepted limitations to this run's
+  `exploration.md`. A mismatch blocks before writing. Official Assess and Decision
+  Context do not own this external packet write.
+- `action=apply-simplification delivery_run=<id>` consumes only the candidate IDs
+  from the immutable native proposal and the actual same-run Simplify gate receipt.
+  Preserve that proposal; keep execution/acceptance bookkeeping in runtime.
+  Feature routes the accepted local work through the Core task owner (regenerated
+  Tasks or append-only Converge, never the read-only scan), then renewed Slice
+  mapping, Analyze, the combined gate, the authorized planning checkpoint, and
+  Ralph. Bugfix uses the assessment-bound continuation
+  adapter with a reserved attempt and preserves original official fix/test reports;
+  Lightweight delegates the same bounded work to `delivery.lightweight`. Scope,
+  design, or durable-contract expansion stops for its owning approval. This action
+  owns routing through existing lane owners; it does not hand-edit the queue or
+  replace their closure checks. After application, return to native Simplify Verify,
+  fresh Quality/Standards, and independent Review; never self-approve resolution.
+- `action=phase delivery_run=<id> name=<phase>` records only the current owner
+  phase through `phase`; it does not assert semantic completion. `handoff` is
+  accepted only after current Review and same-run Evidence pass.
+
+`action=help|status|resume|checkpoint|phase` with no explicit run is an inline
+response (except status listing); do not create a run or guess an active Feature.
+The runtime helper never invokes a model, edits product code/tasks, commits, or
+contacts a tracker. Read `.specify/extensions/delivery/templates/runtime.md`
+when a command receives `runtime_stage`/`runtime_result`; native Quality,
+Standards, Reviewer, Core, Ralph, Evidence, and Close contracts remain their
+owners.
+
 Read project governance and `.specify/extensions/delivery/delivery-config.yml`
 when present. Identify the requested change and repository state. Select one
 provisional, proportional lane; confirm or change it after investigation:
@@ -95,7 +184,7 @@ reopens scope/design approval; ordinary in-scope test additions do not.
 Run the installed Spec Kit commands in this sequence, honoring the scope,
 clarification, plan, and analysis gates just as the Feature YAML workflow does:
 
-`speckit.delivery.doctor → speckit.decision.context (discover) → speckit.delivery.explore → scope approval → speckit.specify → speckit.clarify → clarification approval → speckit.decision.context (resolve) → speckit.plan → speckit.decision.propose → plan approval → speckit.tasks → speckit.delivery.slice → speckit.analyze → analysis approval → slice approval → slice approval record → speckit.quality.brief → speckit.ralph.run → speckit.quality.check → speckit.review.standards → speckit.converge → speckit.simplify.scan → speckit.docs-sync.run (when configured) → speckit.docs-sync.package-readme → final speckit.quality.check → final speckit.review.standards → bounded review/fix loop → final review gate → speckit.decision.finalize → speckit.decision.check → speckit.simplify.verify → review freshness check → speckit.evidence.collect → speckit.delivery.handoff → (after the authorized PR outcome) speckit.delivery.close`.
+`runtime init → doctor → decision.context (discover) → explore → scope approval → specify/bind → clarify → clarification approval (only for a real decision) → decision.context (resolve) → plan → decision.propose → plan approval → tasks → delivery.slice → analyze → combined execution/slice approval → slice approval writer → planning checkpoint → quality.brief → ralph.run → quality.check → review.standards → converge (execute/reassess only if tasks appended) → simplify.scan (approve/apply/verify only if candidates accepted) → docs-sync.run (when configured) → docs-sync.package-readme → current Quality/Standards → guarded Review/repair → final review gate → decision.finalize → decision.check → freshness checks → evidence.collect → delivery.handoff → (after the authorized PR outcome) delivery.close`.
 
 Slice planning runs after task generation so it binds real task IDs. It does not
 rewrite or replace `tasks.md`; `tasks.md` remains the only execution queue and
@@ -116,7 +205,12 @@ slice or integration rollup. Do not push, create, or merge a PR without separate
 user authorization.
 
 Treat `tasks.md` as the only execution queue. When a standards, review, or convergence
-finding remains, add or reopen a task and repeat `analyze → ralph → quality → standards → review`. A quality blocker, missing profile, unavailable configured check, or blocked standards verdict is a delivery blocker, not a passing warning.
+finding remains, have the Core task owner (append-only Converge or a Tasks
+regeneration) add or reopen work, then repeat the renewed Slice → Analyze →
+combined gate → approval writer → authorized planning checkpoint → Ralph →
+Quality/Standards/Review path. Never hand-edit or reorder the Core queue. A
+quality blocker, missing profile, unavailable configured check, or blocked
+standards verdict is a delivery blocker, not a passing warning.
 Keep an ADR Proposed until the reviewed repository HEAD matches it; Accepted
 ADRs must be self-contained and cannot depend on ignored Spec artifacts.
 
@@ -131,14 +225,17 @@ behavior; task or slice approvals do not prove integration correctness. The
 reviewer is read-only and independent where possible; unavailable independence
 must be declared, not silently simulated.
 
-Match each lane's YAML: up to three safe review/repair slots, each invoking
-`speckit.review.run → speckit.delivery.review-fix`, followed by a final
-`review.run` and review gate. The repair command owns lane routing, budget
-accounting, and evidence refresh; do not duplicate its repair policy. Honor the
-lower configured `max_review_fix_rounds` bound, never reset attempts after a
-resume/new HEAD, and make slots after a complete current pass no-ops. A review
-run without a repair does not consume the repair budget. At cap exhaustion,
-unresolved blockers or incomplete coverage stop delivery instead of being waived.
+Match each lane's YAML: record one initial native Review, then use runtime
+`needs --kind repair` to enter the bounded repair loop only when a current
+confirmed repairable blocker exists. Reserve its attempt before editing and pass
+`attempt=<n>` unchanged to the repair owner. Refresh Quality/Standards and the
+independent Review, complete that reservation, and recheck runtime need. A current
+complete pass skips all further model repair/review dispatches. The final runtime
+`require --kind review` and human review gate both remain mandatory. Honor the
+lower configured `max_review_fix_rounds` and hard three-pass ceiling; never reset
+attempts after a resume/new HEAD. A review without a repair consumes no budget.
+Cap exhaustion, incomplete coverage, and unrepairable scope/design blockers stop
+instead of being waived.
 
 Persist the reviewer report and stable finding states as coordinator-owned local
 records. The report template owns snapshot/coverage/aggregation rules. Before
@@ -195,11 +292,13 @@ do not require a full Feature spec or a second root-cause report.
 ## Lightweight and completion
 
 For Lightweight, follow its existing YAML sequence:
-`doctor → quality.brief → delivery.lightweight → quality.check → review.standards
-→ docs-sync.package-readme → bounded review/fix loop → final review gate → evidence.collect → delivery.handoff`,
-then close the run after the authorized PR outcome. State the relevant paths and intended small scope;
+`doctor → quality.brief → delivery.lightweight → simplify.scan (apply/verify only
+accepted candidates) → docs-sync.package-readme → quality.check →
+review.standards → bounded review/fix loop → final review gate → evidence.collect
+→ delivery.handoff`, then close the run after the authorized PR outcome. State the relevant paths and intended small scope;
 do not require full exploration, external research, or two approval rounds for a
-mechanical change. The command is complete only when its selected
-lane has no blocking finding, all durable records match repository HEAD, the
-run's recorded status matches the actual pull-request outcome, and the outgoing
-diff is supported by credible evidence.
+mechanical change. The local routing command completes at `HANDOFF_READY` only when the selected
+lane has no blocker, current Review/Quality/Standards and evidence match the
+outgoing contents, and a usable PR body exists. Report the separately authorized
+publication/outcome as the exact pending action. Terminal delivery completion
+requires Close's recorded status to match the observed external outcome.

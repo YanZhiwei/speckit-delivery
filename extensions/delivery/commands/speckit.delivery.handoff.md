@@ -4,10 +4,32 @@ description: "Render a durable pull-request handoff from final requirements, dec
 
 # Delivery Handoff
 
-If `delivery_run=<id>` is supplied, use its canonical `.specify/delivery/<id>/`
-reports/checkpoint and exploration reference; validate the safe id and do not
-silently select another Feature/run's pass. Include Bugfix continuation evidence
-when repairs followed the original official fix/test reports.
+## Input and run/output binding
+
+Read `$ARGUMENTS`. A direct delivery workflow must supply
+`lane=feature|bugfix|lightweight` and an explicit `delivery_run=<id>`. Validate
+the id as one safe path segment and use only the exact canonical
+`.specify/delivery/<delivery_run>/` run root and its supplied slice/exploration
+paths. Never infer another active Feature/run from recency, branch, or directory
+contents and never relocate a packet after Feature/Bug identity is known. A
+standalone invocation without `delivery_run` renders the body inline only; it
+must not discover or create a Feature path. Report `PR_BODY_PATH: inline` in that
+case.
+
+Per-run operational state/results belong under
+`.specify/delivery/<delivery_run>/runtime/`, while
+`exploration.md`, `slices.md`, `decision-context.md`, `code-context.md`,
+`simplifications.md`, and `evidence.md` remain at the run root. Use the central
+runtime owner at
+`.specify/extensions/delivery/templates/runtime.md`. When either `runtime_stage` or `runtime_result` is supplied, require the
+canonical `delivery_run`, read `.specify/extensions/delivery/templates/runtime.md`
+in full, and follow that runtime contract; do not invent helper flags, paths, or
+result schemas. With neither argument, do not create runtime state here.
+
+If `delivery_run=<id>` is supplied, use its canonical run reports/checkpoint and
+exploration reference; validate the safe id and do not silently select another
+Feature/run's pass. Include Bugfix continuation evidence when repairs followed
+the original official fix/test reports.
 
 Resolve the final base/head diff and read the durable Issue, accepted ADRs,
 final review verdict, evidence report, documentation status, compatibility
@@ -22,7 +44,8 @@ Use the first applicable source, and never mix sections from two:
    file (project-relative or absolute);
 2. `.github/pull_request_template.md`, `.github/PULL_REQUEST_TEMPLATE.md`, or
    `docs/pull_request_template.md`;
-3. the extension's own `templates/pull-request.md`;
+3. the installed Delivery fallback
+   `.specify/extensions/delivery/templates/pull-request.md`;
 4. the section contract below.
 
 A configured path that does not exist is a reported gap, not a reason to
@@ -36,8 +59,9 @@ project template; this command always renders the current change.
 
 ## Slice and rollup modes
 
-Read the approved `.specify/delivery/<run>/slices.md` when present and select the
-mode from the actual request, not from a default:
+Read the approved
+`.specify/delivery/<delivery_run>/slices.md` when present and select the mode
+from the actual request, not from a default:
 
 - `slice=<id>`: render one layer's PR body. State its goal, base branch,
   dependencies, reviewed task range, "not in this layer" deferrals, flag or
@@ -118,33 +142,51 @@ instead of silently choosing a squash that destroys slice boundaries.
 
 ## Output
 
-Write the complete body to a real local file under the actual run or feature
-directory, honoring `artifact_policy`:
+When `delivery_run` is supplied, write the complete body only to the exact run
+workspace path, honoring `artifact_policy`:
 
-- single, final, or rollup: `.specify/delivery/<run>/pull-request.md`
-- one slice: `.specify/delivery/<run>/pull-request-<slice>.md`
+- single, final, or rollup: `.specify/delivery/<delivery_run>/pull-request.md`
+- one slice: `.specify/delivery/<delivery_run>/pull-request-<slice>.md`
 
-Use the resolved feature/run directory when no `delivery_run` was supplied; never
-invent a path. Overwrite only the same mode/slice's prior body, and never clobber
-unrelated delivery records. A chat-only body is not a durable handoff when a run
-directory exists.
+Overwrite only the same mode/slice's prior body, and never clobber unrelated
+records. When no run is supplied, render the complete body inline and do not
+create or discover a Feature directory; use `PR_BODY_PATH: inline`.
+
+Handoff readiness is distinct from terminal Delivery. A successful render emits
+`HANDOFF_READY: ready`, but this command never writes a delivered/abandoned/
+superseded terminal outcome, never changes `evidence.md` status, and never
+publishes, merges, closes, or mutates a tracker/PR. Before a concrete PR is
+observed, the truthful state is `waiting-for-publication`; after a concrete PR is
+recorded but before its merged/closed outcome is verified, it is
+`waiting-for-outcome`. If an already terminal record is merely read, report
+`terminal-recorded` with its observed status and do not alter it. A blocked or
+stale input emits `HANDOFF_READY: blocked` and names the exact refresh or
+approval needed.
 
 Print:
 
 ```text
-PR_BODY_PATH: <actual path>
-PR_CREATE_HINT: gh pr create --base <target> --head <branch> --title "<title>" --body-file <actual path>
-PR_CLOSE_HINT: after the pull request is merged or closed, run speckit.delivery.close delivery_run=<run> outcome=merged|closed pr=<number|url>
+HANDOFF_READY: ready | blocked
+DELIVERY_STATUS: waiting-for-publication | waiting-for-outcome | terminal-recorded | blocked
+PR_BODY_PATH: <actual path or inline>
+PR_CREATE_HINT: <run-bound verified gh pr create --body-file hint, or omitted>
+PR_CLOSE_HINT: <after verified outcome, run speckit.delivery.close with this lane/run/ref, or omitted>
+NEXT_ACTION: <one exact next action; publication or close only after its stated precondition>
 ```
 
 Use the verified provider, target branch, head branch, and title. If any field
-cannot be verified, print the body path and the unresolved fields instead of a
-fabricated command. The hint is not executed; pushing, creating, and merging a PR
-still require separate user authorization.
+cannot be verified, print the body path/inline body and unresolved fields rather
+than a fabricated command. `PR_CREATE_HINT` is omitted when its fields are not
+verified; with no run, omit both command hints and make `NEXT_ACTION` the request
+to rerun with an explicit `lane` and `delivery_run`. The hints are never executed
+and publication/merging/closing still require separate user authorization. The
+next action must say whether the user must publish first or wait for and then
+verify the outcome before invoking Close.
 
 The rendered body is run workspace, not a second durable record. Under
-`artifact_policy: ephemeral`, keep `pull-request.md` local and publish the body
-through `--body-file`; the durable summary belongs in `evidence.md`.
+`artifact_policy: ephemeral`, keep the body local and publish it through
+`--body-file`; the durable summary belongs in the canonical run-root
+`evidence.md`.
 
 ## Boundaries
 
@@ -161,7 +203,9 @@ Do not cite ignored Spec/Plan files, task identifiers, review rounds, agent
 identities, conversation history, or obsolete command output. Link durable
 Issues and ADRs instead.
 
-Write the body locally and report `PR_BODY_PATH`. Publishing or creating the PR
-requires separate user authorization. The command is complete when every
+With a run, write the body locally and report its exact `PR_BODY_PATH`; without
+one, report the inline body and `PR_BODY_PATH: inline`. Publishing or creating
+the PR requires separate user authorization. The command is complete when every
 statement reflects the actual reviewed contents, all evidence links or commands
-are resolvable, and the reported body file contains the same rendered content.
+are resolvable, and the local file (when one exists) contains the same rendered
+content.

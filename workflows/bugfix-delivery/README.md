@@ -1,17 +1,22 @@
 # Bugfix Delivery Workflow
 
-Uses Spec Kit's official `bug` extension for assessment, remediation, and regression
-validation. Doctor, ADR discovery, and `speckit.delivery.explore` establish the
-relevant code/directory structure and Issue/PR/commit history first. Assessment
-consumes that packet and owns reproduction, root-cause diagnosis, and red evidence;
-it does not repeat structural research or require a full Feature spec.
+Uses Spec Kit's official `bug` extension for assessment, remediation, and
+regression validation. It starts the portable
+[Delivery runtime](../../extensions/delivery/templates/runtime.md), then runs
+Doctor, ADR discovery, and `speckit.delivery.explore` to establish the relevant
+code/directory structure and Issue/PR/commit history first. Assessment consumes
+that packet and owns reproduction, root-cause diagnosis, and red evidence; it does
+not repeat structural research or require a full Feature spec.
 
-Supply required `delivery_run=<safe-id>` and a separate normalized `bug_slug`,
-reusing both on resume. Explore persists the canonical packet and expected Bug
-reference before exit. Official Assess writes only its Bug assessment, not the
-external packet. The coordinator verifies the exact expected assessment and
-records its actual reference/hash and the real assessment-gate choice. A fresh
-run stops on slug/output collision; it never guesses another or latest Bug.
+Supply required `delivery_run=<safe-id>`, a separate normalized `bug_slug`, and a
+verified `runtime_python` invocation, reusing them on resume. Explore persists the
+canonical packet and expected Bug reference before exit. Official Assess writes
+only its Bug assessment, not the external packet. Runtime binds and presents that
+exact expected file plus the proposal; the Delivery
+`action=bind-assessment` coordinator then verifies the actual assessment, records
+its reference/hash and the real assessment-gate choice in the run packet. Decision
+Context writes only its own context. A fresh run stops on slug/output collision;
+it never guesses another or latest Bug.
 
 ```bash
 specify workflow run bugfix-delivery --input delivery_run=retry-fix-01 --input bug_slug=duplicate-retry --input report="Retries duplicate notifications"
@@ -24,24 +29,24 @@ contract changes stop this workflow and resume Feature with the same evidence;
 multiple files alone do not require escalation. See the
 [Delivery contract](../../extensions/delivery/README.md).
 
-After the final fix and before Quality/Standards/review,
-`speckit.docs-sync.package-readme` judges package README drift. Internal-only changes no-op; a changed public
-surface must be updated or cite the lines that remain correct. New packages also
-record comparable-project research.
+Simplify candidates are optional: a recorded rejection skips application, while
+accepted candidates are applied through the approved Bugfix continuation and
+verified against the same assessment. Package README judgment runs after accepted
+simplifications, then current Quality/Standards and Review consume the final
+contents. Internal-only changes no-op; a changed public surface must be updated or
+cite the lines that remain correct.
 
-Final six-dimensional Review uses up to three safe review/repair slots, the lower
-configured repair budget, final review, and an aborting gate. Repair stays with
-the approved assessment, not forced Feature tasks. After the initial official
-`bug.fix/test`, the [continuation adapter](../../extensions/delivery/templates/bugfix-review-repair.md)
+Review starts with one independent native six-dimensional pass. Runtime
+`needs --kind repair` enters a durable bounded repair loop only for a current
+confirmed repairable blocker. Repair stays with the approved assessment, not forced
+Feature tasks. After the initial official `bug.fix/test`, the
+[continuation adapter](../../extensions/delivery/templates/bugfix-review-repair.md)
 preserves those reports and appends versioned per-round repair/regression records;
-it does not re-invoke their automated-overwrite refusal paths. A repair that
-changes a package or public surface also refreshes affected documentation before
-its current Quality/Standards/re-review evidence; an internal-only repair records
-why no refresh applies. Current
-complete pass makes remaining slots no-ops; blocked/incomplete stop delivery.
-Attempts and finding IDs persist across resume/new HEAD; decision checks require
-a freshness review before evidence/handoff. YAML gates are guided checkpoints,
-not automatic semantic validation. See the
+it does not re-invoke their automated-overwrite refusal paths. Each iteration
+refreshes current Quality/Standards and independently re-reviews; a current
+complete pass skips further dispatches. The final runtime guard and human gate
+both reject blocked, incomplete, or exhausted repair budgets. Decision checks
+require fresh review and evidence before handoff. See the
 [Reviewer contract](../../extensions/review/templates/reviewer.md).
 
 Continuation preserves all applicable pre/post fix/test hooks. Mandatory hooks

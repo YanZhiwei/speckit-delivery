@@ -1,63 +1,79 @@
 # Feature Delivery Workflow
 
-The full lane for new behavior and architectural change. Doctor and ADR discovery
-precede `speckit.delivery.explore`; a scope gate reviews code/history/open-source
-evidence and the current/candidate directory trees before `specify`. The original
-request and approved packet flow into specification, clarification, and planning.
+The full lane for new behavior and architectural change. It starts the portable
+[Delivery runtime](../../extensions/delivery/templates/runtime.md), then runs
+Doctor and ADR discovery before `speckit.delivery.explore`. A scope gate reviews
+code/history/open-source evidence and the current/candidate directory trees before
+`specify`.
 
-Supply required `delivery_run=<safe-id>` when starting, and reuse it on resume.
-Explore persists its canonical run packet before returning; Specify receives its
-exact path and the real scope-gate choice, not another process's lost context.
-The packet stays at that run path after Feature creation. Gates display the file;
-receiving commands record actual approval and reject missing/stale inputs.
+Supply required `delivery_run=<safe-id>` and a verified `runtime_python`
+invocation (default `python`; for example `python3` or Windows `py -3`) when
+starting, and reuse both on resume. Explore persists its canonical run packet
+before returning; Specify receives its exact path, the real scope-gate choice, and
+must emit the actual `FEATURE_DIR:` for runtime binding. The packet stays at that
+run path after Feature creation. Gates display the file; receiving commands record
+actual approval and reject missing/stale inputs.
 
 The existing plan gate reviews finalized paths, file responsibilities, interfaces,
 test locations/commands, risks, scope differences, and the `Architecture
 constraints` table before tasks. The table stays in the actual feature plan, whose
 exact path is recorded in the canonical packet. After Decision Propose, the
 coordinator records the presented content/input identity before the gate; Tasks
-checks it before binding the actual approval choice. Tasks/Analyze preserve constraint
-IDs and verification work; pre-edit Brief and task/final Review consume applicable
-rows. Optional architecture skill methods follow the shared Plan checkpoint and
-cannot replace project governance or the existing workflow. See the
+checks it before binding the actual approval choice. Tasks/Analyze preserve
+constraint IDs and verification work; pre-edit Brief and task/final Review consume
+applicable rows. Optional architecture skill methods follow the shared Plan
+checkpoint and cannot replace project governance or the existing workflow. See the
 [Delivery contract](../../extensions/delivery/README.md) for research, output,
-approval, and artifact policy. A material scope change reopens approval; if the
-lane is wrong, stop this workflow and carry evidence to the correct lane.
+approval, and artifact policy, and the
+[Core/Ralph adapter](../../extensions/delivery/templates/core-adapter.md) for the
+task shape and planning transition. A material scope change reopens approval; if
+the lane is wrong, stop this workflow and carry evidence to the correct lane.
 
 After task generation, `speckit.delivery.slice` binds the real task IDs to
-reviewable slices and derives the merge mode. Analyze resolves blocking task-map
-and coverage findings before the slice gate; the gate reviews task coverage,
-trunk-safety evidence, diff budgets, flags, merge method, and rollback, then the
-Delivery `action=record-approval` writer records the actual choice and unchanged
-fingerprint before Ralph. `tasks.md` remains the only execution queue; `slices.md` is
-boundary metadata and cannot add, remove, or reorder tasks. Ralph stops at each
-slice boundary for the declared prefix/flag/checkpoint verification. A failed
-prefix check reopens slice planning instead of continuing the stack. Render each
-verified layer with `speckit.delivery.handoff slice=<id>`; the workflow's final
-handoff uses `mode=auto` for the release slice or integration rollup. Creating,
-pushing, or merging a PR still requires separate authorization.
+reviewable slices and derives the merge mode. Analyze runs against the planned
+mapping; a runtime guard then requires a current passing Analyze result before one
+combined execution/slice gate reviews task coverage, trunk-safety evidence, diff
+budgets, flags, merge method, and rollback. The Delivery
+`action=record-approval` writer records the actual choice and unchanged
+fingerprint. A project-authorized planning checkpoint follows before Ralph.
+`tasks.md` remains the only execution queue; `slices.md` is boundary metadata and
+cannot add, remove, or reorder tasks. Ralph stops at each slice boundary for the
+declared prefix/flag/checkpoint verification. A failed prefix check reopens slice
+planning instead of continuing the stack. Render each verified layer with
+`speckit.delivery.handoff slice=<id>`; the workflow's final handoff uses
+`mode=auto` for the release slice or integration rollup. Creating, pushing, or
+merging a PR still requires separate authorization.
+
+If Converge appends tasks, the workflow routes them through Delivery Slice again,
+a fresh Analyze, a renewed combined gate and approval writer, the planning
+checkpoint, and Ralph before reassessing. A no-gap Converge, or a converged
+reassessment, skips all of that work. A configured or three-pass ceiling that
+still has unresolved work fails the final runtime requirement.
+
+If Simplify proposes candidates, an aborting-or-skip presentation gate records the
+actual choice. Accepted candidates are applied by existing lane owners (Feature
+uses Core Converge to append tasks, then the same analyze/approval/checkpoint/Ralph
+path) and verified by native `simplify.verify`; rejected candidates skip further
+optional work. The proposal stays immutable and cannot become a second queue.
 
 Before final Quality/Standards/review, `speckit.docs-sync.package-readme` keeps
 every touched package README true to its manifest, public exports, CLI,
-configuration, dependencies, and real test commands. A new package also records two or three comparable public
-READMEs and what was adopted or rejected. A README-affecting change cannot be
-reported unchanged without citing the lines that remain correct.
+configuration, dependencies, and real test commands. A new package also records
+two or three comparable public READMEs and what was adopted or rejected. A
+README-affecting change cannot be reported unchanged without citing the lines that
+remain correct.
 
-Version `0.1.x` uses explicit human gates and three safe no-op convergence
-slots because command-step prose is not a machine-readable semantic result. The
-YAML three-slot ceiling is portable; a configured lower `max_convergence_rounds`
-must be enforced by the converge command, and malformed/out-of-range values block
-at Doctor. The same host limit applies to review/repair slots.
-Later versions will use a state protocol and custom result gate.
-
-Ralph requires task-scoped Review as well as Quality/Standards. Final integrated
-Review uses up to three `review.run → delivery.review-fix` slots (or the lower
-configured repair budget), then final review and an aborting gate. A complete
-current pass makes remaining slots no-ops; blocked/incomplete cannot be waived.
-Repair attempts and finding IDs survive resume/new HEAD. Feature repairs remain
-in `tasks.md`; no recursive Ralph for an open task and no dirty-entry bypass. A
-repair that changes a package or public surface refreshes affected documentation
-inside the same task/attempt before its checks and commit gate; an internal-only
-repair records why no refresh applies.
-ADR finalization/checks are followed by freshness review before evidence/handoff.
+Review starts with one independent native six-dimensional pass. Runtime
+`needs --kind repair` enters a durable bounded repair loop only for a current
+confirmed repairable blocker; each iteration reserves an attempt, applies one
+lane-owned repair pass, refreshes current Quality/Standards, and independently
+re-reviews. A current complete pass skips all remaining dispatches. The final
+runtime guard and human review gate both reject blocked, incomplete, or
+cap-exhausted findings. Attempts and finding IDs survive resume and new HEAD; a
+dirty preflight, stale evidence, or scope change blocks rather than bypassing.
 See the [Reviewer contract](../../extensions/review/templates/reviewer.md).
+
+After ADR finalization and decision checks, changed contents require refreshed
+Quality, Standards, Review, and accepted-simplification verification before
+Evidence and Handoff. This is transport freshness, not a claim that a host exit
+code proves semantic quality.

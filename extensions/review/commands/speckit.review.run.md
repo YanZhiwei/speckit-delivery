@@ -10,6 +10,31 @@ description: "Independently review task or outgoing changes across six dimension
 $ARGUMENTS
 ```
 
+When `runtime_stage=review` and `runtime_result=<path>` are supplied, require
+`delivery_run=<id>` and read the installed
+`.specify/extensions/delivery/templates/runtime.md` and its pending
+`.specify/delivery/<delivery_run>/runtime/input-review.json` before reviewing.
+The native report remains the source of semantic truth. After the read-only
+review, write the complete native report under this run with its explicit
+`REVIEW_VERDICT` header and exact snapshot/finding data. Then write both exact
+artifacts the runtime contract defines: the machine `native_receipt` (binding this
+stage's identity, verdict, HEAD, report, ordered `evidence` references, and
+`data`) and the normalized envelope at the exact supplied `runtime_result` path,
+copying the pending `scope`, ticket, and input fingerprint. For a pass, include
+`data.dependencies` with exactly the current `quality` and `standards` owner
+receipts (`stage, ticket, input_fingerprint, verdict, report, native_receipt`);
+never fabricate an envelope, change a fingerprint, or treat a successful model/host exit as a review
+pass. Translate the native Reviewer report into the envelope without changing its
+judgment: `fresh-context` -> `independent`, `self-review` -> `self-review`, an
+explicit user-accepted degradation -> `accepted-self-review` plus its `acceptance`
+reference; dimension objects -> the six envelope strings; the native coverage
+mapping -> `complete` only when no required surface is partial/unreviewed,
+otherwise `incomplete`; finding IDs/states/blocking/evidence -> the envelope
+`findings`, with no dropped unresolved ID and no bare blocker downgrade. The
+runtime validates all six dimensions, coverage, independence, finding lifecycle,
+Quality/Standards freshness, and evidence references. Without both runtime
+arguments, do not create runtime state.
+
 Read the installed `.specify/extensions/review/templates/reviewer.md` (or
 `templates/reviewer.md` under the resolved extension root). It is the single
 reviewer contract for input preparation, six-dimensional analysis, findings,

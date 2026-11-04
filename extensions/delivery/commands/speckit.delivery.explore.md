@@ -4,11 +4,29 @@ description: "Ground a delivery request in code, history, and open-source refere
 
 # Delivery Explore
 
-## Input
+## Input and run binding
 
 ```text
 $ARGUMENTS
 ```
+
+A direct workflow invocation must supply `lane=feature|bugfix` and an explicit
+`delivery_run=<id>`; validate the id as one safe path segment and resolve exactly
+`.specify/delivery/<delivery_run>/`. The run id is a transport identity, not a
+Feature slug or Bug slug. A standalone invocation without a run returns the
+packet inline and does not infer an active Feature, create a directory, or write
+to a guessed path. A direct workflow without a usable run stops with recovery
+guidance. Any supplied output path must be the normalized
+`.specify/delivery/<delivery_run>/exploration.md` path.
+
+Per-run operational state and phase results live under
+`.specify/delivery/<delivery_run>/runtime/`; the canonical exploration packet
+stays at the run root. Follow the central runtime owner at
+`.specify/extensions/delivery/templates/runtime.md`. When either `runtime_stage` or `runtime_result` is supplied, require the
+canonical `delivery_run`, read `.specify/extensions/delivery/templates/runtime.md`
+in full, and follow that runtime contract; do not invent helper flags, paths, or
+result schemas. With neither argument, do not create ad hoc runtime state; use
+the required Explore checkpoint rule below.
 
 Use this command before specifying a Feature or assessing a Bugfix. It gathers
 evidence and presents candidate scope; it does not approve scope, write product
@@ -23,14 +41,23 @@ eventual Feature/Bugfix/Lightweight lane. Search for existing behavior before
 accepting the user's description of a feature as new. Reuse relevant evidence
 already gathered in this run rather than starting the investigation again.
 
-For direct YAML workflows, `delivery_run=<id>` is an explicit, user-assigned run
-identity, not a Feature slug. Validate it as one safe path segment matching
+For direct YAML workflows, the explicit user-assigned `delivery_run=<id>` is the
+only run identity. Validate it as one safe path segment matching
 `[A-Za-z0-9][A-Za-z0-9._-]*` (no traversal or reserved device names), then use
-`.specify/delivery/<id>/exploration.md`. Refuse collisions with a different request;
-resume the same record only for the same run. Persist the complete packet before
-exiting, even without a Feature directory. Ephemeral policy means a local ignored
-file, not context-only transport between host processes. A workflow invocation
-without a usable run identity stops with recovery guidance.
+exactly `.specify/delivery/<id>/exploration.md`. Refuse collisions with a
+different request or lane; resume the same record only for the same run and
+reviewed input. Persist the complete packet before exiting, even without a
+Feature directory. Ephemeral policy means a local ignored canonical file, not
+context-only transport between separate host processes. A workflow invocation
+without a usable run identity stops with recovery guidance; a standalone
+no-run invocation returns the packet inline and does not create a Feature path.
+
+At start and on resume, initialize or update the Explore phase checkpoint and
+operational result under the run's `runtime/` directory according to the central
+runtime contract. Record the actual phase and limitations only; do not fabricate
+final evidence, PR outcome, terminal status, or scope approval. The checkpoint
+must point to the same canonical packet and must not relocate it when Feature or
+Bug identity becomes known.
 
 For direct Bugfix entry, `bug_slug=<slug>` is separately explicit, normalized
 lowercase kebab-case. Record its expected `.specify/bugs/<slug>/assessment.md`
@@ -107,29 +134,32 @@ comparisons; they do not replace directory trees or evidence. Do not use AI imag
 generation. Candidate paths are a scope hypothesis, not a locked implementation
 design. The plan later owns exact files, interfaces, and verification decisions.
 
-When an actual feature/run location is known, save one `exploration.md` under
-`.specify/delivery/<feature-or-run>/`, honoring the project's `artifact_policy`.
-In a shared-session router only, before a location is known, return the packet without inventing a feature path;
-carry it forward and persist it when the location becomes known. Update this
-record rather than creating competing copies. Durable Issues/ADRs/PRs must stay
-self-contained when the record is ephemeral. Never create tracker resources
-without separate authorization.
+When `delivery_run` is known, save or update exactly one
+`.specify/delivery/<delivery_run>/exploration.md`, honoring the project's
+`artifact_policy`; this is the canonical run-root packet. Do not write a
+Feature-named or Bug-named alternative, and never move this packet when identity
+becomes known. In a shared-session router or standalone no-run invocation,
+return the packet inline until an explicit run is assigned; do not invent a
+feature path. Durable Issues/ADRs/PRs must stay self-contained when the record is
+ephemeral. Never create tracker resources without separate authorization.
 
 The workflow passes the exact packet path and real preceding gate choice to the
 next command. That consumer records actual approval, approved scope/snapshot, and
 accepted limitations before advancing; ready or exit success is not approval.
 Gates do not edit packets. Missing packet/choice, changed scope/snapshot, or an
 inability to establish what was approved stops progression. Keep the canonical
-run path stable when Feature/bug identity becomes known; record those identities
-here instead of moving the packet and breaking later processes' references.
+run path stable and keep operational checkpoint/results separate under
+`.specify/delivery/<delivery_run>/runtime/`.
 
 ## Completion
 
-Return `EXPLORATION_VERDICT: ready | blocked`, the evidence location (or preserved
-context), recommended lane, research limitations, unresolved blockers, and
+Return `EXPLORATION_VERDICT: ready | blocked`, the exact evidence location (or
+`inline`), `DELIVERY_RUN`/lane, the runtime checkpoint/result location when a run
+exists, recommended lane, research limitations, unresolved blockers, and
 `SCOPE_APPROVAL: pending`. Ready means the evidence supports a scope discussion,
-not user approval, confirmed Bug root cause, or permission to implement. Missing
-decision-critical evidence is blocked; a non-critical limitation stays explicit.
+not user approval, confirmed Bug root cause, permission to implement, or final
+Delivery evidence. Missing decision-critical evidence is blocked; a non-critical
+limitation stays explicit.
 The router/workflow owns scope approval and any lane change. Downstream specify,
 assess, and plan must consume this packet, not only the original request.
 For Bugfix, do not request scope approval before assessment: the official

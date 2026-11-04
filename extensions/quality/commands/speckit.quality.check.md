@@ -10,6 +10,21 @@ description: "Run applicable project quality profiles and return a task-closure 
 $ARGUMENTS
 ```
 
+When `runtime_stage=quality` and `runtime_result=<path>` are supplied, require
+`delivery_run=<id>` and read the installed
+`.specify/extensions/delivery/templates/runtime.md` plus
+`.specify/delivery/<delivery_run>/runtime/input-quality.json` before running the
+native contract. Preserve the original per-check execution receipts in a native
+report that includes the explicit `QUALITY_VERDICT` header. Then write both exact
+artifacts the runtime contract defines: the machine `native_receipt` binding this
+stage's identity, verdict, HEAD, report, `evidence` list, and `data`, and the
+normalized envelope at the supplied `runtime_result` path with the pending
+`scope`, ticket, and input fingerprint. A pass cannot have a failing/missing
+check; only a policy-backed `applicability: not-applicable` plus reason may omit
+checks. The runtime validates receipt identity and exit codes; this command's
+quality judgment and a successful shell exit do not substitute for each other.
+Without both runtime arguments, do not create runtime state.
+
 Determine the repository HEAD, base/head diff, changed paths, and (when
 provided) the task identifier. Read
 `.specify/extensions/quality/quality-config.yml` when present, then read only

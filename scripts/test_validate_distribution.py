@@ -69,10 +69,79 @@ class DistributionContractTest(unittest.TestCase):
             any("workflow 'feature-delivery'" in error for error in errors), errors
         )
 
+    def test_each_workflow_requires_metadata_must_match_yaml(self) -> None:
+        for workflow_id in (
+            "feature-delivery",
+            "bugfix-delivery",
+            "lightweight-delivery",
+        ):
+            with self.subTest(workflow_id=workflow_id):
+                root = self.fixture()
+                workflow_path = root / "workflows" / workflow_id / "workflow.yml"
+                workflow = yaml.safe_load(workflow_path.read_text(encoding="utf-8"))
+                workflow["requires"]["speckit_version"] = ">=0.16.4"
+                workflow_path.write_text(
+                    yaml.safe_dump(workflow, sort_keys=False, allow_unicode=True),
+                    encoding="utf-8",
+                )
+                errors = validator.validate(root)
+                self.assertTrue(
+                    any(f"{workflow_id}: requires" in error for error in errors),
+                    errors,
+                )
+
+    def test_workflow_requirement_floor_cannot_be_lowered_in_both_metadata_copies(self) -> None:
+        for workflow_id in (
+            "feature-delivery",
+            "bugfix-delivery",
+            "lightweight-delivery",
+        ):
+            with self.subTest(workflow_id=workflow_id):
+                root = self.fixture()
+                workflow_path = root / "workflows" / workflow_id / "workflow.yml"
+                workflow = yaml.safe_load(workflow_path.read_text(encoding="utf-8"))
+                workflow["requires"]["speckit_version"] = ">=1.2.2"
+                workflow_path.write_text(
+                    yaml.safe_dump(workflow, sort_keys=False, allow_unicode=True),
+                    encoding="utf-8",
+                )
+                catalog_path = root / "catalogs" / "workflows.json"
+                catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+                catalog["workflows"][workflow_id]["requires"]["speckit_version"] = ">=1.2.2"
+                catalog_path.write_text(json.dumps(catalog), encoding="utf-8")
+                errors = validator.validate(root)
+                self.assertTrue(
+                    any(
+                        workflow_id in error
+                        and "1.2.3" in error
+                        and "speckit_version" in error
+                        for error in errors
+                    ),
+                    errors,
+                )
+
     def test_release_urls_must_match_expected_version(self) -> None:
         root = self.fixture()
         errors = validator.validate(root, expected_version=self.target)
         self.assertTrue(any("catalog_url" in error for error in errors), errors)
+
+    def test_sd_alias_must_belong_to_the_delivery_router(self) -> None:
+        for other_command in (None, "speckit.delivery.doctor"):
+            with self.subTest(other_command=other_command):
+                root = self.fixture()
+                path = root / "extensions/delivery/extension.yml"
+                manifest = yaml.safe_load(path.read_text(encoding="utf-8"))
+                for command in manifest["provides"]["commands"]:
+                    if command["name"] == "speckit.delivery.route":
+                        command.pop("aliases", None)
+                    elif command["name"] == other_command:
+                        command["aliases"] = ["sd"]
+                path.write_text(yaml.safe_dump(manifest), encoding="utf-8")
+                errors = validator.validate(root)
+                self.assertTrue(
+                    any("speckit.delivery.route must declare the sd alias" in error for error in errors),
+                    errors,
+                )
 
     def test_explore_command_must_be_declared(self) -> None:
         root = self.fixture()
@@ -96,6 +165,33 @@ class DistributionContractTest(unittest.TestCase):
                 (root / relative).unlink()
                 errors = validator.validate(root)
                 self.assertTrue(any("missing" in error and "explor" in error for error in errors), errors)
+
+    def test_runtime_resources_must_ship(self) -> None:
+        for relative in (
+            "extensions/delivery/scripts/delivery_runtime.py",
+            "extensions/delivery/templates/runtime.md",
+            "extensions/delivery/templates/core-adapter.md",
+        ):
+            with self.subTest(relative=relative):
+                root = self.fixture()
+                (root / relative).unlink()
+                errors = validator.validate(root)
+                self.assertTrue(any("runtime" in error or "core-adapter" in error for error in errors), errors)
+
+    def test_runtime_templates_must_keep_stage_and_handoff_contracts(self) -> None:
+        for relative, needle in (
+            ("extensions/delivery/templates/runtime.md", "runtime_stage"),
+            ("extensions/delivery/templates/core-adapter.md", "SD_CORE_HANDOFF: PASS"),
+        ):
+            with self.subTest(relative=relative):
+                root = self.fixture()
+                path = root / relative
+                path.write_text(
+                    path.read_text(encoding="utf-8").replace(needle, "removed-contract"),
+                    encoding="utf-8",
+                )
+                errors = validator.validate(root)
+                self.assertTrue(any(relative.split("/")[-1] in error for error in errors), errors)
 
     def test_slice_command_and_template_must_ship(self) -> None:
         for relative in (
@@ -379,6 +475,105 @@ class DistributionContractTest(unittest.TestCase):
                 errors = validator.validate(root)
                 self.assertTrue(any("slice" in error for error in errors), errors)
 
+    def test_native_runtime_stage_requires_adjacent_begin_and_record(self) -> None:
+        for workflow_id, stage_step_id in (
+            ("feature-delivery", "analyze"),
+            ("feature-delivery", "convergence-analyze"),
+            ("bugfix-delivery", "simplify"),
+            ("lightweight-delivery", "simplify"),
+        ):
+            for operation in ("begin", "record"):
+                with self.subTest(
+                    workflow=workflow_id, stage=stage_step_id, operation=operation
+                ):
+                    root = self.fixture()
+                    path = root / "workflows" / workflow_id / "workflow.yml"
+                    workflow = yaml.safe_load(path.read_text(encoding="utf-8"))
+                    stage = next(
+                        step for step in validator._walk_steps(workflow["steps"])
+                        if step.get("id") == stage_step_id
+                    )
+                    stage_name = re.search(
+                        r"runtime_stage=([a-z-]+)",
+                        str(stage.get("input", {}).get("args", "")),
+                    )
+                    self.assertIsNotNone(stage_name)
+                    adjacent_id = f"{stage_step_id}-runtime-{operation}"
+                    if stage_step_id == "convergence-analyze":
+                        adjacent_id = f"convergence-analyze-runtime-{operation}"
+                    steps = validator._walk_steps(workflow["steps"])
+                    adjacent = next(step for step in steps if step.get("id") == adjacent_id)
+                    container = workflow["steps"]
+                    if adjacent not in container:
+                        container = next(
+                            parent["steps"]
+                            for parent in steps
+                            if isinstance(parent.get("steps"), list)
+                            and adjacent in parent["steps"]
+                        )
+                    container.remove(adjacent)
+                    path.write_text(
+                        yaml.safe_dump(workflow, sort_keys=False, allow_unicode=True),
+                        encoding="utf-8",
+                    )
+                    errors = validator.validate(root)
+                    self.assertTrue(
+                        any(
+                            stage_step_id in error and operation in error
+                            for error in errors
+                        ),
+                        errors,
+                    )
+
+    def test_runtime_result_path_must_match_its_stage(self) -> None:
+        root = self.fixture()
+        path = root / "workflows/feature-delivery/workflow.yml"
+        workflow = yaml.safe_load(path.read_text(encoding="utf-8"))
+        analyze = next(step for step in workflow["steps"] if step.get("id") == "analyze")
+        analyze["input"]["args"] = str(analyze["input"]["args"]).replace(
+            ".specify/delivery/{{ inputs.delivery_run }}/runtime/result-analyze.json",
+            ".specify/delivery/other-run/runtime/result-analyze.json",
+        )
+        path.write_text(
+            yaml.safe_dump(workflow, sort_keys=False, allow_unicode=True),
+            encoding="utf-8",
+        )
+        errors = validator.validate(root)
+        self.assertTrue(
+            any("analyze" in error and "result path" in error for error in errors),
+            errors,
+        )
+
+    def test_review_and_convergence_guards_cannot_dispatch_unconditionally(self) -> None:
+        for guard_id, loop_id in (
+            ("review-repair-if-needed", "review-repair-loop"),
+            ("convergence-if-needed", "convergence-loop"),
+        ):
+            for target_id in (guard_id, loop_id):
+                with self.subTest(target=target_id):
+                    root = self.fixture()
+                    path = root / "workflows/feature-delivery/workflow.yml"
+                    workflow = yaml.safe_load(path.read_text(encoding="utf-8"))
+                    target = next(
+                        step for step in validator._walk_steps(workflow["steps"])
+                        if step.get("id") == target_id
+                    )
+                    target["condition"] = "true"
+                    path.write_text(
+                        yaml.safe_dump(workflow, sort_keys=False, allow_unicode=True),
+                        encoding="utf-8",
+                    )
+                    errors = validator.validate(root)
+                    expected_signal = {
+                        "review-repair-if-needed": "runtime need result",
+                        "review-repair-loop": "review-repair-loop",
+                        "convergence-if-needed": "convergence work",
+                        "convergence-loop": "convergence-loop",
+                    }[target_id]
+                    self.assertTrue(
+                        any(expected_signal in error for error in errors), errors
+                    )
+
     def test_feature_scope_gate_cannot_follow_specify(self) -> None:
         root = self.fixture()
         path = root / "workflows/feature-delivery/workflow.yml"
@@ -410,6 +605,232 @@ class DistributionContractTest(unittest.TestCase):
                     path.write_text(yaml.safe_dump(workflow), encoding="utf-8")
                     errors = validator.validate(root)
                     self.assertTrue(any(gate_id in error for error in errors), errors)
+
+    def test_review_repair_loop_requires_reserve_and_complete(self) -> None:
+        for workflow_id in (
+            "feature-delivery",
+            "bugfix-delivery",
+            "lightweight-delivery",
+        ):
+            for removed_id in ("review-reserve", "review-complete"):
+                with self.subTest(workflow=workflow_id, removed=removed_id):
+                    root = self.fixture()
+                    path = root / "workflows" / workflow_id / "workflow.yml"
+                    workflow = yaml.safe_load(path.read_text(encoding="utf-8"))
+                    loop = next(
+                        step for step in validator._walk_steps(workflow["steps"])
+                        if step.get("id") == "review-repair-loop"
+                    )
+                    loop["steps"] = [
+                        step for step in loop["steps"] if step.get("id") != removed_id
+                    ]
+                    path.write_text(
+                        yaml.safe_dump(workflow, sort_keys=False, allow_unicode=True),
+                        encoding="utf-8",
+                    )
+                    errors = validator.validate(root)
+                    self.assertTrue(
+                        any(removed_id in error for error in errors), errors
+                    )
+
+    def test_feature_convergence_require_cannot_be_removed(self) -> None:
+        root = self.fixture()
+        path = root / "workflows/feature-delivery/workflow.yml"
+        workflow = yaml.safe_load(path.read_text(encoding="utf-8"))
+        workflow["steps"] = [
+            step for step in workflow["steps"] if step.get("id") != "convergence-require"
+        ]
+        path.write_text(
+            yaml.safe_dump(workflow, sort_keys=False, allow_unicode=True),
+            encoding="utf-8",
+        )
+        errors = validator.validate(root)
+        self.assertTrue(any("convergence-require" in error for error in errors), errors)
+
+    def test_initial_analyze_must_require_before_combined_slice_gate(self) -> None:
+        for mutation in ("remove", "after-gate", "wrong-kind"):
+            with self.subTest(mutation=mutation):
+                root = self.fixture()
+                path = root / "workflows/feature-delivery/workflow.yml"
+                workflow = yaml.safe_load(path.read_text(encoding="utf-8"))
+                steps = workflow["steps"]
+                analyze_require = next(
+                    step for step in steps if step.get("id") == "analyze-require"
+                )
+                if mutation == "remove":
+                    steps.remove(analyze_require)
+                elif mutation == "after-gate":
+                    steps.remove(analyze_require)
+                    gate_index = next(
+                        index
+                        for index, step in enumerate(steps)
+                        if step.get("id") == "slice-gate"
+                    )
+                    steps.insert(gate_index + 1, analyze_require)
+                else:
+                    analyze_require["run"] = str(analyze_require["run"]).replace(
+                        "--kind analyze", "--kind review"
+                    )
+                path.write_text(
+                    yaml.safe_dump(workflow, sort_keys=False, allow_unicode=True),
+                    encoding="utf-8",
+                )
+                errors = validator.validate(root)
+                self.assertTrue(
+                    any("analyze-require" in error or "slice planning" in error for error in errors),
+                    errors,
+                )
+
+    def test_convergence_slice_owners_and_gate_must_precede_ralph(self) -> None:
+        for target_id, mutation in (
+            ("convergence-slice", "remove"),
+            ("convergence-slice-gate", "remove"),
+            ("convergence-slice-approval", "remove"),
+            ("convergence-slice", "after-ralph"),
+            ("convergence-slice", "wrong-owner"),
+            ("convergence-slice-gate", "wrong-owner"),
+            ("convergence-slice-gate", "after-ralph"),
+            ("convergence-slice-approval", "after-ralph"),
+            ("convergence-slice-approval", "wrong-owner"),
+        ):
+            with self.subTest(target=target_id, mutation=mutation):
+                root = self.fixture()
+                path = root / "workflows/feature-delivery/workflow.yml"
+                workflow = yaml.safe_load(path.read_text(encoding="utf-8"))
+                loop = next(
+                    step for step in validator._walk_steps(workflow["steps"])
+                    if step.get("id") == "convergence-loop"
+                )
+                loop_steps = loop["steps"]
+                target = next(step for step in loop_steps if step.get("id") == target_id)
+                if mutation == "remove":
+                    loop_steps.remove(target)
+                elif mutation == "after-ralph":
+                    loop_steps.remove(target)
+                    ralph_index = next(
+                        index
+                        for index, step in enumerate(loop_steps)
+                        if step.get("id") == "convergence-ralph"
+                    )
+                    loop_steps.insert(ralph_index + 1, target)
+                else:
+                    if target_id == "convergence-slice-gate":
+                        target["type"] = "shell"
+                    else:
+                        target["command"] = "speckit.ralph.run"
+                path.write_text(
+                    yaml.safe_dump(workflow, sort_keys=False, allow_unicode=True),
+                    encoding="utf-8",
+                )
+                errors = validator.validate(root)
+                self.assertTrue(
+                    any(
+                        "convergence" in error
+                        and ("slice" in error.lower() or "ralph" in error.lower())
+                        for error in errors
+                    ),
+                    errors,
+                )
+
+    def test_decision_context_must_forward_the_active_lane(self) -> None:
+        for workflow_id, step_ids, lane in (
+            (
+                "feature-delivery",
+                ("decision-discover", "decision-resolve"),
+                "feature",
+            ),
+            (
+                "bugfix-delivery",
+                ("decision-discover", "decision-context"),
+                "bugfix",
+            ),
+        ):
+            for step_id in step_ids:
+                with self.subTest(workflow=workflow_id, step=step_id):
+                    root = self.fixture()
+                    path = root / "workflows" / workflow_id / "workflow.yml"
+                    workflow = yaml.safe_load(path.read_text(encoding="utf-8"))
+                    step = next(
+                        item for item in workflow["steps"] if item.get("id") == step_id
+                    )
+                    step["input"]["args"] = str(step["input"]["args"]).replace(
+                        f"lane={lane} ", ""
+                    )
+                    path.write_text(
+                        yaml.safe_dump(workflow, sort_keys=False, allow_unicode=True),
+                        encoding="utf-8",
+                    )
+                    errors = validator.validate(root)
+                    self.assertTrue(
+                        any(step_id in error and "lane" in error for error in errors),
+                        errors,
+                    )
+
+    def test_runtime_handoff_phase_must_follow_handoff(self) -> None:
+        for workflow_id in (
+            "feature-delivery",
+            "bugfix-delivery",
+            "lightweight-delivery",
+        ):
+            with self.subTest(workflow=workflow_id):
+                root = self.fixture()
+                path = root / "workflows" / workflow_id / "workflow.yml"
+                workflow = yaml.safe_load(path.read_text(encoding="utf-8"))
+                steps = workflow["steps"]
+                phase = next(step for step in steps if step.get("id") == "runtime-phase-handoff")
+                steps.remove(phase)
+                handoff_index = next(
+                    index for index, step in enumerate(steps) if step.get("id") == "handoff"
+                )
+                steps.insert(handoff_index, phase)
+                path.write_text(
+                    yaml.safe_dump(workflow, sort_keys=False, allow_unicode=True),
+                    encoding="utf-8",
+                )
+                errors = validator.validate(root)
+                self.assertTrue(
+                    any("runtime-phase-handoff" in error for error in errors), errors
+                )
+
+    def test_optional_simplify_rejection_skips_but_mandatory_gates_abort(self) -> None:
+        for workflow_id in (
+            "feature-delivery",
+            "bugfix-delivery",
+            "lightweight-delivery",
+        ):
+            with self.subTest(workflow=workflow_id, gate="simplify-gate"):
+                root = self.fixture()
+                path = root / "workflows" / workflow_id / "workflow.yml"
+                workflow = yaml.safe_load(path.read_text(encoding="utf-8"))
+                simplify_gate = next(
+                    step for step in validator._walk_steps(workflow["steps"])
+                    if step.get("id") == "simplify-gate"
+                )
+                self.assertEqual(simplify_gate.get("on_reject"), "skip")
+                simplify_gate["on_reject"] = "abort"
+                path.write_text(
+                    yaml.safe_dump(workflow, sort_keys=False, allow_unicode=True),
+                    encoding="utf-8",
+                )
+                errors = validator.validate(root)
+                self.assertTrue(
+                    any("simplify-gate" in error for error in errors), errors
+                )
+
+        for gate_id in ("scope-gate", "plan-gate", "review-gate"):
+            with self.subTest(workflow="feature-delivery", gate=gate_id):
+                root = self.fixture()
+                path = root / "workflows/feature-delivery/workflow.yml"
+                workflow = yaml.safe_load(path.read_text(encoding="utf-8"))
+                gate = next(step for step in workflow["steps"] if step.get("id") == gate_id)
+                self.assertEqual(gate.get("on_reject"), "abort")
+                gate["on_reject"] = "skip"
+                path.write_text(
+                    yaml.safe_dump(workflow, sort_keys=False, allow_unicode=True),
+                    encoding="utf-8",
+                )
+                errors = validator.validate(root)
+                self.assertTrue(any(gate_id in error for error in errors), errors)
 
     def test_bugfix_exploration_must_precede_assessment(self) -> None:
         root = self.fixture()
@@ -505,14 +926,19 @@ class DistributionContractTest(unittest.TestCase):
                     path = root / "workflows" / workflow_id / "workflow.yml"
                     workflow = yaml.safe_load(path.read_text(encoding="utf-8"))
                     steps = {step["id"]: step for step in workflow["steps"]}
+                    repair_guard = steps["review-repair-if-needed"]
+                    repair_loop = next(
+                        child for child in repair_guard["then"]
+                        if child.get("id") == "review-repair-loop"
+                    )
                     if mutation == "missing-final":
                         workflow["steps"].remove(steps["review-final"])
                     elif mutation == "bypass-gate":
                         steps["review-gate"]["on_reject"] = "continue"
                     elif mutation == "unbounded":
-                        steps["review-loop"]["max_iterations"] = 100
+                        repair_loop["max_iterations"] = 100
                     elif mutation == "repair-first":
-                        steps["review-loop"]["steps"].reverse()
+                        repair_loop["steps"].reverse()
                     else:
                         workflow["steps"].remove(steps["handoff"])
                         workflow["steps"].insert(0, steps["handoff"])

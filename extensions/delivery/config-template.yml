@@ -7,7 +7,7 @@ issue_tracker: github
 context_files: [AGENTS.md, CONTEXT.md]
 adr_directories: [docs/architecture/decisions]
 # Both bounds must be integers from 1 through 3. Malformed/out-of-range values
-# block; the portable workflows also cap their fixed slots at three.
+# block; guarded workflows also cap actual repair/reassessment loops at three.
 max_convergence_rounds: 3
 max_review_fix_rounds: 3
 docs_sync: auto

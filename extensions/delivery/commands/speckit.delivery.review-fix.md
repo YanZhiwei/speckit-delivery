@@ -41,8 +41,13 @@ existing report/checkpoint is a recovery blocker, not permission to reset state.
    Task-scoped Ralph repair uses the configured bound.
    A round is one attempted repair pass, not one finding or one no-op call.
    Preserve attempts across resume and reviewer reruns for the same run/scope;
-   a new HEAD does not reset the budget. Record the next attempt before editing.
-   At the cap, leave blockers open and return `blocked`; never downgrade to pass,
+   a new HEAD does not reset the budget. With `attempt=<n>`, read the canonical
+   runtime contract and verify this exact pending `review:<scope>` reservation;
+   consume it without allocating or completing a second counter. The workflow
+   completes it only after checks and independent re-review. Without a supplied
+   attempt, reserve through the same helper before editing and return its number
+   to the caller; never create a parallel attempt ledger. At the cap, leave
+   blockers open and return `blocked`; never downgrade to pass,
    invent an approval, or start a hidden loop inside this command.
 5. Apply/dispatch only authorized confirmed repairs through the lane owner. When
    a repair changes any README-affecting surface defined by package-readme
@@ -61,17 +66,27 @@ existing report/checkpoint is a recovery blocker, not permission to reset state.
      re-review.
    - **Feature, outgoing-diff:** require the explicit canonical `slices` path and
      recorded `SLICE_APPROVAL: approved` snapshot; missing context is blocked, not
-     a reason to fall back to a non-sliced Ralph run. Add/reopen repair tasks in
-     `tasks.md`, retaining finding-ID references, and map them to the currently
-     approved slices. If a new slice is required or the task mapping/fingerprint
-     changes, stop for a renewed slice gate and approval. Otherwise run analyze
-     and then Ralph with the same `lane`, `delivery_run`, `exploration`, `slices`,
-     actual approval, and `with_docs_sync`. Preserve Ralph's clean preflight: if
-     tracked queue changes need a planning-state commit, follow existing project
-     Git authorization and commit only this run's declared planning paths before
-     Ralph. If that is not authorized or unrelated work prevents a clean entry,
-     stop with recovery instructions; never stash/reset, auto-commit production
-     code, or stage pre-existing changes to bypass it.
+     a reason to fall back to a non-sliced Ralph run. Have the Core task owner
+     (append-only Converge or a Tasks regeneration) add/reopen repair tasks retaining
+     finding-ID references; do not hand-edit, renumber, reorder, or invent Core task
+     items. Map every changed TaskID to an approved slice. If any mapping, queue, or
+     slice identity changed, run
+     Delivery Slice for the renewed mapping, Analyze, the combined execution/slice
+     gate, and its approval writer before execution; never edit the slice map from
+     this repair or reuse the old approval. After a changed queue/map is approved,
+     invoke Delivery Route `action=checkpoint stage=outgoing-repair
+     checkpoint_id=outgoing-repair-<attempt>` with the same
+     run/exploration/slices/design/slice approvals and `with_docs_sync`. This is a
+     native nested checkpoint: the route writes a unique
+     `runtime/planning-inputs-outgoing-repair-<attempt>.json`/native handoff and
+     performs only an already authorized planning commit. Do not fabricate a
+     runtime stage ticket or leave a pending checkpoint; Ralph consumes that native
+     handoff and the same queue. If the
+     queue is unchanged, apply the repair directly and run Analyze/Ralph only if
+     the design/slice identity actually changed. Preserve Ralph's clean preflight:
+     unrelated work, missing authorization, or a wrong checkpoint base stops with
+     recovery; never stash/reset, auto-commit production code, or stage pre-existing
+     changes to bypass it.
    - **Bugfix:** follow the installed
      `.specify/extensions/delivery/templates/bugfix-review-repair.md` continuation
      adapter. The initial official fix/test commands refuse automated overwrite
@@ -95,7 +110,7 @@ count/cap, scope, report location, changed/task paths, evidence, unresolved IDs,
 `DOCS_REFRESH_REQUIRED: true | false` (with reason when false), and
 `DOCS_REFRESH: refreshed | unchanged | not-applicable | blocked` with its affected
 surfaces, actual results, reused identity, and gaps. No-op alone is not a pass
-verdict. On blocked/incomplete/cap exhaustion the
-workflow may finish its safe no-op slots, but the final review gate must stop
-delivery. Reviewer, model, and shell exit success are not authority to publish,
+verdict. On blocked/incomplete/cap exhaustion, stop with the unresolved owner
+and exact recovery; the final runtime requirement and native review gate must
+block delivery. Reviewer, model, and shell exit success are not authority to publish,
 merge, create tracker resources, or silently waive findings.

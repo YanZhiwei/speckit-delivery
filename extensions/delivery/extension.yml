@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: delivery
   name: Spec Kit Delivery Core
-  version: "0.3.2"
+  version: "0.4.0"
   description: "Explore and scope delivery work, select optional design/diagnosis/review methods, slice large changes into reviewable increments, initialize local policy, and render a durable pull-request handoff from final evidence."
   category: process
   effect: read-write
@@ -19,6 +19,7 @@ provides:
   commands:
     - name: speckit.delivery.route
       file: commands/speckit.delivery.route.md
+      aliases: [sd]
       description: "Choose and orchestrate the Feature, Bugfix, or Lightweight delivery lane."
     - name: speckit.delivery.explore
       file: commands/speckit.delivery.explore.md

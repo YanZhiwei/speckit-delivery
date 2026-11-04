@@ -3,6 +3,43 @@
 所有重要变更遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)
 和语义化版本规范。
 
+## [0.4.0] - 2026-11-04
+
+### 新增
+
+- 新增可移植 Delivery 运行时契约和标准库助手，负责显式 Run 身份、阶段／检查点、
+  原生结果指纹、批准回执、过期结果阻断，以及保存在
+  `.specify/delivery/<run>/runtime/` 的 Review／Converge 有界轮次。
+- 新增 `/sd` 的 help、status、resume、phase 和 planning checkpoint 操作，并新增
+  SD 自有 Core／Ralph 兼容契约；Core 命令所有权和 `tasks.md` 唯一执行队列保持不变。
+- 新增运行时行为测试和真实 Spec Kit 引擎回归测试，用真实 shell／helper 传输和假的原生
+  consumer 覆盖零／一／上限修复、陈旧结果、已接受 Simplify 路由和无追加 Converge。
+- 新增显式规划输入清单和“项目已授权精确路径规划提交”检查点，把未变的 Analyze 内容
+  关联到新的执行 HEAD，同时不改写已批准内容的指纹。
+
+### 变更
+
+- 三条 Lane workflow 改为真实运行时守门和条件循环。只有当前结果确实需要时才调度
+  Review 修复、Converge 重评估和 Simplify 验证；循环达到上限仍未解决时由最终机器守门失败。
+- Feature 切片执行顺序改为 Slice plan → Analyze → 单一执行／切片 Gate → approval writer
+  → planning checkpoint → Ralph。
+- Quality、Standards、Review、Explore、Simplify、Ralph、Close 和 Handoff 契约新增同 Run
+  运行时结果传输，但仍保留各自语义所有权和独立发布授权。
+- Simplify 候选改为可选：记录拒绝后跳过落地；接受的候选由现有 Lane owner 应用，并由原生
+  `simplify.verify` 验证；原生候选提案保持不可变。Review 后的 ADR／决策变化会刷新当前
+  Quality、Standards、Review 和简化验证，再进入 Evidence／Handoff。
+- 受保护 Workflow 要求 Spec Kit `>=1.2.3` 和项目已验证的 Python `>=3.11` 调用
+  （`runtime_python`）；运行时不会静默修改 Shell 配置。
+
+### 修复
+
+- Delivery 为 `speckit.delivery.route` 声明安装器管理的 `sd` 别名，全新 Bundle 或
+  扩展安装后 OpenCode 可直接使用 `/sd`，无需复制门面技能。Spec Kit 1.2.3 在 Codex
+  Skills 模式将同一别名渲染为 `$speckit-sd`，在 Claude Code 渲染为 `/speckit-sd`。
+- 安装检查验证快捷入口与路由的输入／正文一致、登记归属于 Delivery、重新安装可恢复
+  缺失入口、卸载时同步清理入口并保留项目配置。
+- 快速开始与配置指南使用各宿主实际安装的入口名称。
+
 ## [0.3.2] - 2026-11-04
 
 ### 新增

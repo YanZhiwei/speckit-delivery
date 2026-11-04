@@ -24,10 +24,17 @@ Invoke commands through the active host, not as shell executables:
 - `speckit.delivery.close`: record the actual PR outcome and retire abandoned
   run-workspace artifacts.
 
-The `$sd` facade remains thin. The router owns lane transitions and approval;
-Explore owns investigation, not implementation or Bug assessment; Slice owns
-review/merge boundaries and policy, not execution. Core Spec Kit continues to own
-spec, plan, and tasks; Decision owns ADRs.
+Starting with `0.4.0`, the manifest declares `sd` as an alias of
+`speckit.delivery.route`. The installer creates `/sd` in OpenCode,
+`$speckit-sd` in Codex Skills mode, and `/speckit-sd` in Claude Code from the
+same router source, with the same request input and Delivery ownership. Installing
+this extension directly or through the Bundle supplies the alias; refresh and
+removal manage both entries together. No facade skills need to be copied.
+
+The router owns lane transitions and approval; Explore owns investigation, not
+implementation or Bug assessment; Slice owns review/merge boundaries and policy,
+not execution. Core Spec Kit continues to own spec, plan, and tasks; Decision
+owns ADRs.
 
 ## Evidence-first exploration
 
@@ -96,8 +103,81 @@ and explain a required lane change; the router can resume the appropriate lane
 with the same evidence.
 
 Lightweight states relevant paths and runs targeted checks without full
-exploration, external research, or two approval rounds. In `0.1.x`, gates are
-guided human checkpoints, not automatic proof of semantic readiness.
+exploration, external research, or two approval rounds. Historical `0.1.x`
+release notes described gates as guided human checkpoints; current `0.4.x`
+transport is conditional and machine-checked for identity/freshness/completeness,
+while native owners and required user gates retain semantic readiness authority.
+
+## Runtime state, resume, and conditional dispatch
+
+The portable coordinator is installed with the extension at
+`.specify/extensions/delivery/scripts/delivery_runtime.py`; its central contract is
+[`templates/runtime.md`](templates/runtime.md). Run it from the project root with
+Python 3.11 or later and Git on `PATH`. It uses the standard library and Git only:
+it never invokes a model, runs project tests, edits product code/tasks, creates
+commits, or contacts a tracker.
+
+Initialize a run with an explicit safe `delivery_run` and lane. The canonical
+root is `.specify/delivery/<delivery_run>/`; Feature or Bug slugs are metadata and
+must not select or relocate it. The helper stores pending owner inputs, normalized
+results, approval receipts, phase, fingerprints, and bounded-attempt counters only
+under the exact `.specify/delivery/<run>/runtime/` directory. `init` adds that
+exact directory and Spec Kit's operational `.specify/workflows/runs/` ledger to
+Git's local `.git/info/exclude`, preserving existing entries; tracked files stay
+tracked. Exploration, slices, code-context, simplifications, receipts, and
+`evidence.md` keep their canonical run-root `artifact_policy`. They also remain
+freshness inputs: changing one invalidates a stored Review/receipt that consumed it.
+
+The `/sd` control surface supports five run-safe actions:
+
+- `action=help` explains the selected lane, records, gates, runtime location, and
+  next safe action without starting a lane or invoking a model.
+- `action=status delivery_run=<id>` is read-only; without a run it lists runs and
+  never guesses from recency.
+- `action=resume delivery_run=<id>` recovers the same run's pending owner action,
+  input ticket, approval, or reserved attempt without resetting identity or
+  allocating a replacement.
+- `action=checkpoint delivery_run=<id> stage=initial|converge|simplify|outgoing-repair`
+  follows the [Core/Ralph adapter](templates/core-adapter.md), checking approved
+  paths, fingerprints, Git authorization, the current Analyze result, and a clean
+  execution entry. The coordinator may commit only the exact approved planning
+  paths under already established project Git authorization; the helper never
+  commits. It cannot stage unrelated work, approve design, or start Ralph from a
+  dirty entry.
+- `action=phase delivery_run=<id> name=<phase>` records the current owner phase;
+  it is not a completion assertion. Handoff readiness requires current Review and
+  same-run Evidence.
+
+Shell conditions consume newline-free `needs` booleans. A false need skips the
+conditional owner/model branch entirely; there are no fixed no-op model slots. A
+missing, stale, malformed, or tampered native result blocks even when its host
+process returned zero. Review and Converge reservations persist across resume and
+new HEAD; the native repair owner consumes the reserved attempt, and the final
+`require` guard rejects cap exhaustion while blockers or incomplete evidence
+remain. Runtime checks identity, freshness, completeness, report/evidence hashes,
+and the exact machine owner receipt that binds a normalized result to its native
+report, HEAD, verdict, and evidence; Quality, Standards, Reviewer, Core, and Ralph
+remain the semantic owners. A valid envelope or exit code is not automatic
+semantic judging.
+
+Feature execution reads the SD-scoped Core compatibility contract at
+[`templates/core-adapter.md`](templates/core-adapter.md). Core Tasks/Analyze/
+Converge and Ralph retain their owners, `tasks.md` remains the only queue, and the
+clean planning-to-execution checkpoint requires explicit approved paths,
+fingerprints, Git authorization, and a clean execution entry. After slice planning,
+Analyze resolves blocking map/coverage findings before the one combined
+Analyze/execution/Slice gate; the Delivery writer records the actual choice before
+Ralph consumes the queue. Handoff reports readiness for separately authorized
+publication, not a terminal outcome; Close records only a verified external
+outcome. [Doctor](commands/speckit.delivery.doctor.md) uses the current run
+phase/checkpoint when judging missing Evidence, allowing a legitimate pre-Evidence
+absence only when no Evidence was recorded and the required packet/checkpoint
+exists. Missing post-Evidence or final-phase Evidence blocks; unrelated runs are
+maintenance findings. Reusing a planning approval or Evidence record requires
+unchanged relevant bytes and the same requirements/policy fingerprint; a
+project-authorized planning commit may be associated only when it is content-
+equivalent and limited to approved paths. Changed inputs require fresh
+presentation/approval, never a restamped digest.
 
 ## Delivery slices and merge policy
 
@@ -115,11 +195,12 @@ preference:
 - any integration-only slice → `integration`;
 - insufficient evidence or a policy conflict → `needs_decision`.
 
-Analyze runs against the planned slices before the slice gate so blocking task
-map/coverage findings are resolved first. The slice gate approves boundaries,
-order, classification, merge method, and accepted risks; a Delivery-owned
-`action=record-approval` writer then records the actual choice and unchanged
-fingerprint in `slices.md`. Ralph stops at each slice boundary and verifies the
+Analyze runs against the planned slices before the one combined
+Analyze/execution/Slice gate so blocking task map/coverage findings are resolved
+first. That gate approves boundaries, order, classification, merge method, and
+accepted risks; a Delivery-owned approval writer then records the actual choice
+and unchanged fingerprint in `slices.md`. Ralph stops at each slice boundary and
+verifies the
 declaration:
 a standalone slice gets a target-branch prefix build/test, a flagged slice gets
 flag-off and flag-on evidence, and an integration-only slice gets its declared
@@ -149,7 +230,9 @@ branch, and never merge the target into a stack branch. See the
 `slice-verdicts.yml`, `reviews/`, and `pull-request*.md` are run workspace and
 follow `artifact_policy`; when it is ephemeral, keep them local instead of
 committing them. Bind evidence to the reviewed head the PR publishes plus the PR
-reference, not to a merge commit that does not exist before publication.
+reference, not to a merge commit that does not exist before publication. A
+successful Handoff reports `HANDOFF_READY: ready` and a waiting-for-publication
+or waiting-for-outcome state; it is not a terminal Delivery result.
 
 After the PR merges or closes, run
 `speckit.delivery.close outcome=merged|closed|superseded`:
@@ -160,8 +243,10 @@ After the PR merges or closes, run
   artifacts;
 - `superseded` → `superseded`, with a resolvable `superseded_by` and reason.
 
-Absence of `status` means active. A record without an accurate status is not a
-closed delivery. Installation, upgrade, and bootstrap records are operational
+If the PR, tracker, credentials, or observed outcome is unavailable, Close
+returns `PR_OUTCOME: unverified` and stops before writing terminal status/history
+or deleting any workspace. Absence of `status` means active. A record without an
+accurate status is not a closed delivery. Installation, upgrade, and bootstrap records are operational
 one-offs, not delivery runs; keep their authoritative copy in the project's
 durable evidence root instead of maintaining a second copy under
 `.specify/delivery/`. See the
@@ -182,13 +267,16 @@ does not bypass Ralph's clean-worktree preflight; task repairs do not recurse in
 Ralph. Bugfix repairs stay assessment-owned; Lightweight stays mechanical.
 Design defects requiring material changes return for scope/Plan/ADR approval.
 
-Each lane YAML supplies up to three safe review/repair slots, followed by final
-review and an aborting gate. Actual repairs use the smaller configured
-`max_review_fix_rounds` limit (default 3) and slot ceiling; attempts persist across
-resume/new HEAD. Current complete pass makes remaining slots no-ops, not extra
-repairs. Coverage/evidence gaps need investigation, not speculative patches.
-Blocked/incomplete or exhausted unresolved findings stop delivery. These remain
-guided `0.1.x` contracts, not automatic semantic evaluation by the YAML engine.
+Each lane workflow conditionally dispatches bounded review/repair work, followed
+by a final runtime `require` guard and an aborting gate. The configured
+`max_review_fix_rounds` limit (default 3) is also capped by the portable workflow;
+attempt reservations persist across resume/new HEAD, and a current complete pass
+skips further repair dispatch. Coverage/evidence gaps need investigation, not
+speculative patches. Blocked/incomplete or exhausted unresolved findings stop
+Delivery. The runtime enforces transport and budget state; native Quality,
+Standards, Reviewer, Core, and Ralph contracts—not the YAML engine—judge semantic
+correctness. See the [runtime contract](templates/runtime.md) for the owner
+boundary rather than duplicating workflow flags here.
 
 Bugfix continuation uses the packaged
 [adapter](templates/bugfix-review-repair.md): preserve the approved assessment
@@ -210,13 +298,13 @@ Explore emits `EXPLORATION_VERDICT: ready | blocked` and
 records actual approval, approved scope, and accepted non-critical limitations.
 Downstream commands read that packet, not merely the original request.
 
-Once an actual feature/run identity is known, the record lives at
-`.specify/delivery/<feature-or-run>/exploration.md` under the configured
-`artifact_policy`; before that it stays in explicitly preserved context. Do not
-invent feature paths. Update the same record; keep exact design in `plan.md` and
-durable summaries self-contained when working records are ephemeral. Resume
-checks the recorded HEAD and relevant working-tree changes before reusing evidence
-or approval. See [artifact lifecycle](../../LIFECYCLE.md).
+Once an actual `delivery_run` identity is known, the record lives at
+`.specify/delivery/<run>/exploration.md` under the configured `artifact_policy`;
+before that it stays in explicitly preserved context. Do not invent Feature
+paths or relocate the packet after a Feature/Bug identity appears. Update the same
+record; keep exact design in `plan.md` and durable summaries self-contained when
+working records are ephemeral. Resume checks the recorded HEAD and relevant
+working-tree changes before reusing evidence or approval. See [artifact lifecycle](../../LIFECYCLE.md).
 
 For direct YAML entry, supply a unique safe `delivery_run` id up front, reusing it
 on resume. The canonical run packet must be on disk before Explore exits, even

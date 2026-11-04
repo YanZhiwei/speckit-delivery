@@ -88,7 +88,66 @@ specify workflow add --dev "$delivery\workflows\lightweight-delivery\workflow.ym
 
 When upgrading, add `--force` for changed extensions. Verify with `specify
 extension list` and `specify workflow list`; at minimum, see `quality` (2
-commands), `delivery` (11), and `review` (2).
+commands), `delivery` (11), and `review` (2). Delivery also installs
+`extensions/delivery/scripts/delivery_runtime.py` and the `runtime.md` /
+`core-adapter.md` contracts; these are required by the guarded workflows.
+
+## 1.1 Runtime and recovery contract
+
+The guarded workflows run the portable helper from the project root with Python
+3.11 or later and Git on `PATH`. It uses only the standard library and Git; it
+does not call a model, run project tests, edit product code/tasks, create commits,
+or contact a tracker. The [runtime contract](extensions/delivery/templates/runtime.md)
+is the owner of its schema and transport rules.
+
+Use one explicit safe `delivery_run` for a direct workflow and reuse it on every
+resume. The canonical run root is `.specify/delivery/<delivery_run>/`; Feature or
+Bug slugs are metadata and must not select or relocate the packet. The exact
+`.specify/delivery/<delivery_run>/runtime/` directory and Spec Kit's operational
+`.specify/workflows/runs/` ledger are added to Git's local `.git/info/exclude` for
+coordinator bookkeeping. Existing tracked files stay tracked. This does not change the
+project's `artifact_policy` for planning artifacts, run-root packets/receipts, or
+the durable `evidence.md` record.
+
+The `/sd` control surface is useful for recovery and inspection:
+
+```text
+/sd action=help
+/sd action=status delivery_run=<id>
+/sd action=resume delivery_run=<id>
+/sd action=checkpoint delivery_run=<id> stage=initial
+/sd action=phase delivery_run=<id> name=planning
+```
+
+`help` explains the lane and next safe action without starting a lane. `status`
+is read-only (without a run it lists runs); `resume` recovers the same pending
+owner ticket, approval, or reserved attempt; `checkpoint` follows the [SD Core
+adapter](extensions/delivery/templates/core-adapter.md) and requires exact
+approved paths/fingerprints, Git authorization, the current Analyze result, and
+a clean worktree; `phase` records an owner phase and never means completion.
+The coordinator may create only an already project-authorized commit of exact
+approved planning paths; the helper never commits. Unrelated work or missing
+authorization blocks, and Ralph still requires a clean entry.
+
+Feature planning has one combined Analyze/execution/Slice gate after slice
+planning. Runtime conditions use real `needs` booleans: a false condition skips
+the owner/model branch instead of dispatching a fixed no-op slot. Reserved review
+and convergence attempts persist across resume and new HEAD; the final `require`
+guard blocks after the configured cap when work remains. Runtime validates
+identity, freshness, completeness, and native report references, while Quality,
+Standards, Reviewer, Core, and Ralph retain semantic judgment. A valid transport
+result is not an automatic semantic verdict.
+
+[Doctor](extensions/delivery/commands/speckit.delivery.doctor.md) checks missing
+evidence against the current run phase and checkpoint. An active pre-Evidence
+run may legitimately lack `evidence.md` only when no evidence
+was recorded and its required packet/checkpoint exists; missing evidence after a
+recorded Evidence step or in a final/terminal phase blocks. Findings for other
+runs are maintenance findings, and unavailable remote facts stay `unverified`.
+Handoff readiness is not terminal: a ready body still awaits separately
+authorized publication and an observed PR outcome. Close must verify that outcome;
+if it is unverified, it stops before writing terminal status/history or deleting
+workspace artifacts.
 
 ## 2. Initialize project governance
 
@@ -285,10 +344,14 @@ Validate one real small change in this order:
 6. Confirm Ralph closes a Task only after all three current-snapshot verdicts pass
 ```
 
-Start daily work with `$sd <request>` or `/sd <request>`. Feature work passes
-through Doctor, Spec, ADR, Tasks, and Ralph; Bugfix and Lightweight work take a
-proportional lane. Run Ralph directly only after `speckit.analyze` has passed
-the active `tasks.md`.
+Delivery `0.4.0` and later install the router alias automatically: use
+`/sd <request>` in OpenCode, `$speckit-sd <request>` in Codex Skills mode, or
+`/speckit-sd <request>` in Claude Code. Older versions need an upgrade; full
+entries and the optional exact `$sd` facade are documented in
+[host entry points](skills/README.md). Feature work passes through Doctor,
+Spec, ADR, Tasks, and Ralph; Bugfix and Lightweight work take a proportional
+lane. Run Ralph directly only after `speckit.analyze` has passed the active
+`tasks.md`.
 
 ## 7. New-project checklist
 

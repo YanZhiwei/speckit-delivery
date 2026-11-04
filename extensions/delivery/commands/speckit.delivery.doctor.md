@@ -4,12 +4,27 @@ description: "Check delivery component installation, policy coverage, and workfl
 
 # Delivery Doctor
 
-Direct workflows require a user-assigned `delivery_run=<id>` before dispatch.
-Validate the safe single-segment contract in Delivery Explore, check for an
-unrelated-run collision, and verify the workflow persists its canonical packet,
-passes exact paths and actual gate choices, and retains run identity in Review,
-repair, nested Ralph, and handoff. Context-only handoff is valid only in a shared
-router session, not separate CLI host processes. Do not invent a Feature path.
+## Input and run binding
+
+Read `$ARGUMENTS`. A direct workflow invocation must supply
+`lane=feature|bugfix|lightweight` and an explicit `delivery_run=<id>`. Validate
+that id as one safe path segment and resolve exactly
+`.specify/delivery/<delivery_run>/`; the run id is not a Feature slug. Validate
+any supplied output path against that run and never choose a different run by
+recency, branch, directory scan, or a single matching record. A standalone
+invocation without `delivery_run` may inspect project-wide installation and
+policy, but returns its findings inline and must not infer an active Feature or
+create a run record. A missing run in a direct workflow is a recovery blocker.
+
+The canonical run artifacts remain at the run root, including
+`exploration.md`, `slices.md`, `decision-context.md`, `code-context.md`,
+`simplifications.md`, and `evidence.md`. Per-run operational state and command
+results belong under `.specify/delivery/<delivery_run>/runtime/` and are local
+ignored state; use the central runtime owner at
+`.specify/extensions/delivery/templates/runtime.md` for their lifecycle. When either `runtime_stage` or `runtime_result` is supplied, require the
+canonical `delivery_run`, read `.specify/extensions/delivery/templates/runtime.md`
+in full, and follow that runtime contract; do not invent helper flags, paths, or
+result schemas. With neither argument, do not create runtime state here.
 
 Direct Bugfix also requires an explicit `bug_slug`, normalized to lowercase
 kebab-case and separately identified from the run. A fresh assessment needs an
@@ -40,16 +55,27 @@ Standards invocations must carry explicit lane/run context; Feature supplies its
 canonical exploration reference. Report an old
 installation missing these contracts as stale; do not modify it silently.
 
-Also verify Delivery ships `speckit.delivery.slice` and
-`templates/slices.md`, and that the Feature workflow places a `slice` plan,
-`slice-gate`, and post-gate `slice-approval` writer after plan approval/task
-generation and before analysis/Ralph. The slice step must receive the canonical
-`delivery_run`, the approved design choice, and the exact `slices.md` path; the
-post-gate writer must receive the real gate choice and write
-`SLICE_APPROVAL: approved|rejected` plus the unchanged plan fingerprint. Ralph,
-final Review, and Handoff must consume that path. A Feature workflow that still
-goes from tasks directly to analysis/Ralph without slice planning, or lacks the
-post-gate approval record, is stale for large changes.
+Also verify Delivery ships `speckit.delivery.slice`, `templates/slices.md`, the
+central `templates/runtime.md`, `templates/core-adapter.md`, and
+`scripts/delivery_runtime.py`. Confirm the guarded workflows use a verified
+Python 3.11+ invocation and the Spec Kit `>=1.2.3` control-flow surface; a missing
+runtime resource or older host is stale, not compatible by assumption. Verify the
+Feature workflow uses this exact order after plan approval/task generation:
+
+`Slice plan → Analyze → one combined execution/slice gate →
+Delivery-owned approval writer → runtime checkpoint → Ralph`.
+
+The slice step must receive the explicit `lane`, canonical `delivery_run`,
+approved design choice, and exact `.specify/delivery/<delivery_run>/slices.md`
+path. Analyze must resolve blocking task-map and coverage findings before the
+combined gate. That gate must cover both execution readiness and slice
+boundaries; an analyze result, a context-only choice, or a separate earlier
+slice choice is not approval. The post-gate writer must receive the real gate
+choice and write `SLICE_APPROVAL: approved|rejected` plus the unchanged plan
+fingerprint. The runtime checkpoint must be recorded before Ralph consumes the
+approved plan. Ralph, final Review, and Handoff must consume that same path and
+run identity. A workflow that skips this order, lets Ralph run before the
+checkpoint, or lacks the post-gate approval record is stale.
 
 Validate `pr_slicing`, `slice_warn_files`, `slice_warn_lines`,
 `slice_requires_approval`, `stack_provider`, and `merge_policy`. Reject an
@@ -70,20 +96,33 @@ package README rule with no command or template is a blocker.
 Verify the configured `pull_request_template` exists when non-null. If
 `install_pull_request_template` is true, require the approved static template at
 `.github/pull_request_template.md` and report a mismatch as stale; if false, do
-not claim GitHub UI will use the extension fallback. Verify Handoff writes a real
-`PR_BODY_PATH` and prints a `gh pr create --body-file` hint; chat-only output does
-not satisfy the handoff contract.
+not claim GitHub UI will use the extension fallback. Verify Handoff writes a real run-bound
+`PR_BODY_PATH` and prints a `gh pr create --body-file` hint; a standalone
+no-run result may be inline, but must not claim a durable path or fabricate a
+command.
 
-Audit `.specify/delivery/*/evidence.md` when the delivery root exists. Absence of
-`status` means active. Report as blockers: a run with working artifacts but no
-durable `evidence.md`; a `delivered` record with no pull-request or merge
-reference; an `abandoned` record with no reason; a `superseded` record whose
-`superseded_by` does not resolve; and an operational one-off record (installation,
-upgrade, bootstrap) maintained under the delivery root instead of the project's
-durable evidence root. When the configured tracker is reachable, report an active
-record whose PR is already merged or closed without a recorded outcome. Report
-unverifiable remote state as `unverified` and name the limitation; never report it
-as a passing record.
+Audit `.specify/delivery/*/evidence.md` when the delivery root exists, but
+separate the supplied current run from unrelated-run maintenance. Read the
+current run's phase checkpoint/packet using the central runtime contract before
+judging a missing record. In a legitimate pre-Evidence active phase, an absent
+`evidence.md` is allowed when no evidence was previously recorded and the
+phase's required packet/checkpoint is present. A missing evidence file after
+Evidence has already been recorded, a missing file for a final/terminal phase,
+or a run whose previously recorded evidence disappeared is a blocker. Absence of
+`status` means active only when the record exists; it is not by itself proof that
+an unrecorded final run is healthy.
+
+For the current run, report as blockers: missing required pre-Evidence
+checkpoint/packet; absent previously recorded or final evidence; a `delivered`
+record with no pull-request or merge reference; an `abandoned` record with no
+reason; a `superseded` record whose `superseded_by` does not resolve; and an
+active record whose reachable tracker shows its PR already merged or closed
+without a recorded outcome. An operational one-off record (installation,
+upgrade, bootstrap) maintained under the delivery root belongs in the project's
+durable evidence root and is a maintenance finding unless it is the requested
+run. Report unavailable remote state as `unverified` with its limitation; never
+turn it into a passing record. Findings for every other run are maintenance
+findings only and must not block the current run or change its identity.
 
 Verify Review ships `.specify/extensions/review/templates/reviewer.md` and
 supports task/final scopes, six dimension verdicts, independence/coverage, and
@@ -147,6 +186,11 @@ Return:
 
 ```text
 SD_DOCTOR_VERDICT: pass | blocked
+LANE: <feature|bugfix|lightweight|standalone>
+DELIVERY_RUN: <id or none>
+RUN_ROOT: <.specify/delivery/<id>/ or inline>
+RUNTIME_ROOT: <.specify/delivery/<id>/runtime/ or not-applicable>
+PHASE: <runtime phase or unknown>
 INTEGRATION: <active integration>
 COMPONENTS:
 - <component>: installed | missing | stale — <evidence>
@@ -159,11 +203,18 @@ SLICE_POLICY:
 - gate: <present|missing>; merge: <slice/final/sync>
 METHOD_ADAPTERS:
 - <design|diagnose|review>: builtin | skill-verified | builtin-fallback | blocked — <origin/revision/entrypoint, resource status, fallback reason>
-BLOCKERS:
+CURRENT_RUN_BLOCKERS:
 - <id or none>: <remediation>
+UNRELATED_RUN_MAINTENANCE:
+- <run or none>: <maintenance finding; not a current-run blocker>
+BLOCKERS:
+- <current-run or global id, or none>: <remediation>
 RECORDS:
-- <run>: active | delivered | abandoned | superseded | unverified — <evidence>
+- <current run and optional maintenance summaries>: active | delivered | abandoned | superseded | unverified — <evidence>
 ```
 
-Do not edit source code or silently install components. The command is complete
-only after it reports concrete remediation for every blocker.
+`SD_DOCTOR_VERDICT` is blocked by installation/global policy or current-run
+blockers only; unrelated-run maintenance findings do not change it. Do not edit
+source code, silently install components, or repair another run. The command is
+complete only after it reports concrete remediation for every current/global
+blocker and labels every unrelated finding as maintenance.
