@@ -721,7 +721,32 @@ class Runtime:
         """Hash a bound directory including worktree modes and all nested bytes."""
         return digest(encoded(self._directory_manifest(path)))
 
-    def _snapshot_included(self, name: str, explicit_inputs: set[str]) -> bool:
+    @staticmethod
+    def _simplify_noop(state: dict[str, Any]) -> bool:
+        """A no-candidate scan is bookkeeping, not a new content input."""
+        result = state.get("stages", {}).get("simplify")
+        return (
+            isinstance(result, dict)
+            and isinstance(result.get("data"), dict)
+            and result["data"].get("candidates") == []
+        )
+
+    def _canonical_run_inputs(
+        self, state: dict[str, Any], simplify_noop: bool | None = None
+    ) -> set[str]:
+        names = set(CANONICAL_RUN_INPUT_NAMES)
+        if simplify_noop is None:
+            simplify_noop = self._simplify_noop(state)
+        if simplify_noop:
+            names.discard("simplifications.md")
+        return names
+
+    def _snapshot_included(
+        self,
+        name: str,
+        explicit_inputs: set[str],
+        canonical_names: set[str] | None = None,
+    ) -> bool:
         if name in explicit_inputs:
             return True
         run_prefix = f".specify/delivery/{self.run}/"
@@ -730,11 +755,16 @@ class Runtime:
             # These are project-owned requirements/planning inputs even when
             # artifact policy keeps them local. Runtime/, reviews/, receipts,
             # evidence, PR bodies, and task/slice ledgers remain bookkeeping.
-            return relative in CANONICAL_RUN_INPUT_NAMES
+            return relative in (canonical_names or CANONICAL_RUN_INPUT_NAMES)
         return not name.startswith((".specify/delivery/", ".specify/workflows/runs/"))
 
-    def snapshot(self, state: dict[str, Any] | None = None) -> dict[str, Any]:
+    def snapshot(
+        self,
+        state: dict[str, Any] | None = None,
+        simplify_noop: bool | None = None,
+    ) -> dict[str, Any]:
         state = state or self.load()
+        canonical_names = self._canonical_run_inputs(state, simplify_noop)
         names = self._repository_names(self.root)
         index_entries = self._index_entries(self.root)
         names.update(entry["path"] for entry in index_entries)
@@ -746,17 +776,17 @@ class Runtime:
         ))
         names.update(
             f".specify/delivery/{self.run}/{name}"
-            for name in CANONICAL_RUN_INPUT_NAMES
+            for name in canonical_names
             if (self.directory / name).is_file()
         )
         explicit_inputs = {value for key, value in state["bindings"].items() if key != "inputs"} | set(state["bindings"].get("inputs", []))
-        index_entries = [entry for entry in index_entries if self._snapshot_included(entry["path"], explicit_inputs)]
+        index_entries = [entry for entry in index_entries if self._snapshot_included(entry["path"], explicit_inputs, canonical_names)]
         files: dict[str, str] = {}
         worktree: dict[str, Any] = {}
         submodules: dict[str, Any] = {}
         modes = {entry["path"]: entry["mode"] for entry in index_entries if entry["stage"] == 0}
         for name in sorted(names):
-            if not self._snapshot_included(name, explicit_inputs):
+            if not self._snapshot_included(name, explicit_inputs, canonical_names):
                 # Delivery and Spec Kit workflow ledgers are coordinator
                 # bookkeeping, except for an explicitly bound ignored input.
                 continue
@@ -1573,7 +1603,16 @@ class Runtime:
                 raise ProtocolError(f"Result {key} does not match the original pending input.")
         if self.inside(result["report"]["path"]) == path:
             raise ProtocolError("A normalized result cannot use itself as native evidence.")
-        now = self.snapshot(state)
+        # A no-candidate Simplify report is operational bookkeeping. Exclude it
+        # from this result's output snapshot so its own freshness check uses the
+        # same canonical inputs as every later consumer.
+        simplify_noop = (
+            isinstance(result.get("data"), dict)
+            and result["data"].get("candidates") == []
+            if stage == "simplify"
+            else None
+        )
+        now = self.snapshot(state, simplify_noop=simplify_noop)
         before = pending["snapshot"]
         if now["head"] != before["head"] and stage != "checkpoint":
             raise ProtocolError("Owner stage changed HEAD; recover and begin against the actual execution identity.")

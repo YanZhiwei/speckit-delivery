@@ -2,6 +2,29 @@
 
 All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and Semantic Versioning.
 
+## [0.4.1] - 2026-11-04
+
+### Changed
+
+- Feature Delivery now guards the pre-review Quality and Standards refreshes
+  with the runtime `needs` check. A current passing receipt is reused instead of
+  being dispatched again, removing two redundant model rounds from the normal
+  Feature path and more from resumed runs.
+
+### Fixed
+
+- A no-candidate Simplify scan is coordinator bookkeeping, not a new content
+  input. Its `simplifications.md` report is excluded from the canonical snapshot
+  when the recorded result has no candidates, so it no longer invalidates
+  current Quality/Standards receipts. Reports with candidates remain governed
+  inputs.
+
+### Tests
+
+- Full-workflow regression coverage now asserts one Quality/Standards pass on
+  the happy path, a forced refresh when package documentation changes, and the
+  expected refresh count after a post-review ADR mutation.
+
 ## [0.4.0] - 2026-11-04
 
 ### Added

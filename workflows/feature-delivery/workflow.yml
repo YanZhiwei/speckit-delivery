@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "feature-delivery"
   name: "Spec Kit Feature Delivery"
-  version: "0.4.0"
+  version: "0.4.1"
   author: "Yan Zhiwei"
   description: "Evidence-first feature delivery with code/history/reference exploration, scope and design approval, slice planning, guarded execution, convergence, quality, review, and handoff."
 
@@ -405,49 +405,69 @@ steps:
         flag/checkpoint verification, write the slice receipt, and continue only
         after SLICE_READY. Do not create, push, or merge a PR.
 
-  - id: quality-after-ralph-runtime-begin
+  - id: quality-after-ralph-needed
     type: shell
     run: >-
-      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
-      --run {{ inputs.delivery_run }} --stage quality
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} needs
+      --run {{ inputs.delivery_run }} --kind quality
 
-  - id: quality-after-ralph
-    command: speckit.quality.check
-    integration: "{{ inputs.integration }}"
-    input:
-      args: >-
-        lane=feature delivery_run={{ inputs.delivery_run }} scope=outgoing-diff
-        runtime_stage=quality runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-quality.json
-        {{ inputs.spec }} Read the pending runtime input, preserve original check receipts in the native report/data, and write the machine native receipt plus normalized envelope.
+  - id: quality-after-ralph-if-needed
+    type: if
+    condition: "{{ steps.quality-after-ralph-needed.output.stdout == 'true' }}"
+    then:
+      - id: quality-after-ralph-runtime-begin
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+          --run {{ inputs.delivery_run }} --stage quality
 
-  - id: quality-after-ralph-runtime-record
+      - id: quality-after-ralph
+        command: speckit.quality.check
+        integration: "{{ inputs.integration }}"
+        input:
+          args: >-
+            lane=feature delivery_run={{ inputs.delivery_run }} scope=outgoing-diff
+            runtime_stage=quality runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-quality.json
+            {{ inputs.spec }} Read the pending runtime input, preserve original check receipts in the native report/data, and write the machine native receipt plus normalized envelope.
+
+      - id: quality-after-ralph-runtime-record
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+          --run {{ inputs.delivery_run }} --stage quality
+
+  - id: standards-after-ralph-needed
     type: shell
     run: >-
-      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
-      --run {{ inputs.delivery_run }} --stage quality
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} needs
+      --run {{ inputs.delivery_run }} --kind standards
 
-  - id: standards-after-ralph-runtime-begin
-    type: shell
-    run: >-
-      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
-      --run {{ inputs.delivery_run }} --stage standards
+  - id: standards-after-ralph-if-needed
+    type: if
+    condition: "{{ steps.standards-after-ralph-needed.output.stdout == 'true' }}"
+    then:
+      - id: standards-after-ralph-runtime-begin
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+          --run {{ inputs.delivery_run }} --stage standards
 
-  - id: standards-after-ralph
-    command: speckit.review.standards
-    integration: "{{ inputs.integration }}"
-    input:
-      args: >-
-        lane=feature delivery_run={{ inputs.delivery_run }}
-        exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
-        scope=outgoing-diff runtime_stage=standards
-        runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-standards.json
-        {{ inputs.spec }} Resolve and validate this packet's approved plan identity before reviewing applicable Architecture constraints. Read the pending runtime input and write the native report, machine native receipt, and normalized envelope defined by runtime.md.
+      - id: standards-after-ralph
+        command: speckit.review.standards
+        integration: "{{ inputs.integration }}"
+        input:
+          args: >-
+            lane=feature delivery_run={{ inputs.delivery_run }}
+            exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
+            scope=outgoing-diff runtime_stage=standards
+            runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-standards.json
+            {{ inputs.spec }} Resolve and validate this packet's approved plan identity before reviewing applicable Architecture constraints. Read the pending runtime input and write the native report, machine native receipt, and normalized envelope defined by runtime.md.
 
-  - id: standards-after-ralph-runtime-record
-    type: shell
-    run: >-
-      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
-      --run {{ inputs.delivery_run }} --stage standards
+      - id: standards-after-ralph-runtime-record
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+          --run {{ inputs.delivery_run }} --stage standards
 
   - id: converge-runtime-begin
     type: shell
@@ -818,49 +838,69 @@ steps:
     integration: "{{ inputs.integration }}"
     input: { args: "delivery_run={{ inputs.delivery_run }} lane=feature repair=0 scope=outgoing-diff {{ inputs.spec }} Derive from actual package contents and changed surfaces; emit PACKAGE_README_VERDICT and INPUT_IDENTITY." }
 
-  - id: quality-before-review-begin
+  - id: quality-before-review-needed
     type: shell
     run: >-
-      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
-      --run {{ inputs.delivery_run }} --stage quality
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} needs
+      --run {{ inputs.delivery_run }} --kind quality
 
-  - id: quality-before-review
-    command: speckit.quality.check
-    integration: "{{ inputs.integration }}"
-    input:
-      args: >-
-        lane=feature delivery_run={{ inputs.delivery_run }} scope=outgoing-diff
-        runtime_stage=quality runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-quality.json
-        {{ inputs.spec }} Refresh quality after package/docs synchronization.
+  - id: quality-before-review-if-needed
+    type: if
+    condition: "{{ steps.quality-before-review-needed.output.stdout == 'true' }}"
+    then:
+      - id: quality-before-review-begin
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+          --run {{ inputs.delivery_run }} --stage quality
 
-  - id: quality-before-review-record
+      - id: quality-before-review
+        command: speckit.quality.check
+        integration: "{{ inputs.integration }}"
+        input:
+          args: >-
+            lane=feature delivery_run={{ inputs.delivery_run }} scope=outgoing-diff
+            runtime_stage=quality runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-quality.json
+            {{ inputs.spec }} Refresh quality after package/docs synchronization only when the prior receipt is stale; a current pass is reusable.
+
+      - id: quality-before-review-record
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+          --run {{ inputs.delivery_run }} --stage quality
+
+  - id: standards-before-review-needed
     type: shell
     run: >-
-      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
-      --run {{ inputs.delivery_run }} --stage quality
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} needs
+      --run {{ inputs.delivery_run }} --kind standards
 
-  - id: standards-before-review-begin
-    type: shell
-    run: >-
-      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
-      --run {{ inputs.delivery_run }} --stage standards
+  - id: standards-before-review-if-needed
+    type: if
+    condition: "{{ steps.standards-before-review-needed.output.stdout == 'true' }}"
+    then:
+      - id: standards-before-review-begin
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+          --run {{ inputs.delivery_run }} --stage standards
 
-  - id: standards-before-review
-    command: speckit.review.standards
-    integration: "{{ inputs.integration }}"
-    input:
-      args: >-
-        lane=feature delivery_run={{ inputs.delivery_run }}
-        exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
-        scope=outgoing-diff runtime_stage=standards
-        runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-standards.json
-        {{ inputs.spec }} Refresh standards after package/docs synchronization.
+      - id: standards-before-review
+        command: speckit.review.standards
+        integration: "{{ inputs.integration }}"
+        input:
+          args: >-
+            lane=feature delivery_run={{ inputs.delivery_run }}
+            exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
+            scope=outgoing-diff runtime_stage=standards
+            runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-standards.json
+            {{ inputs.spec }} Refresh standards after package/docs synchronization only when the prior receipt is stale; a current pass is reusable.
 
-  - id: standards-before-review-record
-    type: shell
-    run: >-
-      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
-      --run {{ inputs.delivery_run }} --stage standards
+      - id: standards-before-review-record
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+          --run {{ inputs.delivery_run }} --stage standards
 
   - id: review-initial-begin
     type: shell

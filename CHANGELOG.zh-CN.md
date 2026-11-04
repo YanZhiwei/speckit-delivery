@@ -3,6 +3,25 @@
 所有重要变更遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)
 和语义化版本规范。
 
+## [0.4.1] - 2026-11-04
+
+### 变更
+
+- Feature Delivery 的 Review 前 Quality／Standards 刷新改用运行时 `needs` 守门：
+  当前已通过的回执直接复用，不再重复调度。正常 Feature 路径减少两个模型轮次，
+  Resume 场景节省更多。
+
+### 修复
+
+- 无候选的 Simplify 扫描属于协调簿记，不是新的内容输入。当记录的扫描结果没有候选时，
+  其 `simplifications.md` 不再进入规范快照，因此不会让当前 Quality／Standards 回执失效；
+  有候选的报告仍是受治理输入。
+
+### 测试
+
+- 全流程回归测试新增断言：顺利路径只执行一次 Quality／Standards；包文档变化会强制刷新；
+  Review 后的 ADR 变更按预期次数刷新。
+
 ## [0.4.0] - 2026-11-04
 
 ### 新增

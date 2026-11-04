@@ -283,6 +283,7 @@ class FullWorkflowConsumers(FakeConsumers):
         clarify_needs_approval: bool = False,
         simplify_candidates: list[str] | None = None,
         mutate_after_review: bool = False,
+        docs_change: bool = False,
         bug_slug: str = "actual-bug",
     ) -> None:
         super().__init__(root, repairs_to_resolve=repairs_to_resolve)
@@ -293,6 +294,7 @@ class FullWorkflowConsumers(FakeConsumers):
         self.clarify_needs_approval = clarify_needs_approval
         self.simplify_candidates = simplify_candidates or []
         self.mutate_after_review = mutate_after_review
+        self.docs_change = docs_change
         self.dispatches: list[tuple[str, str]] = []
         self.stage_counts: dict[str, int] = {}
         self.analyze_calls = 0
@@ -966,11 +968,16 @@ class FullWorkflowConsumers(FakeConsumers):
                 self._run_dir(args) / "pull-request.md",
                 f"# Proposed {self.lane} handoff\n\nVerified full workflow fixture.\n",
             )
+        elif command == "speckit.docs-sync.package-readme":
+            if self.docs_change:
+                self._write(
+                    self.root / "README.md",
+                    f"# Fixture package\n\nUpdated {self.lane} documentation.\n",
+                )
         elif command in {
             "speckit.delivery.doctor",
             "speckit.quality.brief",
             "speckit.docs-sync.run",
-            "speckit.docs-sync.package-readme",
         }:
             pass
         else:
@@ -1362,6 +1369,8 @@ class WorkflowRuntimeTest(unittest.TestCase):
         self.assertEqual(fake.ralph_calls, 1)
         self.assertEqual(fake.review_calls, 1)
         self.assertEqual(fake.repair_calls, 0)
+        self.assertEqual(fake.stage_counts.get("quality"), 1)
+        self.assertEqual(fake.stage_counts.get("standards"), 1)
         self.assertEqual(fake.checkpoint_stages, ["initial"])
         self.assertIn("speckit.evidence.collect", fake.calls)
         self.assertIn("speckit.delivery.handoff", fake.calls)
@@ -1378,6 +1387,30 @@ class WorkflowRuntimeTest(unittest.TestCase):
         self.assertTrue((root / bindings["plan"]).is_file())
         self.assertTrue((root / bindings["tasks"]).is_file())
         self.assertNotIn("- [ ]", (root / bindings["tasks"]).read_text(encoding="utf-8"))
+
+    def test_feature_docs_change_refreshes_quality_and_standards_before_review(self):
+        fake = FullWorkflowConsumers(Path("."), lane="feature", docs_change=True)
+        _, _, state = self.run_feature(fake, run="feature-docs-refresh")
+        self.assert_workflow_status(state, "completed")
+        self.assertEqual(fake.stage_counts.get("quality"), 2)
+        self.assertEqual(fake.stage_counts.get("standards"), 2)
+        self.assertEqual(fake.review_calls, 1)
+        quality_calls = [
+            index
+            for index, command in enumerate(fake.calls)
+            if command == "speckit.quality.check"
+        ]
+        standards_calls = [
+            index
+            for index, command in enumerate(fake.calls)
+            if command == "speckit.review.standards"
+        ]
+        review_index = fake.calls.index("speckit.review.run")
+        self.assertEqual(len(quality_calls), 2)
+        self.assertEqual(len(standards_calls), 2)
+        self.assertLess(quality_calls[-1], review_index)
+        self.assertLess(standards_calls[-1], review_index)
+        self.assertIn("speckit.delivery.handoff", fake.calls)
 
     def test_full_feature_one_appended_convergence_runs_one_append_analyze_and_ralph(self):
         fake = FullWorkflowConsumers(
@@ -1629,9 +1662,8 @@ class WorkflowRuntimeTest(unittest.TestCase):
                 self.assert_workflow_status(state, "completed")
                 self.assertEqual(fake.review_calls, 2)
                 self.assertEqual(fake.repair_calls, 0)
-                expected_checks = 3 if lane == "feature" else 2
-                self.assertEqual(fake.stage_counts.get("quality"), expected_checks)
-                self.assertEqual(fake.stage_counts.get("standards"), expected_checks)
+                self.assertEqual(fake.stage_counts.get("quality"), 2)
+                self.assertEqual(fake.stage_counts.get("standards"), 2)
                 first_review = fake.calls.index("speckit.review.run")
                 decision_check = fake.calls.index("speckit.decision.check")
                 review_calls = [
