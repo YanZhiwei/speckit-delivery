@@ -2,6 +2,55 @@
 
 All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and Semantic Versioning.
 
+## [0.4.0] - 2026-11-04
+
+### Added
+
+- Added the portable Delivery runtime contract and standard-library helper for
+  explicit run identity, phase/checkpoint state, native result fingerprints,
+  approval receipts, stale-result rejection, and durable review/convergence
+  attempt accounting under `.specify/delivery/<run>/runtime/`.
+- Added `/sd` operational actions for help, status, resume, phase, and planning
+  checkpoints, plus an SD-owned Core/Ralph compatibility contract that preserves
+  Core command ownership and `tasks.md` as the sole execution queue.
+- Added behavioral runtime and full Spec Kit engine regression coverage using
+  real shell/helper transport and fake native consumers for zero/one/capped
+  repair, stale results, accepted-simplification routing, and no-op convergence.
+- Added an explicit planning-input manifest and authorized exact-path planning
+  commit checkpoint that associates unchanged Analyze content with the resulting
+  execution HEAD, without restamping changed approvals.
+
+### Changed
+
+- Reworked Feature, Bugfix, and Lightweight workflows to use actual runtime
+  guards and conditional loops. Review repairs, convergence reassessment, and
+  simplification verification are dispatched only when current results require
+  them; final machine guards reject unresolved work after a successful loop cap.
+- Feature slice execution now follows Slice plan → Analyze → one combined
+  execution/slice gate → approval writer → planning checkpoint → Ralph.
+- Quality, Standards, Review, Explore, Simplify, Ralph, Close, and Handoff
+  contracts now transport same-run runtime results without replacing their
+  semantic ownership or publication authorization.
+- Simplify candidates are optional: a recorded rejection skips application, while
+  accepted IDs are applied by the existing lane owner and verified by native
+  `simplify.verify`; the native proposal remains immutable. Post-review ADR and
+  decision changes refresh current Quality, Standards, Review, and simplification
+  verification before Evidence/Handoff.
+- Guarded workflows now require Spec Kit `>=1.2.3` and a project-verified Python
+  `>=3.11` invocation (`runtime_python`); the runtime does not silently alter
+  shell configuration.
+
+### Fixed
+
+- Delivery declares `sd` as an installer-managed alias of
+  `speckit.delivery.route`, so a fresh Bundle or extension install provides
+  OpenCode's `/sd` without copying facade skills. Spec Kit 1.2.3 renders the
+  same alias as `$speckit-sd` in Codex Skills mode and `/speckit-sd` in Claude Code.
+- Installation checks verify that the shortcut shares the router input/body,
+  belongs to Delivery in the registry, is restored by reinstall, and is removed
+  with the extension while project configuration is preserved.
+- Quick-start and configuration guides use the actual installed host names.
+
 ## [0.3.2] - 2026-11-04
 
 ### Added

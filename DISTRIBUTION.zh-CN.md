@@ -55,6 +55,8 @@ uv run --with pyyaml python scripts/stamp_release.py --version <version> --check
 uv run --with pyyaml python scripts/validate_distribution.py
 uv run --with pyyaml python scripts/test_validate_distribution.py
 uv run --with pyyaml python scripts/test_stamp_release.py
+python scripts/test_delivery_runtime.py
+python scripts/test_workflow_runtime.py
 python scripts/test_bundle_install.py
 python scripts/test_bundle_install.py --integration codex
 cp -R /path/to/speckit-delivery/bundle /tmp/speckit-bundle-check/bundle
@@ -64,18 +66,32 @@ python scripts/check_links.py
 ```
 
 `test_bundle_install.py` 会从本地 release-shaped Catalog 安装实际构建的 Bundle；它要求
-Spec Kit `>=1.2.3`，也是 Bundle 的最低版本。单独 Extension/Workflow 仍支持 `>=0.16.4`。
+Spec Kit `>=1.2.3`，也是 Bundle 和 `0.4.x` Workflow 的最低版本；单独 Extension 命令
+仍支持 `>=0.16.4`。
 发布前还要在第二个干净项目中验证已发布 Catalog 安装。只有 Manifest、Catalog、
 Workflow requirements、压缩包根布局、README 命令和版本完全一致时，才能认为可发布。
 
 本地 Bundle 测试还检查 Explore／Review 模板、review-fix 与 Ralph 资源是否完整打包／安装、
-宿主是否渲染命令，以及
-三个已安装 Workflow 是否与源码一致。默认验证 OpenCode，Codex 变体验证 Skills 模式。
-结构检查不能证明调研质量或用户实际批准；行为验收案例位于 `evals/evals.json`。
+宿主是否渲染命令，以及三个已安装 Workflow 是否与源码一致。它还校验 `sd` 别名与路由
+共用正文／输入和登记归属，重装能恢复入口，卸载会清理入口并保留项目配置。默认验证
+OpenCode，Codex 变体验证 Skills 模式。结构检查不能证明调研质量或用户实际批准；
+行为验收案例位于 `evals/evals.json`。
 
-`scripts/test_workflow_handoff.py` 使用真实 Spec Kit Command／Gate 边界、假宿主消费者和
+`scripts/test_workflow_handoff.py` 使用 Spec Kit Command／Gate 的真实传输边界、假宿主消费者和
 临时磁盘包，验证新上下文、真实 Gate 选择和缺包失败。在已安装 `specify_cli` 与 PyYAML
-的 Python 环境运行（已验证 Spec Kit 1.2.3）；它不是实际模型调用或端到端交付。
+的 Python 环境运行（已验证 Spec Kit 1.2.3）；它不是实际模型调用、语义评估、性能验证或端到端交付。
+
+随包提供的 Delivery Runtime Helper 在目标项目根目录运行时需要 Python 3.11
+或更高版本以及 Git，只使用标准库和 Git。Helper 新增的本地忽略规则包括 Spec Kit 的
+`.specify/workflows/runs/` 运行账本，以及精确的
+`.specify/delivery/<delivery_run>/runtime/`；Run 根目录的规划工件和 `evidence.md`
+仍遵循项目原有的 Artifact Policy。
+
+`scripts/test_delivery_runtime.py` 使用临时 Git 项目、真实 Helper CLI 和假的原生报告／
+回执文件，检查身份、新鲜度、证据哈希、路径边界、原生回执绑定、可重放操作键、规划
+检查点关联以及持久尝试记账。`scripts/test_workflow_runtime.py` 使用真实 Shell／Runtime
+传输、假 Consumer 和确定性的 Spec Kit `WorkflowEngine`，检查条件派发、恢复、修复上限
+和最终守门。这些都是确定性的契约探针，不是实际模型或语义质量验证。
 
 ## README 归属
 

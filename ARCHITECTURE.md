@@ -17,6 +17,7 @@ existing workflow.
 | Delivery Method Adapter | Verified selection and provenance for optional design/diagnosis/review methods | Core Plan/Assessment/Review ownership, task closure, approvals, or another execution chain |
 | Delivery Slice | Slice boundaries, task mapping, trunk-safety classification, merge policy, and slice/rollup handoff | Requirements, task generation, source edits, review verdicts, branches, or PR creation |
 | Delivery Close | PR outcome recording and run-workspace retirement | Source edits, remote PR mutation, or another run's records |
+| Delivery Runtime | Run identity, checkpoint/result transport, freshness, approval receipts, and bounded dispatch state | Semantic Quality/Standards/Review judgment, product edits, commits, or remote mutation |
 | Package README | User install/API/limits and maintainer development/release contract derived from real package contents | Code behavior, generated projections, or release publishing |
 | Ralph | Dependency-ready task execution, Git task commits, slice-boundary verification, and task completion | Planning or self-authorized task closure |
 | Diagram | One evidence-backed view per change, in Mermaid by default | Test evidence, review judgment, or installer behavior |
@@ -30,8 +31,9 @@ Machine state      Verdicts that prose or exit status cannot safely express
 ```
 
 `0.1.x` and `0.2.x` use explicit gates and bounded loops. `0.2.x` adds delivery
-slicing and merge policy; a later state file remains planned to carry
-machine-readable phase and verdict transitions.
+slicing and merge policy. The `0.4.x` runtime contract now carries machine-readable
+identity, phase, result, freshness, approval, and bounded-attempt transitions while
+native owners retain semantic verdict authority.
 
 ## Decision and closure lifecycle
 
@@ -83,6 +85,15 @@ may temporarily keep context-only evidence; ephemeral direct runs still persist
 ignored local files. Consumers record approval; gates do not edit artifacts.
 Feature/bug identity does not relocate the run packet. Transport is not semantic judgment.
 
+The portable runtime helper is installed at
+`.specify/extensions/delivery/scripts/delivery_runtime.py`. It stores only
+coordinator bookkeeping under `.specify/delivery/<delivery_run>/runtime/`, keeps
+canonical planning/evidence artifacts at the run root, and persists pending owner
+inputs/results across host processes. It can skip a dispatch only from a current
+valid result; missing, stale, malformed, or tampered evidence blocks instead of
+becoming a pass. Quality, Standards, Reviewer, Core, Ralph, Evidence, and Close
+remain the owners of semantic judgments and product/Git/remote mutations.
+
 Ralph consumes only `tasks.md` as its execution queue. An approved `slices.md`
 supplies review/merge boundaries only: it cannot add, remove, or reorder tasks.
 The portable contract is one dependency-ready task per iteration on a clean
@@ -121,14 +132,16 @@ The [Reviewer template](extensions/review/templates/reviewer.md) owns snapshot,
 coverage, verdict, and finding lifecycle policy. The coordinator persists reports;
 the reviewer remains read-only. Self-review is incomplete unless explicitly accepted.
 
-All lanes use bounded `review.run → delivery.review-fix` slots, a final review,
-and an aborting gate. The repair command owns lane routing; Feature keeps
-`tasks.md` as its sole queue, while Bugfix/Lightweight avoid forced Feature files.
-Portable YAML offers at most three repair slots, capped further by configuration.
-Attempts survive resume/new HEAD; a current complete pass makes remaining slots
-no-ops. These are guided prompt contracts, not an automatic semantic state engine.
-Post-review ADR or other governed changes require freshness review, and handoff
-rechecks the actual content/requirements snapshot.
+All lanes use guarded `review.run → delivery.review-fix` slots, a final runtime
+requirement, and an aborting gate. The repair command owns lane routing; Feature
+keeps `tasks.md` as its sole queue, while Bugfix/Lightweight avoid forced Feature
+files. Portable YAML offers at most three repair slots, capped further by
+configuration. Attempts survive resume/new HEAD; a current complete pass skips
+remaining slots, while cap exhaustion fails the final guard. The central
+[Delivery runtime contract](extensions/delivery/templates/runtime.md) checks
+identity, freshness, native report references, and transport completeness without
+making semantic decisions. Post-review ADR or other governed changes require
+freshness review, and handoff rechecks the actual content/requirements snapshot.
 
 Quality owns original execution identity and exact-input/config hook reuse;
 callers cannot relabel old hook output with current hashes. Bugfix review repairs

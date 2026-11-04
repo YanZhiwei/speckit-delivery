@@ -2,12 +2,12 @@ schema_version: "1.0"
 workflow:
   id: "bugfix-delivery"
   name: "Spec Kit Bugfix Delivery"
-  version: "0.3.2"
+  version: "0.4.0"
   author: "Yan Zhiwei"
-  description: "Evidence-first structure/history exploration, bug assessment and scope approval, repair, regression validation, review, and handoff."
+  description: "Evidence-first structure/history exploration, bug assessment and scope approval, guarded repair, regression validation, quality, review, and handoff."
 
 requires:
-  speckit_version: ">=0.16.4"
+  speckit_version: ">=1.2.3"
   integrations:
     any: ["codex", "claude", "copilot", "gemini", "opencode", "generic"]
 
@@ -28,7 +28,18 @@ inputs:
     type: string
     default: "auto"
 
+  runtime_python:
+    type: string
+    default: "python"
+    prompt: "Verified Python 3.11+ invocation (for example python, python3, or py -3 on Windows)"
+
 steps:
+  - id: runtime-init
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} init
+      --run {{ inputs.delivery_run }} --lane bugfix --bug-slug {{ inputs.bug_slug }}
+
   - id: delivery-doctor
     command: speckit.delivery.doctor
     integration: "{{ inputs.integration }}"
@@ -37,61 +48,105 @@ steps:
   - id: decision-discover
     command: speckit.decision.context
     integration: "{{ inputs.integration }}"
-    input: { args: "mode=discover {{ inputs.report }}" }
+    input: { args: "mode=discover lane=bugfix delivery_run={{ inputs.delivery_run }} {{ inputs.report }}" }
 
   - id: explore
     command: speckit.delivery.explore
     integration: "{{ inputs.integration }}"
-    input: { args: "lane=bugfix delivery_run={{ inputs.delivery_run }} bug_slug={{ inputs.bug_slug }} {{ inputs.report }} Persist .specify/delivery/{{ inputs.delivery_run }}/exploration.md before returning; record this explicit expected Bug slug and assessment path as unverified until assessment exists. No context-only workflow handoff." }
+    input: { args: "lane=bugfix delivery_run={{ inputs.delivery_run }} bug_slug={{ inputs.bug_slug }} {{ inputs.report }} Persist .specify/delivery/{{ inputs.delivery_run }}/exploration.md before returning; record the explicit expected Bug slug and assessment path as unverified until assessment exists. No context-only workflow handoff." }
+
+  - id: runtime-phase-exploration
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} phase
+      --run {{ inputs.delivery_run }} --name exploration
 
   - id: code-context
     command: speckit.delivery.context
     integration: "{{ inputs.integration }}"
-    continue_on_error: true
-    input: { args: "lane=bugfix {{ inputs.report }}" }
+    input: { args: "lane=bugfix delivery_run={{ inputs.delivery_run }} {{ inputs.report }} Reuse the current Explore map and write only this run's code-context.md when a concrete gap remains." }
 
   - id: assess
     command: speckit.bug.assess
     integration: "{{ inputs.integration }}"
     input:
       args: >-
-        slug={{ inputs.bug_slug }}
-        {{ inputs.report }}
-        delivery_run={{ inputs.delivery_run }}
+        slug={{ inputs.bug_slug }} delivery_run={{ inputs.delivery_run }}
         exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
-        Read this exact persisted exploration packet (stop if missing): current code
-        structure, related Issues/PRs/commit diffs, governing ADRs, symptoms,
+        {{ inputs.report }} Read this exact persisted exploration packet: current
+        code structure, related Issues/PRs/commit diffs, governing ADRs, symptoms,
         logs/configuration, and reference limitations. Reuse that investigation;
         bug.assess owns reproduction, root-cause diagnosis, and red evidence.
-        Present the packet's current and candidate directory trees, fault path,
-        reproduction/red evidence, proposed bounded repair, tests, exclusions,
-        risks, and unknowns in the conversation before the assessment gate.
-        Use the explicit normalized slug supplied above, not the delivery run id.
-        Write only the official assessment in its permitted Bug output root;
-        do not edit the external Delivery packet. The coordinator verifies the
-        expected assessment and records its reference after this command exits.
-        No confirmed root cause or permission to fix without
-        reproduction. Keep the assessment as the repair contract, not a full
-        Feature spec. Stop on critical evidence gaps; escalate new capability,
-        material architecture, or durable-contract changes to Feature, carrying
-        evidence forward. Multiple files alone do not require escalation.
+        Present the packet's current and candidate trees, fault path, reproduction/
+        red evidence, proposed bounded repair, tests, exclusions, risks, and
+        unknowns before the assessment gate. Use the explicit normalized slug, not
+        the delivery run id. Write only the official assessment in its permitted
+        Bug output root. Do not edit the external Delivery packet. No confirmed
+        root cause or permission to fix without reproduction.
+
+  - id: runtime-bind-assessment
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} bind
+      --run {{ inputs.delivery_run }}
+      --assessment .specify/bugs/{{ inputs.bug_slug }}/assessment.md
+
+  - id: runtime-present-assessment
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} present
+      --run {{ inputs.delivery_run }} --name assessment
+      --input .specify/delivery/{{ inputs.delivery_run }}/exploration.md
+      --input .specify/bugs/{{ inputs.bug_slug }}/assessment.md
 
   - id: assessment-gate
     show_file: ".specify/delivery/{{ inputs.delivery_run }}/exploration.md"
     type: gate
-    message: "Review the shown current/candidate trees, fault path, reproduction/red evidence, repair/test scope, exclusions, and risks. Approve and record the bounded repair scope and accepted non-critical limitations only when evidence supports it. Reject/stop for missing reproduction, critical gaps, or new capability/material architecture/durable-contract decisions; resume Feature with the evidence, not merely because several files are affected."
+    message: "Review the shown exploration packet and the runtime-presented exact assessment at .specify/bugs/{{ inputs.bug_slug }}/assessment.md: current/candidate trees, fault path, reproduction/red evidence, repair/test scope, exclusions, and risks. Approve and record the bounded repair scope and accepted non-critical limitations only when evidence supports it. Reject/stop for missing reproduction, critical gaps, or new capability/material architecture/durable-contract decisions."
     options: [approve, reject]
     on_reject: abort
+
+  - id: runtime-decide-assessment
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} decide
+      --run {{ inputs.delivery_run }} --name assessment
+      --choice {{ steps.assessment-gate.output.choice }}
+
+  - id: runtime-phase-planning
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} phase
+      --run {{ inputs.delivery_run }} --name planning
+
+  - id: bind-assessment
+    command: speckit.delivery.route
+    integration: "{{ inputs.integration }}"
+    input:
+      args: >-
+        action=bind-assessment lane=bugfix delivery_run={{ inputs.delivery_run }}
+        bug_slug={{ inputs.bug_slug }} assessment=.specify/bugs/{{ inputs.bug_slug }}/assessment.md
+        exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
+        assessment_approval={{ steps.assessment-gate.output.choice }} {{ inputs.report }}
+        As Delivery coordinator, verify this exact assessment against the
+        presented runtime receipt and persist its actual hash, approved repair
+        scope, choice, and limitations in the canonical exploration packet.
 
   - id: decision-context
     command: speckit.decision.context
     integration: "{{ inputs.integration }}"
-    input: { args: "mode=resolve delivery_run={{ inputs.delivery_run }} bug_slug={{ inputs.bug_slug }} assessment=.specify/bugs/{{ inputs.bug_slug }}/assessment.md exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md assessment_approval={{ steps.assessment-gate.output.choice }} {{ inputs.report }} As coordinator, verify this exact expected assessment exists and matches the requested Bug and approved repair; persist its actual reference/hash and the supplied gate choice, approved scope/snapshot, and accepted limitations in the Delivery packet. Stop on missing/mismatched output, stale packet, or missing approval; never select a different or latest Bug. Do not treat delivery_run as a Bug slug. Resolve ADRs without silently changing scope." }
+    input: { args: "mode=resolve lane=bugfix delivery_run={{ inputs.delivery_run }} bug_slug={{ inputs.bug_slug }} assessment=.specify/bugs/{{ inputs.bug_slug }}/assessment.md exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md assessment_approval={{ steps.assessment-gate.output.choice }} {{ inputs.report }} Consume the coordinator-verified exact assessment reference and approved scope; write only decision-context.md. Resolve ADRs without silently changing scope." }
 
   - id: quality-brief-before-fix
     command: speckit.quality.brief
     integration: "{{ inputs.integration }}"
-    input: { args: "lane=bugfix delivery_run={{ inputs.delivery_run }} bug_slug={{ inputs.bug_slug }} assessment=.specify/bugs/{{ inputs.bug_slug }}/assessment.md exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md scope=bugfix {{ inputs.report }} Use this run's approved assessment; do not infer a Feature plan from other runs." }
+    input: { args: "lane=bugfix delivery_run={{ inputs.delivery_run }} bug_slug={{ inputs.bug_slug }} assessment=.specify/bugs/{{ inputs.bug_slug }}/assessment.md exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md scope=bugfix {{ inputs.report }} Use this run's approved assessment; do not infer a Feature plan from another run." }
+
+  - id: runtime-phase-execution
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} phase
+      --run {{ inputs.delivery_run }} --name execution
 
   - id: fix
     command: speckit.bug.fix
@@ -101,69 +156,356 @@ steps:
   - id: regression-test
     command: speckit.bug.test
     integration: "{{ inputs.integration }}"
-    input: { args: "slug={{ inputs.bug_slug }} {{ inputs.report }} delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md Read the coordinator-verified assessment reference; stop on a slug mismatch, not a single-candidate guess." }
+    input: { args: "slug={{ inputs.bug_slug }} {{ inputs.report }} delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md Read the coordinator-verified assessment reference; preserve the original fix/test report and stop on a slug mismatch." }
 
-  - id: package-readme
-    command: speckit.docs-sync.package-readme
-    integration: "{{ inputs.integration }}"
-    input: { args: "delivery_run={{ inputs.delivery_run }} lane=bugfix repair=0 scope=outgoing-diff {{ inputs.report }} Judge package README drift after the final fix; emit PACKAGE_README_VERDICT and INPUT_IDENTITY." }
-
-  - id: quality
-    command: speckit.quality.check
-    integration: "{{ inputs.integration }}"
-    input: { args: "lane=bugfix delivery_run={{ inputs.delivery_run }} scope=outgoing-diff {{ inputs.report }}" }
-
-  - id: standards
-    command: speckit.review.standards
-    integration: "{{ inputs.integration }}"
-    input: { args: "lane=bugfix delivery_run={{ inputs.delivery_run }} bug_slug={{ inputs.bug_slug }} assessment=.specify/bugs/{{ inputs.bug_slug }}/assessment.md exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md scope=outgoing-diff {{ inputs.report }} Use this run's approved assessment; do not load a Feature plan from another run." }
+  - id: simplify-runtime-begin
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+      --run {{ inputs.delivery_run }} --stage simplify
 
   - id: simplify
     command: speckit.simplify.scan
     integration: "{{ inputs.integration }}"
-    input: { args: "lane=bugfix delivery_run={{ inputs.delivery_run }} scope=diff {{ inputs.report }}" }
+    input:
+      args: >-
+        lane=bugfix delivery_run={{ inputs.delivery_run }} bug_slug={{ inputs.bug_slug }}
+        scope=diff runtime_stage=simplify
+        runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-simplify.json
+        {{ inputs.report }} Read the pending runtime input and approved assessment;
+        write only this run's simplifications.md and normalized result. Do not edit
+        source, the assessment, or create Feature tasks.
 
-  - id: review-loop
-    type: do-while
-    condition: "true"
-    max_iterations: 3
-    steps:
-      - id: review
-        command: speckit.review.run
-        integration: "{{ inputs.integration }}"
-        input: { args: "delivery_run={{ inputs.delivery_run }} lane=bugfix scope=outgoing-diff {{ inputs.report }} Review all six dimensions against the approved assessment and regression evidence; reuse only a complete current pass and retain prior finding IDs." }
-      - id: review-fix
-        command: speckit.delivery.review-fix
-        integration: "{{ inputs.integration }}"
-        input: { args: "delivery_run={{ inputs.delivery_run }} lane=bugfix scope=outgoing-diff repair_slots=3 {{ inputs.report }} One bounded assessment-owned repair pass using the installed Bugfix continuation adapter; preserve original official fix/test reports. No Feature tasks required. Pass is no-op; stale/incomplete evidence, cap, or scope expansion stops repairs." }
+  - id: simplify-runtime-record
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+      --run {{ inputs.delivery_run }} --stage simplify
 
-  - id: review-final
+  - id: simplify-needs
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} needs
+      --run {{ inputs.delivery_run }} --kind simplification
+
+  - id: simplify-if-needed
+    type: if
+    condition: "{{ steps.simplify-needs.output.stdout == 'true' }}"
+    then:
+      - id: simplify-present
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} present
+          --run {{ inputs.delivery_run }} --name simplify
+          --input .specify/delivery/{{ inputs.delivery_run }}/simplifications.md
+      - id: simplify-gate
+        type: gate
+        show_file: ".specify/delivery/{{ inputs.delivery_run }}/simplifications.md"
+        message: "Approve the presented candidate IDs within the Bug assessment, or reject them and continue without simplification. Scope expansion returns to its owning approval."
+        options: [approve, reject]
+        on_reject: skip
+      - id: simplify-decide
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} decide
+          --run {{ inputs.delivery_run }} --name simplify
+          --choice {{ steps.simplify-gate.output.choice }}
+      - id: simplify-accepted
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} needs
+          --run {{ inputs.delivery_run }} --kind accepted-simplification
+      - id: simplify-apply-if-accepted
+        type: if
+        condition: "{{ steps.simplify-accepted.output.stdout == 'true' }}"
+        then:
+          - id: simplify-apply
+            command: speckit.delivery.route
+            integration: "{{ inputs.integration }}"
+            input:
+              args: >-
+                action=apply-simplification lane=bugfix delivery_run={{ inputs.delivery_run }}
+                bug_slug={{ inputs.bug_slug }} assessment=.specify/bugs/{{ inputs.bug_slug }}/assessment.md
+                {{ inputs.report }} Apply only runtime-accepted candidate IDs through
+                the Bugfix continuation adapter. Reserve the existing budget,
+                preserve original official fix/test reports and the immutable proposal,
+                and return to verification without creating Feature tasks.
+          - id: simplify-verify-begin
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+              --run {{ inputs.delivery_run }} --stage simplify-verify
+          - id: simplify-verify
+            command: speckit.simplify.verify
+            integration: "{{ inputs.integration }}"
+            input:
+              args: >-
+                lane=bugfix delivery_run={{ inputs.delivery_run }} bug_slug={{ inputs.bug_slug }}
+                runtime_stage=simplify-verify runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-simplify-verify.json
+                {{ inputs.report }} Verify only actual accepted candidates after their lane-owned application; preserve the proposal and write the native verification report under runtime.
+          - id: simplify-verify-record
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+              --run {{ inputs.delivery_run }} --stage simplify-verify
+          - id: simplify-verify-require
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} require
+              --run {{ inputs.delivery_run }} --kind simplify-verify
+
+  - id: package-readme
+    command: speckit.docs-sync.package-readme
+    integration: "{{ inputs.integration }}"
+    input: { args: "delivery_run={{ inputs.delivery_run }} lane=bugfix repair=0 scope=outgoing-diff {{ inputs.report }} Judge package README drift after the final fix and accepted simplifications; emit PACKAGE_README_VERDICT and INPUT_IDENTITY." }
+
+  - id: quality-begin
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+      --run {{ inputs.delivery_run }} --stage quality
+
+  - id: quality
+    command: speckit.quality.check
+    integration: "{{ inputs.integration }}"
+    input:
+      args: >-
+        lane=bugfix delivery_run={{ inputs.delivery_run }} scope=outgoing-diff
+        runtime_stage=quality runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-quality.json
+        {{ inputs.report }} Read the pending runtime input and preserve original check receipts.
+
+  - id: quality-record
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+      --run {{ inputs.delivery_run }} --stage quality
+
+  - id: standards-begin
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+      --run {{ inputs.delivery_run }} --stage standards
+
+  - id: standards
+    command: speckit.review.standards
+    integration: "{{ inputs.integration }}"
+    input:
+      args: >-
+        lane=bugfix delivery_run={{ inputs.delivery_run }} bug_slug={{ inputs.bug_slug }}
+        assessment=.specify/bugs/{{ inputs.bug_slug }}/assessment.md
+        exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
+        scope=outgoing-diff runtime_stage=standards
+        runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-standards.json
+        {{ inputs.report }} Use this run's approved assessment and write the native report, machine native receipt, and normalized envelope defined by runtime.md.
+
+  - id: standards-record
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+      --run {{ inputs.delivery_run }} --stage standards
+
+  - id: review-initial-begin
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+      --run {{ inputs.delivery_run }} --stage review
+
+  - id: review-initial
     command: speckit.review.run
     integration: "{{ inputs.integration }}"
-    input: { args: "delivery_run={{ inputs.delivery_run }} lane=bugfix scope=outgoing-diff {{ inputs.report }} Re-review after the last repair slot or reuse a complete current pass; no extra repair rounds. Present all six verdicts, coverage, and prior finding dispositions." }
+    input:
+      args: >-
+        delivery_run={{ inputs.delivery_run }} lane=bugfix runtime_stage=review
+        runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-review.json
+        scope=outgoing-diff {{ inputs.report }} Review all six dimensions against the approved assessment and regression evidence; read the pending runtime input, preserve prior finding IDs, and write the native report, machine native receipt, and normalized envelope defined by runtime.md.
+
+  - id: review-initial-record
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+      --run {{ inputs.delivery_run }} --stage review
+
+  - id: review-needs-repair
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} needs
+      --run {{ inputs.delivery_run }} --kind repair
+
+  - id: review-repair-if-needed
+    type: if
+    condition: "{{ steps.review-needs-repair.output.stdout == 'true' }}"
+    then:
+      - id: review-repair-loop
+        type: do-while
+        condition: "{{ steps.review-next.output.stdout == 'true' }}"
+        max_iterations: 3
+        steps:
+          - id: review-reserve
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} reserve
+              --run {{ inputs.delivery_run }} --kind review --scope outgoing-diff --plain
+          - id: review-fix
+            command: speckit.delivery.review-fix
+            integration: "{{ inputs.integration }}"
+            input: { args: "delivery_run={{ inputs.delivery_run }} lane=bugfix scope=outgoing-diff repair_slots=3 attempt={{ steps.review-reserve.output.stdout }} {{ inputs.report }} One bounded assessment-owned repair pass; preserve official fix/test reports, finding IDs, and the reserved attempt. Do not create Feature tasks." }
+          - id: repair-quality-begin
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+              --run {{ inputs.delivery_run }} --stage quality
+          - id: repair-quality
+            command: speckit.quality.check
+            integration: "{{ inputs.integration }}"
+            input: { args: "lane=bugfix delivery_run={{ inputs.delivery_run }} scope=outgoing-diff runtime_stage=quality runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-quality.json {{ inputs.report }} Refresh original Quality receipts after the repair." }
+          - id: repair-quality-record
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+              --run {{ inputs.delivery_run }} --stage quality
+          - id: repair-standards-begin
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+              --run {{ inputs.delivery_run }} --stage standards
+          - id: repair-standards
+            command: speckit.review.standards
+            integration: "{{ inputs.integration }}"
+            input: { args: "lane=bugfix delivery_run={{ inputs.delivery_run }} scope=outgoing-diff runtime_stage=standards runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-standards.json assessment=.specify/bugs/{{ inputs.bug_slug }}/assessment.md {{ inputs.report }} Refresh Standards after the repair." }
+          - id: repair-standards-record
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+              --run {{ inputs.delivery_run }} --stage standards
+          - id: review-recheck-begin
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+              --run {{ inputs.delivery_run }} --stage review
+          - id: review-recheck
+            command: speckit.review.run
+            integration: "{{ inputs.integration }}"
+            input: { args: "delivery_run={{ inputs.delivery_run }} lane=bugfix scope=outgoing-diff runtime_stage=review runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-review.json {{ inputs.report }} Re-review independently after the repair and account for every prior finding ID." }
+          - id: review-recheck-record
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+              --run {{ inputs.delivery_run }} --stage review
+          - id: review-complete
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} complete
+              --run {{ inputs.delivery_run }} --kind review --scope outgoing-diff
+              --attempt {{ steps.review-reserve.output.stdout }}
+          - id: review-next
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} needs
+              --run {{ inputs.delivery_run }} --kind repair
+
+  - id: review-final
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} require
+      --run {{ inputs.delivery_run }} --kind review
 
   - id: review-gate
     type: gate
-    message: "Approve only complete current snapshot-bound REVIEW_VERDICT: pass for all six dimensions, verified finding closure, full required coverage, accepted actual review independence, and passing regression evidence. Blocked/incomplete or exhausted repairs stop delivery; approval cannot waive an unresolved blocker."
+    message: "Approve only a complete current snapshot-bound REVIEW_VERDICT: pass for all six dimensions, verified finding closure, full required coverage, accepted actual review independence, and passing regression evidence. Blocked/incomplete or exhausted repairs stop delivery."
     options: [approve, reject]
     on_reject: abort
 
   - id: decision-check
     command: speckit.decision.check
     integration: "{{ inputs.integration }}"
-    input: { args: "{{ inputs.report }} delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md Read the actual Bug slug and assessment path from this packet, not the run id." }
+    input: { args: "{{ inputs.report }} delivery_run={{ inputs.delivery_run }} bug_slug={{ inputs.bug_slug }} assessment=.specify/bugs/{{ inputs.bug_slug }}/assessment.md exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md Read the actual Bug slug and assessment path from this packet, not the run id." }
 
-  - id: review-close
-    command: speckit.review.run
-    integration: "{{ inputs.integration }}"
-    input: { args: "delivery_run={{ inputs.delivery_run }} lane=bugfix scope=outgoing-diff {{ inputs.report }} Verify final snapshot after decision checks; reuse only an unchanged complete pass. No new repair budget; stale/blocked/incomplete stops evidence and handoff." }
+  - id: review-close-needed
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} needs
+      --run {{ inputs.delivery_run }} --kind review
+
+  - id: review-close-if-stale
+    type: if
+    condition: "{{ steps.review-close-needed.output.stdout == 'true' }}"
+    then:
+      - id: close-quality-begin
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+          --run {{ inputs.delivery_run }} --stage quality
+      - id: close-quality
+        command: speckit.quality.check
+        integration: "{{ inputs.integration }}"
+        input:
+          args: >-
+            lane=bugfix delivery_run={{ inputs.delivery_run }} scope=outgoing-diff
+            runtime_stage=quality runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-quality.json
+            {{ inputs.report }} Refresh original Quality receipts after post-review changes.
+      - id: close-quality-record
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+          --run {{ inputs.delivery_run }} --stage quality
+      - id: close-standards-begin
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+          --run {{ inputs.delivery_run }} --stage standards
+      - id: close-standards
+        command: speckit.review.standards
+        integration: "{{ inputs.integration }}"
+        input:
+          args: >-
+            lane=bugfix delivery_run={{ inputs.delivery_run }} scope=outgoing-diff
+            assessment=.specify/bugs/{{ inputs.bug_slug }}/assessment.md
+            runtime_stage=standards runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-standards.json
+            {{ inputs.report }} Refresh Standards for the final inputs.
+      - id: close-standards-record
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+          --run {{ inputs.delivery_run }} --stage standards
+      - id: review-close-begin
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+          --run {{ inputs.delivery_run }} --stage review
+      - id: review-close
+        command: speckit.review.run
+        integration: "{{ inputs.integration }}"
+        input: { args: "delivery_run={{ inputs.delivery_run }} lane=bugfix scope=outgoing-diff runtime_stage=review runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-review.json {{ inputs.report }} Refresh final review only when post-review inputs changed; no new repair round." }
+      - id: review-close-record
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+          --run {{ inputs.delivery_run }} --stage review
+
+  - id: review-close-final
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} require
+      --run {{ inputs.delivery_run }} --kind review
 
   - id: evidence
     command: speckit.evidence.collect
     integration: "{{ inputs.integration }}"
-    input: { args: "lane=bugfix delivery_run={{ inputs.delivery_run }} bug_slug={{ inputs.bug_slug }} evidence=.specify/delivery/{{ inputs.delivery_run }}/evidence.md exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md assessment=.specify/bugs/{{ inputs.bug_slug }}/assessment.md {{ inputs.report }} Read and update only this run's canonical evidence record; use the explicit assessment and original fix/test receipts, bind actual reviewed content and PR identity, and do not require Feature artifacts." }
+    input: { args: "lane=bugfix delivery_run={{ inputs.delivery_run }} bug_slug={{ inputs.bug_slug }} evidence=.specify/delivery/{{ inputs.delivery_run }}/evidence.md exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md assessment=.specify/bugs/{{ inputs.bug_slug }}/assessment.md {{ inputs.report }} Read and update only this run's canonical evidence record; bind actual reviewed content, explicit assessment, and original fix/test receipts." }
+
+  - id: runtime-require-evidence
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} require
+      --run {{ inputs.delivery_run }} --kind evidence
 
   - id: handoff
     command: speckit.delivery.handoff
     integration: "{{ inputs.integration }}"
-    input: { args: "delivery_run={{ inputs.delivery_run }} lane=bugfix {{ inputs.report }}" }
+    input: { args: "delivery_run={{ inputs.delivery_run }} lane=bugfix {{ inputs.report }} Render a truthful handoff and stop before publication; do not push, create, or merge the PR." }
+
+  - id: runtime-phase-handoff
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} phase
+      --run {{ inputs.delivery_run }} --name handoff

@@ -32,6 +32,12 @@ jobs:
           uv run --with pyyaml python scripts/test_validate_distribution.py
           uv run --with pyyaml python scripts/test_stamp_release.py
 
+      - name: Validate Delivery runtime and real workflow engine
+        run: |
+          python scripts/test_delivery_runtime.py
+          uv run --with specify-cli==1.2.3 python scripts/test_workflow_handoff.py
+          uv run --with specify-cli==1.2.3 python scripts/test_workflow_runtime.py
+
       - name: Validate workflow syntax
         shell: bash
         run: uvx --from actionlint-py actionlint .github/workflows/*.yml

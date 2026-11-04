@@ -1,8 +1,41 @@
-# Agent-native skills
+# Agent-native entry points
 
-## Router skills
+## Installed router and shortcut
 
-Copy both router directories into a skill-discovery root without renaming them:
+Starting with Delivery `0.4.0`, the extension declares `sd` as an alias of
+`speckit.delivery.route`. Installing the Bundle or Delivery extension renders
+both names through the active host; no facade skill or manual command copy is
+required:
+
+| Host | Installed shortcut | Full entry |
+| --- | --- | --- |
+| OpenCode | `/sd <request>` | `/speckit.delivery.route <request>` |
+| Codex Skills mode | `$speckit-sd <request>` | `$speckit-delivery-route <request>` |
+| Claude Code | `/speckit-sd <request>` | `/speckit-delivery-route <request>` |
+
+Spec Kit 1.2.3 prefixes skill names with `speckit-`, including aliases. OpenCode
+keeps the declared command name and creates `.opencode/commands/sd.md`.
+The alias and full command are rendered from the same router source and belong
+to Delivery in the installation registry. Refreshing or removing the extension
+refreshes or removes both entries; there is no second lifecycle prompt to
+maintain.
+
+Versions through `0.3.2` do not declare this alias. Follow the
+[existing-Bundle upgrade steps](../README.en.md#upgrade-an-existing-bundle) to
+replace the version-pinned catalogs and run `specify bundle update speckit-delivery`.
+OpenCode reloads command files automatically; if an open command list is stale,
+close and reopen it or run `/reload`.
+
+Availability is a host-native command/skill surface, not a PATH executable.
+Do not use `Get-Command speckit*` to check it.
+
+## Optional exact `$sd` facade
+
+For Codex users who specifically want `$sd` instead of the automatically
+installed `$speckit-sd`, the existing facade skills remain optional.
+
+Copy both router skill directories into a skill-discovery root without renaming
+them:
 
 ```text
 <skills-root>/
@@ -10,20 +43,11 @@ Copy both router directories into a skill-discovery root without renaming them:
 └── speckit-delivery/
 ```
 
-In Codex, invoke `$sd <request>`. A host that renders user-invoked skills as
-slash commands can expose the same entry as `/sd`.
-
-`sd` is deliberately only a facade. It reads the canonical `speckit-delivery`
-router through its relative sibling path, so install both directories together.
-
-Codex renders installed Spec Kit extension commands as skills, not shell
-executables. After `specify extension add`, the Delivery router appears as
-`speckit-delivery-route` in the active skills root; do not use
-`Get-Command speckit*` as a Codex availability check.
-
-Claude Code exposes the same router as `/speckit-delivery-route`; OpenCode
-exposes it as `/speckit.delivery.route`. Availability is a host-native
-command/skill surface, not a PATH executable.
+Invoke `$sd <request>`. The `sd` facade reads its sibling
+`speckit-delivery/SKILL.md`, which delegates to the installed
+`speckit-delivery-route` skill in the active skills root. Install both facade
+directories together, plus the Delivery extension; the facade adds no lifecycle
+policy.
 
 ## Optional diagram renderers
 

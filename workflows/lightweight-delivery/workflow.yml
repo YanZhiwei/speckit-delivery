@@ -2,12 +2,12 @@ schema_version: "1.0"
 workflow:
   id: "lightweight-delivery"
   name: "Spec Kit Lightweight Delivery"
-  version: "0.3.2"
+  version: "0.4.0"
   author: "Yan Zhiwei"
-  description: "Proportional delivery for mechanical, documentation-only, or behavior-preserving changes."
+  description: "Proportional delivery for mechanical, documentation-only, or behavior-preserving changes with guarded quality and review dispatch."
 
 requires:
-  speckit_version: ">=0.16.4"
+  speckit_version: ">=1.2.3"
   integrations:
     any: ["codex", "claude", "copilot", "gemini", "opencode", "generic"]
 
@@ -24,7 +24,18 @@ inputs:
     type: string
     default: "auto"
 
+  runtime_python:
+    type: string
+    default: "python"
+    prompt: "Verified Python 3.11+ invocation (for example python, python3, or py -3 on Windows)"
+
 steps:
+  - id: runtime-init
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} init
+      --run {{ inputs.delivery_run }} --lane lightweight
+
   - id: delivery-doctor
     command: speckit.delivery.doctor
     integration: "{{ inputs.integration }}"
@@ -35,57 +46,290 @@ steps:
     integration: "{{ inputs.integration }}"
     input: { args: "lane=lightweight delivery_run={{ inputs.delivery_run }} scope=lightweight {{ inputs.change }} Use this request and applicable project policy; do not infer a Feature plan from another run." }
 
+  - id: runtime-phase-execution
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} phase
+      --run {{ inputs.delivery_run }} --name execution
+
   - id: implement
     command: speckit.delivery.lightweight
     integration: "{{ inputs.integration }}"
-    input: { args: "{{ inputs.change }}" }
+    input: { args: "lane=lightweight delivery_run={{ inputs.delivery_run }} {{ inputs.change }} Keep the bounded request; do not create Feature artifacts or a second queue." }
+
+  - id: simplify-runtime-begin
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+      --run {{ inputs.delivery_run }} --stage simplify
+
+  - id: simplify
+    command: speckit.simplify.scan
+    integration: "{{ inputs.integration }}"
+    input:
+      args: >-
+        lane=lightweight delivery_run={{ inputs.delivery_run }} scope=diff
+        runtime_stage=simplify runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-simplify.json
+        {{ inputs.change }} Read the pending runtime input and keep the scan read-only; no Feature queue or forcedTasks.
+
+  - id: simplify-runtime-record
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+      --run {{ inputs.delivery_run }} --stage simplify
+
+  - id: simplify-needs
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} needs
+      --run {{ inputs.delivery_run }} --kind simplification
+
+  - id: simplify-if-needed
+    type: if
+    condition: "{{ steps.simplify-needs.output.stdout == 'true' }}"
+    then:
+      - id: simplify-present
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} present
+          --run {{ inputs.delivery_run }} --name simplify
+          --input .specify/delivery/{{ inputs.delivery_run }}/simplifications.md
+      - id: simplify-gate
+        type: gate
+        show_file: ".specify/delivery/{{ inputs.delivery_run }}/simplifications.md"
+        message: "Approve the presented candidate IDs within the bounded Lightweight request, or reject them and continue without simplification. Behavior, compatibility, data, security, or architecture expansion requires lane escalation."
+        options: [approve, reject]
+        on_reject: skip
+      - id: simplify-decide
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} decide
+          --run {{ inputs.delivery_run }} --name simplify
+          --choice {{ steps.simplify-gate.output.choice }}
+      - id: simplify-accepted
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} needs
+          --run {{ inputs.delivery_run }} --kind accepted-simplification
+      - id: simplify-apply-if-accepted
+        type: if
+        condition: "{{ steps.simplify-accepted.output.stdout == 'true' }}"
+        then:
+          - id: simplify-apply
+            command: speckit.delivery.route
+            integration: "{{ inputs.integration }}"
+            input:
+              args: >-
+                action=apply-simplification lane=lightweight delivery_run={{ inputs.delivery_run }}
+                {{ inputs.change }} Delegate only actual runtime-accepted candidate
+                IDs to delivery.lightweight, preserving the bounded scope and
+                immutable proposal. Do not create a Feature queue or expand behavior.
+          - id: simplify-verify-begin
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+              --run {{ inputs.delivery_run }} --stage simplify-verify
+          - id: simplify-verify
+            command: speckit.simplify.verify
+            integration: "{{ inputs.integration }}"
+            input:
+              args: >-
+                lane=lightweight delivery_run={{ inputs.delivery_run }}
+                runtime_stage=simplify-verify runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-simplify-verify.json
+                {{ inputs.change }} Verify actual accepted candidates after lane-owned application; preserve the proposal and write the native verification report under runtime.
+          - id: simplify-verify-record
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+              --run {{ inputs.delivery_run }} --stage simplify-verify
+          - id: simplify-verify-require
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} require
+              --run {{ inputs.delivery_run }} --kind simplify-verify
 
   - id: package-readme
     command: speckit.docs-sync.package-readme
     integration: "{{ inputs.integration }}"
-    input: { args: "delivery_run={{ inputs.delivery_run }} lane=lightweight repair=0 scope=outgoing-diff {{ inputs.change }} Judge package README drift; emit PACKAGE_README_VERDICT and INPUT_IDENTITY; no-op when no package surface changed." }
+    input: { args: "delivery_run={{ inputs.delivery_run }} lane=lightweight repair=0 scope=outgoing-diff {{ inputs.change }} Judge package README drift after accepted simplifications; emit PACKAGE_README_VERDICT and INPUT_IDENTITY; no-op when no package surface changed." }
+
+  - id: quality-begin
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+      --run {{ inputs.delivery_run }} --stage quality
 
   - id: quality
     command: speckit.quality.check
     integration: "{{ inputs.integration }}"
-    input: { args: "lane=lightweight delivery_run={{ inputs.delivery_run }} scope=outgoing-diff {{ inputs.change }}" }
+    input:
+      args: >-
+        lane=lightweight delivery_run={{ inputs.delivery_run }} scope=outgoing-diff
+        runtime_stage=quality runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-quality.json
+        {{ inputs.change }} Read the pending runtime input and preserve original check receipts.
+
+  - id: quality-record
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+      --run {{ inputs.delivery_run }} --stage quality
+
+  - id: standards-begin
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+      --run {{ inputs.delivery_run }} --stage standards
 
   - id: standards
     command: speckit.review.standards
     integration: "{{ inputs.integration }}"
-    input: { args: "lane=lightweight delivery_run={{ inputs.delivery_run }} scope=outgoing-diff {{ inputs.change }} Use this request and applicable project policy; do not load or create a Feature plan." }
+    input:
+      args: >-
+        lane=lightweight delivery_run={{ inputs.delivery_run }} scope=outgoing-diff
+        runtime_stage=standards runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-standards.json
+        {{ inputs.change }} Use this bounded request and applicable project policy; do not load or create a Feature plan. Write the native report, machine native receipt, and normalized envelope defined by runtime.md.
 
-  - id: review-loop
-    type: do-while
-    condition: "true"
-    max_iterations: 3
-    steps:
-      - id: review
-        command: speckit.review.run
-        integration: "{{ inputs.integration }}"
-        input: { args: "delivery_run={{ inputs.delivery_run }} lane=lightweight scope=outgoing-diff {{ inputs.change }} Review the bounded request across six dimensions, explain non-applicable surfaces, and reuse only a complete current pass. No full Feature spec or broad audit." }
-      - id: review-fix
-        command: speckit.delivery.review-fix
-        integration: "{{ inputs.integration }}"
-        input: { args: "delivery_run={{ inputs.delivery_run }} lane=lightweight scope=outgoing-diff repair_slots=3 {{ inputs.change }} One mechanical repair pass only; pass is no-op. Preserve attempts; stop at cap, missing evidence, or behavior/architecture expansion." }
+  - id: standards-record
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+      --run {{ inputs.delivery_run }} --stage standards
 
-  - id: review-final
+  - id: review-initial-begin
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+      --run {{ inputs.delivery_run }} --stage review
+
+  - id: review-initial
     command: speckit.review.run
     integration: "{{ inputs.integration }}"
-    input: { args: "delivery_run={{ inputs.delivery_run }} lane=lightweight scope=outgoing-diff {{ inputs.change }} Re-review the final repaired contents or reuse a complete current pass; no extra repairs. Present six verdicts and coverage proportionally." }
+    input:
+      args: >-
+        delivery_run={{ inputs.delivery_run }} lane=lightweight scope=outgoing-diff
+        runtime_stage=review runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-review.json
+        {{ inputs.change }} Review the bounded request across six dimensions, explain non-applicable surfaces, read the pending runtime input, and write the native report, machine native receipt, and normalized envelope defined by runtime.md.
+
+  - id: review-initial-record
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+      --run {{ inputs.delivery_run }} --stage review
+
+  - id: review-needs-repair
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} needs
+      --run {{ inputs.delivery_run }} --kind repair
+
+  - id: review-repair-if-needed
+    type: if
+    condition: "{{ steps.review-needs-repair.output.stdout == 'true' }}"
+    then:
+      - id: review-repair-loop
+        type: do-while
+        condition: "{{ steps.review-next.output.stdout == 'true' }}"
+        max_iterations: 3
+        steps:
+          - id: review-reserve
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} reserve
+              --run {{ inputs.delivery_run }} --kind review --scope outgoing-diff --plain
+          - id: review-fix
+            command: speckit.delivery.review-fix
+            integration: "{{ inputs.integration }}"
+            input: { args: "delivery_run={{ inputs.delivery_run }} lane=lightweight scope=outgoing-diff repair_slots=3 attempt={{ steps.review-reserve.output.stdout }} {{ inputs.change }} One mechanical repair pass only; preserve the bounded request and reserved attempt." }
+          - id: repair-quality-begin
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+              --run {{ inputs.delivery_run }} --stage quality
+          - id: repair-quality
+            command: speckit.quality.check
+            integration: "{{ inputs.integration }}"
+            input: { args: "lane=lightweight delivery_run={{ inputs.delivery_run }} scope=outgoing-diff runtime_stage=quality runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-quality.json {{ inputs.change }} Refresh Quality after the repair." }
+          - id: repair-quality-record
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+              --run {{ inputs.delivery_run }} --stage quality
+          - id: repair-standards-begin
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+              --run {{ inputs.delivery_run }} --stage standards
+          - id: repair-standards
+            command: speckit.review.standards
+            integration: "{{ inputs.integration }}"
+            input: { args: "lane=lightweight delivery_run={{ inputs.delivery_run }} scope=outgoing-diff runtime_stage=standards runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-standards.json {{ inputs.change }} Refresh Standards after the repair." }
+          - id: repair-standards-record
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+              --run {{ inputs.delivery_run }} --stage standards
+          - id: review-recheck-begin
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+              --run {{ inputs.delivery_run }} --stage review
+          - id: review-recheck
+            command: speckit.review.run
+            integration: "{{ inputs.integration }}"
+            input: { args: "delivery_run={{ inputs.delivery_run }} lane=lightweight scope=outgoing-diff runtime_stage=review runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-review.json {{ inputs.change }} Re-review independently after the repair and account for every prior finding ID." }
+          - id: review-recheck-record
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+              --run {{ inputs.delivery_run }} --stage review
+          - id: review-complete
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} complete
+              --run {{ inputs.delivery_run }} --kind review --scope outgoing-diff
+              --attempt {{ steps.review-reserve.output.stdout }}
+          - id: review-next
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} needs
+              --run {{ inputs.delivery_run }} --kind repair
+
+  - id: review-final
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} require
+      --run {{ inputs.delivery_run }} --kind review
 
   - id: review-gate
     type: gate
-    message: "Confirm complete current snapshot-bound REVIEW_VERDICT: pass, required coverage and finding closure, with actual independent review or explicitly accepted degradation. Blocked/incomplete cannot be approved as pass. This closure check does not require Feature planning artifacts."
+    message: "Confirm complete current snapshot-bound REVIEW_VERDICT: pass, required coverage and finding closure, with actual independent review or explicitly accepted degradation. Blocked/incomplete or exhausted repair budgets stop delivery; approval cannot waive an unresolved blocker."
     options: [approve, reject]
     on_reject: abort
+
+  - id: review-close-final
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} require
+      --run {{ inputs.delivery_run }} --kind review
 
   - id: evidence
     command: speckit.evidence.collect
     integration: "{{ inputs.integration }}"
-    input: { args: "lane=lightweight delivery_run={{ inputs.delivery_run }} evidence=.specify/delivery/{{ inputs.delivery_run }}/evidence.md {{ inputs.change }} Read and update only this run's canonical evidence record; bind actual reviewed content, the bounded request, and PR identity. No Feature artifacts or exploration are required." }
+    input: { args: "lane=lightweight delivery_run={{ inputs.delivery_run }} evidence=.specify/delivery/{{ inputs.delivery_run }}/evidence.md {{ inputs.change }} Read and update only this run's canonical evidence record; bind actual reviewed content, bounded request, and PR identity. No Feature artifacts or exploration are required." }
+
+  - id: runtime-require-evidence
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} require
+      --run {{ inputs.delivery_run }} --kind evidence
 
   - id: handoff
     command: speckit.delivery.handoff
     integration: "{{ inputs.integration }}"
-    input: { args: "delivery_run={{ inputs.delivery_run }} lane=lightweight {{ inputs.change }}" }
+    input: { args: "delivery_run={{ inputs.delivery_run }} lane=lightweight {{ inputs.change }} Render a truthful handoff and stop before publication; do not push, create, or merge a PR." }
+
+  - id: runtime-phase-handoff
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} phase
+      --run {{ inputs.delivery_run }} --name handoff

@@ -17,7 +17,7 @@ Spec Kit turns a request into `Spec → Plan → Tasks`. Spec Kit Delivery carri
 It builds on Spec Kit's Extension, Workflow, and Bundle mechanisms. It **does not replace Spec Kit and does not bind the project to a model or host**.
 
 > [!IMPORTANT]
-> The current release line is `0.3.x`. The workflows, gates, and command contracts are usable. The portable Ralph path is sequential, with one verified commit per task. Provider-level parallelism and fully machine-driven semantic branching remain on the roadmap.
+> The current release line is `0.4.x`. The workflows, gates, and command contracts are usable. The portable Ralph path is sequential, with one verified commit per task. Provider-level parallelism and fully machine-driven semantic branching remain on the roadmap.
 
 ## Contents
 
@@ -44,7 +44,7 @@ It builds on Spec Kit's Extension, Workflow, and Bundle mechanisms. It **does no
 
 | What you need | What the delivery layer provides | Entry point |
 | --- | --- | --- |
-| Decide which process a request needs | Three-lane routing and a Doctor preflight | `speckit.delivery.route`, `$sd` |
+| Decide which process a request needs | Three-lane routing and a Doctor preflight | `speckit.delivery.route`, `/sd` |
 | See the current code, impact, and prior art first | Explore, current/candidate trees, external reference research | `speckit.delivery.explore` |
 | Make architectural decisions traceable | ADR discovery, proposal, finalization, consistency check | `speckit.decision.context`, `.propose`, `.finalize`, `.check` |
 | Split a large change into reviewable PRs | Slice boundaries, trunk-safety classification, merge policy | `speckit.delivery.slice` |
@@ -61,14 +61,17 @@ It builds on Spec Kit's Extension, Workflow, and Bundle mechanisms. It **does no
 route → doctor → decision discovery → explore code/history/references
       → current + candidate trees → scope approval
       → specify → clarify → ADR resolution → plan (architecture constraints + verification) → design approval
-      → tasks → slice → slice approval → analyze
-      → quality brief → Ralph → quality → standards → review
-      → converge → simplify → docs / package README
-      → final review → evidence → handoff
+      → tasks → slice → analyze → combined execution/slice gate → approval writer → runtime checkpoint → Ralph
+      → quality → standards → Converge
+      → (only when tasks are appended) Slice → Analyze → renewed slice approval → checkpoint → Ralph → checks → reassessment
+      → simplify (only accepted candidates are applied/verified) → docs / package README
+      → current Quality/Standards → guarded Review/Repair → ADR/freshness checks → evidence → handoff
       → (after authorization) PR merges or closes → close
 ```
 
-Three gates separate "think it through" from "write code": **scope approval** before the Spec, **design approval** after the Plan, and **slice approval** after tasks. `tasks.md` is always the only execution queue; `slices.md` supplies review and merge boundaries only.
+Three gates separate "think it through" from "write code": **scope approval** before the Spec, **design approval** after the Plan, and the **combined execution/slice approval** after Analyze. `tasks.md` is always the only execution queue; `slices.md` supplies review and merge boundaries only.
+
+Use `/sd action=status delivery_run=<id>` to inspect phase, pending owners, stale results, and remaining attempts; `action=resume` recovers only the same run's pending ticket. Delivery installs a standard-library runtime helper that keeps local coordinator state under `.specify/delivery/<run>/runtime/` and validates native report/machine-receipt references, input fingerprints, and six-dimensional Review completeness. A current Review pass skips unnecessary Repair dispatch; unresolved work at a repair/convergence cap fails the final machine guard. Quality, Standards, Reviewer, Core, and Ralph remain the semantic owners.
 
 The Feature Plan records architecture constraint sources, affected paths, design responses, verification owners, and evidence gaps, carrying IDs into Tasks, Brief, and Review. Optional open-source skill methods inform alternatives, interfaces, and failure modes under project governance; see the pinned [method review](REFERENCE-REVIEW.md#architecture-skill-methods).
 
@@ -82,7 +85,7 @@ Three lanes keep the process proportional:
 | Bugfix | A reported defect expected to have bounded scope | Explore → assessment/red evidence → repair-scope approval → fix → verify |
 | Lightweight | Mechanical, documentation, or behavior-preserving small changes | Scope → change → targeted evidence |
 
-`$sd` and `/sd` are host conveniences. The cross-host contract is the `speckit.delivery.route` extension command.
+Starting with `0.4.0`, Delivery ships the `sd` alias: use `/sd` in OpenCode or `$speckit-sd` in Codex Skills mode immediately after installation. The installer renders both names from the same `speckit.delivery.route` source and manages their lifecycle together. See [host entry points](skills/README.md).
 
 ## Quick start
 
@@ -97,7 +100,7 @@ specify self check
 ```
 
 - The Bundle install path requires Spec Kit CLI `>=1.2.3`.
-- Individual extensions and workflows require `>=0.16.4`.
+- Individual extensions require `>=0.16.4`; the guarded `0.4.x` workflows require `>=1.2.3`.
 - Git and the target project's own build, test, and quality tools are also required.
 
 ### 2. Initialize the target project
@@ -120,21 +123,40 @@ Initialization creates `.specify/` and the host command surface; it does not rep
 
 ```bash
 specify extension catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.3.2/catalogs/extensions.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.0/catalogs/extensions.json \
   --name speckit-delivery --install-allowed
 
 specify workflow catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.3.2/catalogs/workflows.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.0/catalogs/workflows.json \
   --name speckit-delivery
 
 specify bundle catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.3.2/catalogs/bundles.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.0/catalogs/bundles.json \
   --id speckit-delivery --policy install-allowed
 
 specify bundle install speckit-delivery
 ```
 
 The Bundle installs Delivery, Decision, Ralph, Review, Simplify, Evidence, Quality, Docs Sync, and Diagram, plus Spec Kit's official Bug extension and the Feature, Bugfix, and Lightweight workflows. Do not mix component versions from different tags.
+
+#### Upgrade an existing Bundle
+
+Back up project configuration and core template customizations first, then run `specify workflow catalog list` to find the old source index.
+This example assumes all three existing catalogs are named `speckit-delivery` and the Workflow source has index `0`; substitute its actual index and retain unrelated sources.
+
+```powershell
+$base = 'https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.0/catalogs'
+specify extension catalog remove speckit-delivery
+specify extension catalog add "$base/extensions.json" --name speckit-delivery --install-allowed
+specify workflow catalog remove 0
+specify workflow catalog add "$base/workflows.json" --name speckit-delivery
+specify bundle catalog remove speckit-delivery
+specify bundle catalog add "$base/bundles.json" --id speckit-delivery --policy install-allowed
+specify bundle update speckit-delivery
+specify bundle list --json
+```
+
+After upgrading, verify the Bundle version, project configuration, core customizations, and OpenCode's `/sd` command entry.
 
 ### 4. Initialize project governance
 
@@ -149,9 +171,13 @@ Review both before starting a Feature. Each source family needs its own quality 
 
 ### 5. Start the first delivery
 
+In OpenCode, invoke the installed shortcut directly:
+
 ```text
-$sd Add an audit trail for privileged configuration changes.
+/sd Add an audit trail for privileged configuration changes.
 ```
+
+Codex Skills mode uses `$speckit-sd <request>`; Claude Code uses `/speckit-sd <request>`. The full router entry remains available; no facade skills need to be copied.
 
 The router inspects the project and selects Feature, Bugfix, or Lightweight; it does not assume every request needs the full workflow. You can also run a workflow directly:
 
@@ -160,6 +186,12 @@ specify workflow run feature-delivery \
   --input delivery_run=audit-trail-01 \
   --input spec="Add an audit trail for privileged configuration changes"
 ```
+
+Workflows need an available Python `>=3.11`. Verify `python --version` first.
+A Windows project using the Python Launcher can pass
+`--input runtime_python="py -3"`; Linux/macOS projects can select `python3`.
+Use a verified local interpreter invocation. Fix shell startup errors before
+execution; the runtime does not alter global shell configuration.
 
 ## Command reference
 
@@ -194,7 +226,7 @@ The project chooses whether `spec.md`, `plan.md`, and `tasks.md` are committed. 
 - **PR**: final change summary, risk, and verification evidence.
 - **Delivery evidence**: `.specify/delivery/<run>/evidence.md` and its recorded `delivered` / `abandoned` / `superseded` outcome.
 
-`exploration.md`, `slices.md`, `receipts/`, `task-verdicts.yml`, review workspaces, and the rendered PR body are run workspace and follow `artifact_policy`; under `ephemeral` they stay local. Evidence binds to actual contents and the requirements snapshot. Stale evidence is rerun, never relabeled with the current hash.
+`exploration.md`, `slices.md`, `receipts/`, `task-verdicts.yml`, review workspaces, and the rendered PR body are run workspace and follow `artifact_policy`; under `ephemeral` they stay local. `.specify/delivery/<run>/runtime/` and Spec Kit's `.specify/workflows/runs/` are local coordinator state, added to `.git/info/exclude` without untracking existing files. Evidence binds to actual contents and the requirements snapshot. Stale evidence is rerun, never relabeled with the current hash.
 
 See [Artifact lifecycle](LIFECYCLE.md) and [Architecture](ARCHITECTURE.md).
 
@@ -203,17 +235,18 @@ See [Artifact lifecycle](LIFECYCLE.md) and [Architecture](ARCHITECTURE.md).
 | Item | Requirement |
 | --- | --- |
 | Bundle install | Spec Kit CLI `>=1.2.3` |
-| Individual extension or workflow | Spec Kit CLI `>=0.16.4` |
+| Individual extension | Spec Kit CLI `>=0.16.4` |
+| Guarded `0.4.x` workflow | Spec Kit CLI `>=1.2.3` |
 | Hosts | Codex, Claude Code, OpenCode, generic adapters |
-| Runtime | Git; the target project's build and test tools |
+| Runtime | Python `>=3.11`, Git, and the target project's build and test tools |
 
 Extension commands are the stable cross-host surface. Host entry points:
 
 | Host | Invocation |
 | --- | --- |
-| Claude Code | `/speckit-delivery-route <request>` |
-| Codex | `$speckit-delivery-route <request>`, or the optional `$sd <request>` facade |
-| OpenCode | `/speckit.delivery.route <request>` |
+| Claude Code | `/speckit-sd <request>`, full entry `/speckit-delivery-route <request>` |
+| Codex | `$speckit-sd <request>`, full entry `$speckit-delivery-route <request>`; exact `$sd` is an optional facade |
+| OpenCode | `/sd <request>`, full entry `/speckit.delivery.route <request>` |
 | Generic adapter | Run the rendered `speckit.delivery.route` command file |
 
 Do not use `Get-Command speckit*` or `which speckit*` to decide whether an extension is installed. In Codex Skills mode, check for the `speckit-delivery-route` skill under the active skills root; other hosts should check the rendered command file.
@@ -288,7 +321,8 @@ Releasing is two steps: run **Prepare release PR** to stamp versions and catalog
 - `0.1.x`: command contracts, guided workflows, catalogs, quality profiles, release structure.
 - `0.2.x`: delivery slicing and merge policy, handoff body path, Chinese fallback template.
 - `0.3.x`: delivery outcome and retirement, package README node, and README drift judgment in all three lanes.
-- Next: provider-level parallel Ralph, machine-readable workflow state, cross-host semantic gates.
+- `0.4.x`: persistent runtime checkpoints, conditional dispatch and recovery, the Core/Ralph compatibility contract, and guarded Review/Converge workflows.
+- Next: provider-level parallel Ralph and cross-host semantic gates.
 - `1.0.0`: clean-project installation evidence across supported integrations.
 
 ## Contributing and license

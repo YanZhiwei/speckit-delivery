@@ -51,6 +51,9 @@ def check_delivery_install(
             "templates/method-diagnose.md",
             "templates/method-review.md",
             "templates/pull-request.md",
+            "templates/runtime.md",
+            "templates/core-adapter.md",
+            "scripts/delivery_runtime.py",
         ),
         "review": ("commands/speckit.review.run.md", "commands/speckit.review.standards.md", "templates/reviewer.md"),
         "quality": (
@@ -142,6 +145,40 @@ def check_delivery_install(
         if not any(path.read_text(encoding="utf-8") == expected for path in candidates):
             raise RuntimeError(f"installed workflow missing/stale: {workflow_id}")
     print("Explore/Review/Ralph resources, rendering, and all workflows verified.", flush=True)
+
+
+def check_router_alias(project: Path, integration: str) -> tuple[Path, Path]:
+    """Require the installed alias to share the router body and installer owner."""
+    if integration == "codex":
+        root = project / ".agents/skills"
+        router = root / "speckit-delivery-route/SKILL.md"
+        alias = root / "speckit-sd/SKILL.md"
+    else:
+        root = project / ".opencode/commands"
+        router = root / "speckit.delivery.route.md"
+        alias = root / "sd.md"
+    if not router.is_file() or not alias.is_file():
+        raise RuntimeError(f"{integration} delivery router or sd alias was not installed")
+    router_text = router.read_text(encoding="utf-8")
+    alias_text = alias.read_text(encoding="utf-8")
+    heading = "# Spec Kit Delivery Route\n"
+    if heading not in router_text or heading not in alias_text:
+        raise RuntimeError(f"{integration} sd alias does not contain the installed router")
+    if router_text.split(heading, 1)[1].strip() != alias_text.split(heading, 1)[1].strip():
+        raise RuntimeError(f"{integration} sd alias differs from the installed router")
+    if "$ARGUMENTS" not in alias_text:
+        raise RuntimeError(f"{integration} sd alias lost its request argument")
+    if integration == "codex":
+        if not re.search(r"^name: speckit-sd$", alias_text, re.MULTILINE):
+            raise RuntimeError("Codex alias skill has the wrong name")
+    elif router_text != alias_text:
+        raise RuntimeError("OpenCode sd alias must match the router command exactly")
+    registry = json.loads((project / ".specify/extensions/.registry").read_text(encoding="utf-8"))
+    registered = registry["extensions"]["delivery"]["registered_commands"].get(integration, [])
+    if not {"speckit.delivery.route", "sd"}.issubset(registered):
+        raise RuntimeError(f"{integration} registry does not assign both router names to Delivery")
+    print(f"{integration} sd alias, request input, and Delivery ownership verified.", flush=True)
+    return router, alias
 
 
 def run(command: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
@@ -293,7 +330,27 @@ def main() -> int:
         if "speckit-delivery" not in text or version not in text:
             raise RuntimeError("Bundle installation record is missing the expected id/version")
         check_delivery_install(project, dist, version, args.integration)
-        print("Bundle install from local catalogs passed.", flush=True)
+        router, alias = check_router_alias(project, args.integration)
+        config_path = project / ".specify/extensions/delivery/delivery-config.yml"
+        custom_config = config_path.read_text(encoding="utf-8").replace(
+            "max_review_fix_rounds: 3", "max_review_fix_rounds: 2"
+        )
+        config_path.write_text(
+            custom_config + "\n# Project-owned setting: preserve this customization.\n",
+            encoding="utf-8",
+        )
+        original_config = config_path.read_bytes()
+        alias.unlink()
+        run([args.specify, "extension", "add", "delivery", "--force"], project)
+        check_router_alias(project, args.integration)
+        if config_path.read_bytes() != original_config:
+            raise RuntimeError("Reinstalling Delivery overwrote the project configuration")
+        run([args.specify, "extension", "remove", "delivery", "--keep-config", "--force"], project)
+        if router.exists() or alias.exists():
+            raise RuntimeError(f"{args.integration} removal left a router or sd alias behind")
+        if config_path.read_bytes() != original_config:
+            raise RuntimeError("Removing Delivery with --keep-config lost the project configuration")
+        print("Bundle install, sd alias refresh/removal, and config preservation passed.", flush=True)
         return 0
     except (OSError, RuntimeError, ValueError, KeyError, zipfile.BadZipFile) as exc:
         print(f"Bundle installation test failed: {exc}")

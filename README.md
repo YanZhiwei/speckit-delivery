@@ -17,7 +17,7 @@ Spec Kit 负责把需求变成 `Spec → Plan → Tasks`。Spec Kit Delivery 负
 它建立在 Spec Kit 的 Extension、Workflow 和 Bundle 机制上，**不替换 Spec Kit，也不绑定模型或宿主**。
 
 > [!IMPORTANT]
-> 当前发布线是 `0.3.x`。Workflow、Gate 和命令契约可直接使用；可移植的 Ralph 路径按 Task 串行，每个 Task 一个已验证提交。Provider 级并行和完全机器化的语义分支仍在路线图中。
+> 当前发布线是 `0.4.x`。Workflow、Gate 和命令契约可直接使用；可移植的 Ralph 路径按 Task 串行，每个 Task 一个已验证提交。Provider 级并行和完全机器化的语义分支仍在路线图中。
 
 ## 目录
 
@@ -44,7 +44,7 @@ Spec Kit 负责把需求变成 `Spec → Plan → Tasks`。Spec Kit Delivery 负
 
 | 你需要 | 交付层提供 | 入口 |
 | --- | --- | --- |
-| 判断需求该走哪条流程 | 三 Lane 路由与 Doctor 预检 | `speckit.delivery.route`、`$sd` |
+| 判断需求该走哪条流程 | 三 Lane 路由与 Doctor 预检 | `speckit.delivery.route`、`/sd` |
 | 先看清现状、影响面和参考实现 | Explore、现状/候选目录树、外部参考调研 | `speckit.delivery.explore` |
 | 让架构决策可追溯 | ADR 发现、提案、定稿与一致性检查 | `speckit.decision.context`、`.propose`、`.finalize`、`.check` |
 | 把大改动拆成可评审 PR | Slice 边界、trunk-safe 分类、合并策略 | `speckit.delivery.slice` |
@@ -61,14 +61,17 @@ Spec Kit 负责把需求变成 `Spec → Plan → Tasks`。Spec Kit Delivery 负
 route → doctor → 决策发现 → explore 代码/历史/参考
       → 现状 + 候选目录树 → 范围确认
       → specify → clarify → ADR 解析 → plan（架构约束 + 验证映射）→ 设计确认
-      → tasks → slice → 切片确认 → analyze
-      → quality brief → Ralph → quality → standards → review
-      → converge → simplify → docs / package README
-      → 最终 Review → evidence → handoff
+      → tasks → slice → analyze → 执行／切片确认 → approval writer → runtime checkpoint → Ralph
+      → quality → standards → Converge
+      → (有追加任务时) Slice → Analyze → 新切片确认 → checkpoint → Ralph → checks → Converge 再评估
+      → simplify（只处理已接受的候选）→ docs / package README
+      → 当前 Quality／Standards → guarded Review／Repair → ADR 定稿／新鲜度检查 → evidence → handoff
       → （授权后）PR 合并/关闭 → close
 ```
 
-三道 Gate 把“想清楚”和“写代码”分开：**范围确认**发生在 Spec 之前，**设计确认**发生在 Plan 之后，**切片确认**发生在 Task 生成之后。`tasks.md` 始终是唯一执行队列，`slices.md` 只提供评审与合并边界。
+三道 Gate 把“想清楚”和“写代码”分开：**范围确认**发生在 Spec 之前，**设计确认**发生在 Plan 之后，**执行／切片确认**发生在 Analyze 之后。`tasks.md` 始终是唯一执行队列，`slices.md` 只提供评审与合并边界。
+
+`/sd action=status delivery_run=<id>` 可查看当前阶段、待恢复 owner、过期结果和剩余轮次；`action=resume` 只恢复同一 Run 的 pending ticket。随 Delivery 安装的标准库运行时会在 `.specify/delivery/<run>/runtime/` 保存本地协调状态，校验原生报告／机器回执、输入指纹和六维 Review 完整性。当前 Review 已通过时不会无谓调用 Repair；达到修复／收敛上限而仍有阻塞时，最终机器守门会失败。语义判断仍由 Quality、Standards、Reviewer、Core 和 Ralph 负责。
 
 Feature 的 Plan 会列出架构约束来源、适用路径、设计响应、验证负责人和证据缺口，并把约束 ID 传给 Tasks、Brief 和 Review。可选开源 Skill 提供方案比较、接口与失败模式等方法，按项目治理采纳；方法取舍和固定版本见 [参考评审](REFERENCE-REVIEW.zh-CN.md#架构-skill-方法参考)。
 
@@ -82,7 +85,7 @@ Feature 的 Plan 会列出架构约束来源、适用路径、设计响应、验
 | Bugfix | 预计有界的缺陷 | 取证 → 评估/红色证据 → 修复范围确认 → 修复 → 验证 |
 | Lightweight | 机械、文档、行为不变的小改动 | 范围 → 修改 → 定向证据 |
 
-`$sd` 或 `/sd` 只是宿主上的便捷入口；真正的跨宿主契约是 `speckit.delivery.route` 扩展命令。
+从 `0.4.0` 起，Delivery 随包注册 `sd` 别名：OpenCode 安装后直接使用 `/sd`，Codex Skills 模式使用 `$speckit-sd`。两者与完整入口共用 `speckit.delivery.route` 的源文件，由安装器统一管理。各宿主名称见[入口说明](skills/README.md)。
 
 ## 快速开始
 
@@ -97,7 +100,7 @@ specify self check
 ```
 
 - Bundle 安装路径要求 Spec Kit CLI `>=1.2.3`。
-- 单独安装 Extension 或 Workflow 要求 `>=0.16.4`。
+- 单独安装 Extension 要求 `>=0.16.4`；`0.4.x` Workflow 的运行时控制流要求 `>=1.2.3`。
 - 还需要 Git，以及目标项目自己的构建、测试和质量工具。
 
 ### 2. 初始化目标项目
@@ -120,21 +123,40 @@ specify init . --integration codex --integration-options="--skills" --script ps
 
 ```bash
 specify extension catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.3.2/catalogs/extensions.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.0/catalogs/extensions.json \
   --name speckit-delivery --install-allowed
 
 specify workflow catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.3.2/catalogs/workflows.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.0/catalogs/workflows.json \
   --name speckit-delivery
 
 specify bundle catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.3.2/catalogs/bundles.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.0/catalogs/bundles.json \
   --id speckit-delivery --policy install-allowed
 
 specify bundle install speckit-delivery
 ```
 
 Bundle 会安装 Delivery、Decision、Ralph、Review、Simplify、Evidence、Quality、Docs Sync、Diagram 扩展，以及 Spec Kit 官方的 Bug 扩展和 Feature、Bugfix、Lightweight 三条 Workflow。不要混用不同 Tag 的组件。
+
+#### 已有 Bundle 升级
+
+已有安装先备份项目配置与核心模板定制，运行 `specify workflow catalog list` 查看旧来源的索引。
+下面示例假定三类旧 Catalog 均名为 `speckit-delivery`，其中 Workflow 来源索引为 `0`；按实际列表替换索引，保留其他来源。
+
+```powershell
+$base = 'https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.0/catalogs'
+specify extension catalog remove speckit-delivery
+specify extension catalog add "$base/extensions.json" --name speckit-delivery --install-allowed
+specify workflow catalog remove 0
+specify workflow catalog add "$base/workflows.json" --name speckit-delivery
+specify bundle catalog remove speckit-delivery
+specify bundle catalog add "$base/bundles.json" --id speckit-delivery --policy install-allowed
+specify bundle update speckit-delivery
+specify bundle list --json
+```
+
+升级后核对 Bundle 版本、项目配置和核心定制，并在 OpenCode 命令列表中确认 `/sd`。
 
 ### 4. 初始化项目治理
 
@@ -149,9 +171,13 @@ Bundle 会安装 Delivery、Decision、Ralph、Review、Simplify、Evidence、Qu
 
 ### 5. 开始第一次交付
 
+OpenCode 安装后直接调用快捷入口：
+
 ```text
-$sd 为特权配置变更增加审计轨迹。
+/sd 为特权配置变更增加审计轨迹。
 ```
+
+Codex Skills 模式使用 `$speckit-sd <需求>`；Claude Code 使用 `/speckit-sd <需求>`。完整路由入口也继续可用，无需另外复制门面技能。
 
 路由器会检查项目并选择 Feature、Bugfix 或 Lightweight，不会默认所有需求都走完整流程。也可以直接运行 Workflow：
 
@@ -160,6 +186,11 @@ specify workflow run feature-delivery \
   --input delivery_run=audit-trail-01 \
   --input spec="为特权配置变更增加审计轨迹"
 ```
+
+Workflow 需要可用的 Python `>=3.11`。先验证 `python --version`；若 Windows 使用
+Python Launcher，可传入 `--input runtime_python="py -3"`，Linux/macOS 也可选择
+`python3`。`runtime_python` 必须是项目已验证的本地解释器调用。系统 shell 的启动错误
+需先修复；运行时不会修改全局 shell 配置。
 
 ## 常用命令
 
@@ -194,7 +225,7 @@ specify workflow run feature-delivery \
 - **PR**：最终变化、风险与验证证据。
 - **交付证据**：`.specify/delivery/<run>/evidence.md` 及其记录的 `delivered` / `abandoned` / `superseded` 结果。
 
-`exploration.md`、`slices.md`、`receipts/`、`task-verdicts.yml`、Review 工作区和渲染后的 PR 正文属于运行工作区，遵循 `artifact_policy`；`ephemeral` 时只保留在本地。证据绑定实际内容与需求快照，过期即重跑，不能给旧结果补当前哈希。
+`exploration.md`、`slices.md`、`receipts/`、`task-verdicts.yml`、Review 工作区和渲染后的 PR 正文属于运行工作区，遵循 `artifact_policy`；`ephemeral` 时只保留在本地。`.specify/delivery/<run>/runtime/` 与 Spec Kit 的 `.specify/workflows/runs/` 是本地编排状态，会加入 `.git/info/exclude`，不改变已有跟踪文件。证据绑定实际内容与需求快照，过期即重跑，不能给旧结果补当前哈希。
 
 见 [产物生命周期](LIFECYCLE.zh-CN.md) 和 [架构说明](ARCHITECTURE.zh-CN.md)。
 
@@ -203,17 +234,18 @@ specify workflow run feature-delivery \
 | 项目 | 要求 |
 | --- | --- |
 | Bundle 安装 | Spec Kit CLI `>=1.2.3` |
-| 单独 Extension / Workflow | Spec Kit CLI `>=0.16.4` |
+| 单独 Extension | Spec Kit CLI `>=0.16.4` |
+| `0.4.x` Workflow | Spec Kit CLI `>=1.2.3` |
 | 宿主 | Codex、Claude Code、OpenCode、通用适配器 |
-| 运行时 | Git；目标项目的构建与测试工具 |
+| 运行时 | Python `>=3.11`、Git；目标项目的构建与测试工具 |
 
 Extension 命令是跨宿主的稳定接口。各宿主入口：
 
 | 宿主 | 调用方式 |
 | --- | --- |
-| Claude Code | `/speckit-delivery-route <request>` |
-| Codex | `$speckit-delivery-route <request>`，或可选的 `$sd <request>` |
-| OpenCode | `/speckit.delivery.route <request>` |
+| Claude Code | `/speckit-sd <request>`，完整入口 `/speckit-delivery-route <request>` |
+| Codex | `$speckit-sd <request>`，完整入口 `$speckit-delivery-route <request>`；精确 `$sd` 为可选门面 |
+| OpenCode | `/sd <request>`，完整入口 `/speckit.delivery.route <request>` |
 | 通用适配器 | 执行渲染出的 `speckit.delivery.route` 命令文件 |
 
 不要用 `Get-Command speckit*` 或 `which speckit*` 判断扩展是否安装。Codex Skills 模式应检查实际 skills root 下的 `speckit-delivery-route` 技能；其他宿主检查渲染后的命令文件。
@@ -288,7 +320,8 @@ uv run --with pyyaml python scripts/test_bundle_install.py --integration opencod
 - `0.1.x`：命令契约、引导式 Workflow、Catalog、质量 Profile 和发布结构。
 - `0.2.x`：交付切片与合并策略、Handoff 正文路径、中文兜底模板。
 - `0.3.x`：交付结果收口与退役、包 README 节点，以及三条 Lane 的文档漂移判断。
-- 后续：Provider 级并行 Ralph、机器可读的 Workflow 状态、跨宿主语义 Gate。
+- `0.4.x`：持久运行时检查点、条件调度与恢复、Core/Ralph 兼容契约，以及 guarded Review／Converge workflow。
+- 后续：Provider 级并行 Ralph、跨宿主语义 Gate。
 - `1.0.0`：完成多 Integration 的干净项目安装验证。
 
 ## 贡献与许可

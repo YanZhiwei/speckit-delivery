@@ -16,6 +16,7 @@ Spec Kit Delivery 是 Spec Kit 之上的分发层，不是 Spec Kit 的 Fork，�
 | Delivery Method Adapter | 可选设计／诊断／评审方法的受验选择与来源记录 | Core Plan／Assess／Review 所有权、任务关闭、批准或另一套执行链 |
 | Delivery Slice | Slice 边界、Task 映射、trunk-safe 分类、合并策略与 Slice／Rollup 交接 | 需求、Task 生成、代码修改、Review 判定、分支或 PR 创建 |
 | Delivery Close | 记录 PR 真实结果并退役运行工作区 | 修改代码、变更远端 PR 或其他 Run 的记录 |
+| Delivery Runtime | Run 身份、检查点／结果传输、新鲜度、批准回执和有界调度状态 | Quality／Standards／Review 语义判定、产品修改、提交或远端变更 |
 | Package README | 面向使用者的安装／API／限制，以及面向维护者的开发／发布契约；内容取自真实包内容 | 代码行为、生成文档或发布动作 |
 | Ralph | 依赖就绪任务执行、Git Task 提交、Slice 边界验证和完成确认 | 规划或自行关闭任务 |
 | Diagram | 每次变更一张有证据的视图，默认 Mermaid | 测试证据、评审判断或安装器行为 |
@@ -28,8 +29,9 @@ Spec Kit Workflow 排列阶段、Gate 和有限循环
 Machine State     承载文本无法可靠表达的 Verdict
 ```
 
-`0.1.x` 与 `0.2.x` 通过显式 Gate 和有限循环工作；`0.2.x` 增加交付切片与合并策略，
-后续版本再引入机器可读的阶段和 Verdict 状态文件。
+`0.1.x` 与 `0.2.x` 通过显式 Gate 和有限循环工作；`0.2.x` 增加交付切片与合并策略。
+`0.4.x` 的运行时契约现在承载机器可读的身份、阶段、结果、新鲜度、批准和有界轮次
+转换，同时继续由原生 owner 负责语义 Verdict。
 
 ## 决策与关闭生命周期
 
@@ -70,6 +72,13 @@ Review。
 进程传递。只有同会话 Router 可暂存上下文；临时直接运行仍需本地忽略文件。消费者记录
 批准，Gate 不编辑文件，Feature／Bug 标识确定后不搬移 Run 包。这不等于自动语义判断。
 
+可移植运行时助手安装在
+`.specify/extensions/delivery/scripts/delivery_runtime.py`。它只把编排 bookkeeping
+放入 `.specify/delivery/<delivery_run>/runtime/`，把规范规划／证据工件留在 Run 根目录，
+并跨宿主进程保存 owner 输入和结果。只有当前且完整的结果才能跳过调度；缺失、过期、
+格式错误或被篡改的证据会阻断而不会变成 pass。Quality、Standards、Reviewer、Core、
+Ralph、Evidence 和 Close 仍分别拥有语义判定以及产品／Git／远端变更。
+
 Ralph 只把 `tasks.md` 当作执行队列；已批准的 `slices.md` 只提供评审／合并边界，
 不得增删或重排 Task。可移植协议是在干净的 `ralph/<feature>` 分支上每轮执行一个
 依赖就绪任务；启用切片时使用 `ralph/<feature>/<slice>`，stacked Slice 基于上一层，
@@ -104,11 +113,13 @@ Code Review 复用有效检查回执，但独立覆盖需求符合性、代码�
 Verdict 与问题生命周期策略；编排器保存报告，Reviewer 保持只读。未被用户明确接受的
 自审降级属于 incomplete。
 
-三条 Lane 均采用有界 `review.run → delivery.review-fix` 槽位、最终 Review 与可中止 Gate。
-修复命令负责 Lane 路由；Feature 保持 `tasks.md` 唯一队列，Bugfix／Lightweight 不强制
-Feature 文档。可移植 YAML 最多提供三次修复槽位，再取配置上限的较小值；跨恢复／新 HEAD
-不重置，完整当前 pass 后剩余槽位 no-op。这仍是引导式提示契约，不是自动语义状态引擎。
-ADR 等后置变更需要 freshness review，交接再次核对实际代码和需求快照。
+三条 Lane 均采用有界 `review.run → delivery.review-fix` 槽位、最终 runtime require 与可中止
+Gate。修复命令负责 Lane 路由；Feature 保持 `tasks.md` 唯一队列，Bugfix／Lightweight
+不强制 Feature 文档。可移植 YAML 最多提供三次修复槽位，再取配置上限的较小值；跨恢复／
+新 HEAD 不重置，完整当前 pass 后跳过剩余槽位，达到上限仍有阻塞时由最终 Gate 失败。
+[运行时契约](extensions/delivery/templates/runtime.md) 只校验身份、新鲜度、原生报告引用和
+传输完整性，不替代语义判断。ADR 等后置变更需要 freshness review，交接再次核对实际代码
+和需求快照。
 
 Quality 拥有原始执行身份和精确输入／配置的 Hook 复用策略，调用者不能用当前哈希标注旧
 结果。Bugfix 复审续修使用 Delivery 的 Assessment 约束适配器，保留官方原始 fix/test

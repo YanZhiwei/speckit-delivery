@@ -63,6 +63,8 @@ uv run --with pyyaml python scripts/stamp_release.py --version <version> --check
 uv run --with pyyaml python scripts/validate_distribution.py
 uv run --with pyyaml python scripts/test_validate_distribution.py
 uv run --with pyyaml python scripts/test_stamp_release.py
+python scripts/test_delivery_runtime.py
+python scripts/test_workflow_runtime.py
 python scripts/test_bundle_install.py
 python scripts/test_bundle_install.py --integration codex
 cp -R /path/to/speckit-delivery/bundle /tmp/speckit-bundle-check/bundle
@@ -73,22 +75,42 @@ python scripts/check_links.py
 
 `test_bundle_install.py` installs the built Bundle through local, release-shaped
 catalogs in a clean project. It requires Spec Kit `>=1.2.3`, which is also the
-Bundle's minimum; individual extensions and workflows remain installable on
-`>=0.16.4`. Release verification additionally installs from published catalogs
+Bundle's minimum. Individual extension commands remain installable on
+`>=0.16.4`; guarded `0.4.x` workflows require `>=1.2.3`. Release verification additionally installs from published catalogs
 in a second clean project. A release is ready only when catalogs, manifests,
 workflow requirements, packaged roots, README commands, and versions agree.
 
 The local Bundle test also checks that Explore/Review/Plan, method-adapter,
 repair-docs, review-fix, and Ralph slice resources survive packaging/installation,
-the active host renders the commands, and all three installed workflows match source. Its default host is OpenCode; the Codex
-variant verifies Skills-mode rendering. Structural checks do not prove semantic
+the active host renders the commands, and all three installed workflows match source.
+It also checks that the `sd` alias shares the router body/input and registry owner,
+is restored by reinstall, and is removed with Delivery while configuration survives.
+Its default host is OpenCode; the Codex variant verifies Skills-mode rendering.
+Structural checks do not prove semantic
 research quality or user approval; behavioral prompts live in `evals/evals.json`.
 
 `scripts/test_workflow_handoff.py` additionally probes the real Spec Kit
 Command/Gate boundary with fake host consumers and a temporary shared disk
 packet: fresh contexts, actual gate choices, and missing-packet failures.
 Run it in a Python environment containing `specify_cli` and PyYAML (verified
-against Spec Kit 1.2.3). It is not live model execution or end-to-end delivery.
+against Spec Kit 1.2.3). It is not live model execution, semantic evaluation,
+performance validation, or end-to-end delivery.
+
+The packaged Delivery runtime helper requires Python 3.11 or later and Git when
+run from the target project root. It uses only the standard library and Git; its
+coordinator ignore rules cover the exact per-run
+`.specify/delivery/<delivery_run>/runtime/` directory and Spec Kit's operational
+`.specify/workflows/runs/` ledger. Existing tracked files stay tracked. Canonical run-root
+planning artifacts and `evidence.md` keep the project's existing artifact policy.
+
+`scripts/test_delivery_runtime.py` uses temporary Git projects, the real helper
+CLI, and fake native report/receipt files to check identity, freshness, evidence
+hashes, path containment, native receipt binding, replay-safe operation keys,
+planning checkpoints/associations, and persistent attempt accounting. `scripts/test_workflow_runtime.py`
+uses real shell/runtime transport with fake consumers and the deterministic
+Spec Kit `WorkflowEngine` to check conditional dispatch, resume, repair caps,
+and final guards. These are deterministic contract probes, not live model or
+semantic-quality validation.
 
 ## README contract
 

@@ -2,12 +2,12 @@ schema_version: "1.0"
 workflow:
   id: "feature-delivery"
   name: "Spec Kit Feature Delivery"
-  version: "0.3.2"
+  version: "0.4.0"
   author: "Yan Zhiwei"
-  description: "Evidence-first feature delivery with code/history/reference exploration, scope and design approval, slice planning and merge policy, quality, review, and handoff."
+  description: "Evidence-first feature delivery with code/history/reference exploration, scope and design approval, slice planning, guarded execution, convergence, quality, review, and handoff."
 
 requires:
-  speckit_version: ">=0.16.4"
+  speckit_version: ">=1.2.3"
   integrations:
     any: ["codex", "claude", "copilot", "gemini", "opencode", "generic"]
 
@@ -24,12 +24,22 @@ inputs:
     type: string
     default: "auto"
     prompt: "Integration to use; auto selects the project's default"
+  runtime_python:
+    type: string
+    default: "python"
+    prompt: "Verified Python 3.11+ invocation (for example python, python3, or py -3 on Windows)"
   with_docs_sync:
     type: boolean
     default: true
     prompt: "Run configured documentation synchronization?"
 
 steps:
+  - id: runtime-init
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} init
+      --run {{ inputs.delivery_run }} --lane feature
+
   - id: delivery-doctor
     command: speckit.delivery.doctor
     integration: "{{ inputs.integration }}"
@@ -38,12 +48,25 @@ steps:
   - id: decision-discover
     command: speckit.decision.context
     integration: "{{ inputs.integration }}"
-    input: { args: "mode=discover {{ inputs.spec }}" }
+    input: { args: "mode=discover lane=feature delivery_run={{ inputs.delivery_run }} {{ inputs.spec }}" }
 
   - id: explore
     command: speckit.delivery.explore
     integration: "{{ inputs.integration }}"
-    input: { args: "lane=feature delivery_run={{ inputs.delivery_run }} {{ inputs.spec }} Persist .specify/delivery/{{ inputs.delivery_run }}/exploration.md before returning; no context-only workflow handoff." }
+    input: { args: "lane=feature delivery_run={{ inputs.delivery_run }} {{ inputs.spec }} Persist .specify/delivery/{{ inputs.delivery_run }}/exploration.md before returning. Do not invent a Feature directory before Core Specify creates one. No context-only workflow handoff." }
+
+  - id: runtime-phase-exploration
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} phase
+      --run {{ inputs.delivery_run }} --name exploration
+
+  - id: runtime-present-scope
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} present
+      --run {{ inputs.delivery_run }} --name scope
+      --input .specify/delivery/{{ inputs.delivery_run }}/exploration.md
 
   - id: scope-gate
     show_file: ".specify/delivery/{{ inputs.delivery_run }}/exploration.md"
@@ -51,6 +74,13 @@ steps:
     message: "Review the current and candidate directory trees, code/history/GitHub evidence, alternatives, exclusions, risks, and unknowns in the conversation. Approve only when exploration is ready, the Feature lane is appropriate, and any non-critical evidence limitations are explicitly accepted; record scope approval in the packet or preserved context. Reject/stop on critical gaps or a lane change, carrying evidence to the appropriate lane."
     options: [approve, reject]
     on_reject: abort
+
+  - id: runtime-decide-scope
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} decide
+      --run {{ inputs.delivery_run }} --name scope
+      --choice {{ steps.scope-gate.output.choice }}
 
   - id: specify
     command: speckit.specify
@@ -64,34 +94,97 @@ steps:
         Read this exact persisted exploration packet. Record the actual supplied
         scope-gate choice, approved scope/snapshot, and accepted limitations there
         before specifying; missing packet/approval or changed scope/snapshot stops
-        progression. Do not infer approval from ready. Consume its
-        including source/history/reference evidence, boundaries, and unknowns.
-        Keep this canonical run path when the feature location becomes known;
-        record that location in the packet. Honor artifact_policy.
-        Specify behavior and acceptance, not locked file design;
-        stop and renew scope approval for material expansion or a lane change.
+        progression. Consume its source/history/reference evidence, boundaries,
+        and unknowns. Keep this canonical run path when the Feature location
+        becomes known and emit exactly one `FEATURE_DIR: <project-relative-directory>`
+        line in the packet. Honor artifact_policy. Specify behavior and acceptance,
+        not locked file design; stop and renew scope approval for material expansion
+        or a lane change.
+
+  - id: runtime-bind-feature
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} bind
+      --run {{ inputs.delivery_run }}
+      --feature-from-packet .specify/delivery/{{ inputs.delivery_run }}/exploration.md
+
+  - id: clarify-runtime-begin
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+      --run {{ inputs.delivery_run }} --stage clarify
 
   - id: clarify
     command: speckit.clarify
     integration: "{{ inputs.integration }}"
-    input: { args: "lane=feature delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md {{ inputs.spec }} Use the approved exploration and spec; preserve evidence-backed scope and surface material changes for renewed approval." }
+    input:
+      args: >-
+        lane=feature delivery_run={{ inputs.delivery_run }}
+        runtime_stage=clarify
+        runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-clarify.json
+        exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
+        {{ inputs.spec }} Use the approved exploration and spec; preserve
+        evidence-backed scope and surface material changes for renewed approval.
+        Read .specify/extensions/delivery/templates/runtime.md and
+        .specify/extensions/delivery/templates/core-adapter.md in full. Read the
+        pending runtime input and write the native report, machine native receipt, and normalized envelope defined by runtime.md
+        only at the supplied runtime result path.
 
-  - id: clarify-gate
-    type: gate
-    message: "Review clarified requirements before architecture planning."
-    options: [approve, reject]
-    on_reject: abort
+  - id: clarify-runtime-record
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+      --run {{ inputs.delivery_run }} --stage clarify
+
+  - id: clarify-needs
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} needs
+      --run {{ inputs.delivery_run }} --kind clarification
+
+  - id: clarification-approval
+    type: if
+    condition: "{{ steps.clarify-needs.output.stdout == 'true' }}"
+    then:
+      - id: runtime-present-clarification
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} present
+          --run {{ inputs.delivery_run }} --name clarification
+          --input .specify/delivery/{{ inputs.delivery_run }}/exploration.md --binding spec
+      - id: clarify-gate
+        type: gate
+        message: "Review clarified requirements before architecture planning. Approve only the current run's presented clarification inputs; reject material scope changes for renewed exploration approval."
+        options: [approve, reject]
+        on_reject: abort
+      - id: runtime-decide-clarification
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} decide
+          --run {{ inputs.delivery_run }} --name clarification
+          --choice {{ steps.clarify-gate.output.choice }}
+
+  - id: runtime-phase-planning
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} phase
+      --run {{ inputs.delivery_run }} --name planning
 
   - id: decision-resolve
     command: speckit.decision.context
     integration: "{{ inputs.integration }}"
-    input: { args: "mode=resolve delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md {{ inputs.spec }} Read the approved exploration and clarified spec; surface any scope-changing ADR conflict before planning." }
+    input:
+      args: >-
+        mode=resolve lane=feature delivery_run={{ inputs.delivery_run }}
+        clarification_choice={{ steps.clarify-gate.output.choice | default('not-required') }}
+        exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
+        {{ inputs.spec }} Read the approved exploration and clarified runtime
+        result; surface any scope-changing ADR conflict before planning.
 
   - id: code-context
     command: speckit.delivery.context
     integration: "{{ inputs.integration }}"
-    continue_on_error: true
-    input: { args: "lane=feature {{ inputs.spec }}" }
+    input: { args: "lane=feature delivery_run={{ inputs.delivery_run }} {{ inputs.spec }} Reuse the current Explore map and write only this run's code-context.md when a concrete gap remains." }
 
   - id: plan
     command: speckit.plan
@@ -104,17 +197,14 @@ steps:
         Consume this exact approved exploration packet, clarified spec, and
         resolved decision context. Follow the Plan checkpoint format in the
         installed delivery/templates/exploration.md, including Architecture
-        constraints and optional skill methods, before choosing the design.
-        Keep the constraint table and exact design in the actual feature plan.md;
-        record its exact path in the canonical exploration packet. The final
-        presented fingerprint is recorded after Decision Propose establishes
-        the ADR baseline, as the checkpoint requires. Prepare constraint sources, design
-        responses, verification owners/mechanisms and gaps with the finalized
-        change tree, file responsibilities, interfaces and data flow, test paths
-        and commands, compatibility/migration/security risks, and differences
-        from approved scope for that checkpoint.
-        Stop for renewed scope approval on material expansion; scope approval
-        alone is not design approval. Do not implement.
+        constraints and optional skill methods, before choosing the design. Keep
+        the constraint table and exact design in the actual feature plan.md;
+        record its exact path in the canonical exploration packet. Prepare
+        constraint sources, design responses, verification owners/mechanisms and
+        gaps with the finalized change tree, file responsibilities, interfaces and
+        data flow, test paths and commands, compatibility/migration/security risks,
+        and differences from approved scope. Stop for renewed scope approval on
+        material expansion; scope approval alone is not design approval. Do not implement.
 
   - id: decision-propose
     command: speckit.decision.propose
@@ -123,65 +213,176 @@ steps:
       args: >-
         delivery_run={{ inputs.delivery_run }}
         exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
-        {{ inputs.spec }}
-        Read this packet's exact plan and establish the Proposed ADR baseline.
-        Then, as Delivery coordinator, follow the installed Plan checkpoint to
-        record the final presented fingerprint/method/input manifest in this
-        packet and present the design, ADR baseline, and Architecture constraints
-        for the existing plan gate, even when no new ADR is warranted. Never
-        infer approval; changes after this presentation require a new checkpoint.
-        This is the pre-gate snapshot, not ADR acceptance or implementation.
+        {{ inputs.spec }} Read this packet's exact plan and establish the Proposed
+        ADR baseline. Then, as Delivery coordinator, follow the installed Plan
+        checkpoint to record the final presented fingerprint/method/input manifest
+        in this packet and present the design, ADR baseline, and Architecture
+        constraints for the existing plan gate. Never infer approval; changes after
+        this presentation require a new checkpoint.
+
+  - id: design-present
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} present
+      --run {{ inputs.delivery_run }} --name design --binding spec --binding plan
+      --input .specify/delivery/{{ inputs.delivery_run }}/exploration.md
 
   - id: plan-gate
     type: gate
-    message: "Approve the shown finalized directory tree, file responsibilities, interfaces, tests/commands, risks, Proposed ADR baseline, and Architecture constraints table before task generation. Each binding constraint needs a design response, verification owner and credible mechanism; planned checks and semantic-only or unsupported coverage must remain explicit. Decision-critical gaps block approval; accepting a limitation does not waive a binding rule or mandated enforcement. Record design approval against this plan; material scope changes require renewed scope approval, not inference from the earlier candidate tree."
+    message: "Approve the shown finalized directory tree, file responsibilities, interfaces, tests/commands, risks, Proposed ADR baseline, and Architecture constraints table before task generation. Each binding constraint needs a design response, verification owner and credible mechanism; planned checks and semantic-only or unsupported coverage remain explicit. Decision-critical gaps block approval. Record design approval against this plan; material scope changes require renewed scope approval."
     options: [approve, reject]
     on_reject: abort
+
+  - id: design-decide
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} decide
+      --run {{ inputs.delivery_run }} --name design --choice {{ steps.plan-gate.output.choice }}
 
   - id: tasks
     command: speckit.tasks
     integration: "{{ inputs.integration }}"
-    input: { args: "lane=feature delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md design_approval={{ steps.plan-gate.output.choice }} {{ inputs.spec }} Read the approved exploration, spec, exact plan path recorded in that packet, and ADR baseline. Recompute the presented plan/requirements/policy identity using the stored method and input manifest; only after a match record the supplied plan-gate choice against that baseline including Architecture constraints. A missing baseline or changed input stops for refreshed presentation/approval; never replace the stored fingerprint to make an old choice fit. Derive tasks with exact change/test paths, applicable constraint IDs, and planned verification work from the approved design, not just the original request. Keep semantic checks assigned to their named reviewer; do not invent executable coverage. Material expansion returns to scope/design approval." }
+    input:
+      args: >-
+        lane=feature delivery_run={{ inputs.delivery_run }}
+        exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
+        design_approval={{ steps.plan-gate.output.choice }} {{ inputs.spec }}
+        Read .specify/extensions/delivery/templates/core-adapter.md in full before
+        generating Tasks; it defines one independently verifiable green vertical
+        Task rather than separate TDD-step items. Read the approved exploration,
+        spec, exact plan path recorded in that packet, and ADR baseline. Recompute the presented plan/requirements/policy
+        identity using the stored method and input manifest; only after a match
+        record the supplied plan-gate choice. Derive independently verifiable
+        vertical green tasks with exact change/test paths, applicable constraint IDs,
+        and planned verification work. Keep semantic checks assigned to their named
+        reviewer; do not invent executable coverage. Material expansion returns to
+        scope/design approval.
 
   - id: slice
     command: speckit.delivery.slice
     integration: "{{ inputs.integration }}"
     input:
       args: >-
-        lane=feature
-        delivery_run={{ inputs.delivery_run }}
+        lane=feature delivery_run={{ inputs.delivery_run }}
         exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
         slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md
-        design_approval={{ steps.plan-gate.output.choice }}
-        {{ inputs.spec }}
+        design_approval={{ steps.plan-gate.output.choice }} {{ inputs.spec }}
         Read the approved plan and generated tasks. Map every task exactly once,
-        classify trunk safety with executable evidence, derive the merge mode,
-        and write the slice plan. Do not edit tasks.md or implement. Return
-        needs_decision instead of forcing a mode when evidence or policy is
-        missing.
+        classify trunk safety with executable evidence, derive the merge mode, and
+        write the slice plan. Do not edit tasks.md or implement. Return
+        needs_decision instead of forcing a mode when evidence or policy is missing.
+
+  - id: analyze-runtime-begin
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+      --run {{ inputs.delivery_run }} --stage analyze
 
   - id: analyze
     command: speckit.analyze
     integration: "{{ inputs.integration }}"
-    input: { args: "lane=feature delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md {{ inputs.spec }} Analyze the planned slices against the exact approved plan in this packet before the slice gate. Verify every task is mapped to exactly one planned slice, every acceptance requirement and binding Architecture constraint has task/verification coverage, the slice dependency order is acyclic and linear for stacked mode, and every slice has verification and rollback. Report missing constraint IDs, verification work, or review owners as blocking findings; a planned or unsupported check is not execution evidence. Do not treat pending slice approval as approval, or rewrite tasks.md." }
+    input:
+      args: >-
+        lane=feature delivery_run={{ inputs.delivery_run }}
+        runtime_stage=analyze
+        runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-analyze.json
+        exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
+        slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md {{ inputs.spec }}
+        Read .specify/extensions/delivery/templates/runtime.md and
+        .specify/extensions/delivery/templates/core-adapter.md in full. Analyze
+        the planned slices against the exact approved plan before the
+        combined execution/slice gate. Verify every task is mapped to exactly one
+        planned slice, every acceptance requirement and binding Architecture
+        constraint has task/verification coverage, the dependency order is acyclic,
+        and every slice has verification and rollback. Report missing constraint
+        IDs, verification work, or review owners as blocking findings; planned or
+        unsupported checks are not execution evidence. Read the pending runtime
+        input and write the native report, machine native receipt, and normalized envelope defined by runtime.md at the supplied path.
 
-  - id: analyze-gate
-    type: gate
-    message: "Confirm every blocking Spec/Plan/Tasks/slice-coverage finding is resolved before slice approval. A failed analyze command cannot be waived by this gate."
-    options: [approve, reject]
-    on_reject: abort
+  - id: analyze-runtime-record
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+      --run {{ inputs.delivery_run }} --stage analyze
+
+  - id: analyze-require
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} require
+      --run {{ inputs.delivery_run }} --kind analyze
+
+  - id: execution-present
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} present
+      --run {{ inputs.delivery_run }} --name execution --binding spec --binding plan --binding tasks
+      --input .specify/delivery/{{ inputs.delivery_run }}/slices.md
 
   - id: slice-gate
     show_file: ".specify/delivery/{{ inputs.delivery_run }}/slices.md"
     type: gate
-    message: "Review the slice table, task coverage, trunk-safety evidence, merge mode, diff budgets, flags, verification, rollback, and merge policy. For a single-slice plan, confirm that one PR is appropriate. For stacked, approve only when every task is mapped exactly once, every prefix has credible trunk-safety evidence, and no unknown remains. For integration, confirm the explicit integration-only reason and accepted rollback scope. A material change to scope, design, task mapping, or merge policy requires renewed slice approval. This gate is the final slice snapshot; record it through the post-gate approval writer."
+    message: "Confirm every blocking Spec/Plan/Tasks/analyze finding is resolved and execution is ready. Review the slice table, task coverage, trunk-safety evidence, merge mode, diff budgets, flags, verification, rollback, and merge policy. A failed or incomplete Analyze result, context-only choice, or unknown slice is not approval. This is the single combined execution/slice gate; record its actual choice through the Delivery-owned writer."
     options: [approve, reject]
     on_reject: abort
+
+  - id: execution-decide
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} decide
+      --run {{ inputs.delivery_run }} --name execution --choice {{ steps.slice-gate.output.choice }}
 
   - id: slice-approval
     command: speckit.delivery.slice
     integration: "{{ inputs.integration }}"
-    input: { args: "action=record-approval lane=feature delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md design_approval={{ steps.plan-gate.output.choice }} slice_approval={{ steps.slice-gate.output.choice }} {{ inputs.spec }} Record the actual gate choice and current approved snapshot in the displayed slices.md; stop on a missing fingerprint, changed plan, or missing choice. Do not replan or edit tasks/source." }
+    input:
+      args: >-
+        action=record-approval lane=feature delivery_run={{ inputs.delivery_run }}
+        exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
+        slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md
+        design_approval={{ steps.plan-gate.output.choice }}
+        slice_approval={{ steps.slice-gate.output.choice }} {{ inputs.spec }}
+        Record the actual combined gate choice and current approved snapshot in
+        displayed slices.md; stop on a missing fingerprint, changed plan, failed
+        Analyze result, or missing choice. Do not replan or edit tasks/source.
+
+  - id: planning-checkpoint-begin
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+      --run {{ inputs.delivery_run }} --stage checkpoint
+
+  - id: planning-checkpoint
+    command: speckit.delivery.route
+    integration: "{{ inputs.integration }}"
+    input:
+      args: >-
+        action=checkpoint stage=initial lane=feature delivery_run={{ inputs.delivery_run }}
+        runtime_stage=checkpoint runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-checkpoint.json
+        exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
+        slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md
+        slice_approval={{ steps.slice-gate.output.choice }} {{ inputs.spec }}
+        Read .specify/extensions/delivery/templates/runtime.md and core-adapter.md.
+        Perform only an already project-authorized exact planning-path commit,
+        preserve original approvals, and write the native SD_CORE_HANDOFF plus
+        normalized checkpoint result. Missing authorization or unrelated dirty work blocks.
+
+  - id: planning-checkpoint-record
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+      --run {{ inputs.delivery_run }} --stage checkpoint
+
+  - id: runtime-require-planning
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} require
+      --run {{ inputs.delivery_run }} --kind planning
+
+  - id: runtime-phase-execution
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} phase
+      --run {{ inputs.delivery_run }} --name execution
 
   - id: quality-brief-before-ralph
     command: speckit.quality.brief
@@ -191,67 +392,417 @@ steps:
   - id: ralph
     command: speckit.ralph.run
     integration: "{{ inputs.integration }}"
-    input: { args: "lane=feature delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md slice_approval={{ steps.slice-gate.output.choice }} with_docs_sync={{ inputs.with_docs_sync }} {{ inputs.spec }} Require the actual slice-gate approval and unchanged slice plan. Execute only tasks from tasks.md, in slice order. Stop at each approved slice boundary, run the declared quality/standards/review and prefix/flag/checkpoint verification, write the slice receipt, and continue only after SLICE_READY. Do not create, push, or merge a PR." }
+    input:
+      args: >-
+        lane=feature delivery_run={{ inputs.delivery_run }}
+        exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
+        slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md
+        slice_approval={{ steps.slice-gate.output.choice }}
+        with_docs_sync={{ inputs.with_docs_sync | to_json }} {{ inputs.spec }}
+        Require the actual combined slice/execution approval and unchanged slice
+        plan. Execute only tasks from tasks.md, in slice order. Stop at each
+        approved slice boundary, run declared quality/standards/review and prefix/
+        flag/checkpoint verification, write the slice receipt, and continue only
+        after SLICE_READY. Do not create, push, or merge a PR.
+
+  - id: quality-after-ralph-runtime-begin
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+      --run {{ inputs.delivery_run }} --stage quality
 
   - id: quality-after-ralph
     command: speckit.quality.check
     integration: "{{ inputs.integration }}"
-    input: { args: "lane=feature delivery_run={{ inputs.delivery_run }} scope=outgoing-diff {{ inputs.spec }}" }
+    input:
+      args: >-
+        lane=feature delivery_run={{ inputs.delivery_run }} scope=outgoing-diff
+        runtime_stage=quality runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-quality.json
+        {{ inputs.spec }} Read the pending runtime input, preserve original check receipts in the native report/data, and write the machine native receipt plus normalized envelope.
+
+  - id: quality-after-ralph-runtime-record
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+      --run {{ inputs.delivery_run }} --stage quality
+
+  - id: standards-after-ralph-runtime-begin
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+      --run {{ inputs.delivery_run }} --stage standards
 
   - id: standards-after-ralph
     command: speckit.review.standards
     integration: "{{ inputs.integration }}"
-    input: { args: "lane=feature delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md scope=outgoing-diff {{ inputs.spec }} Resolve and validate this packet's approved plan identity before reviewing its applicable Architecture constraints." }
+    input:
+      args: >-
+        lane=feature delivery_run={{ inputs.delivery_run }}
+        exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
+        scope=outgoing-diff runtime_stage=standards
+        runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-standards.json
+        {{ inputs.spec }} Resolve and validate this packet's approved plan identity before reviewing applicable Architecture constraints. Read the pending runtime input and write the native report, machine native receipt, and normalized envelope defined by runtime.md.
 
-  - id: converge-loop
-    type: do-while
-    condition: "true"
-    max_iterations: 3
-    steps:
-      - id: converge
-        command: speckit.converge
-        integration: "{{ inputs.integration }}"
-        continue_on_error: true
-        input: { args: "lane=feature delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md {{ inputs.spec }}" }
-      - id: analyze-appended
-        command: speckit.analyze
-        integration: "{{ inputs.integration }}"
-        continue_on_error: true
-        input: { args: "lane=feature delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md slice_approval={{ steps.slice-gate.output.choice }} Analyze tasks appended by convergence for {{ inputs.spec }}. Assign every appended task to an existing approved slice; if a new slice is required, or the append changes the approved task mapping/fingerprint, stop for a renewed slice gate and approval instead of silently extending the queue or reusing the old approval." }
-      - id: ralph-appended
-        command: speckit.ralph.run
-        integration: "{{ inputs.integration }}"
-        input: { args: "lane=feature delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md slice_approval={{ steps.slice-gate.output.choice }} with_docs_sync={{ inputs.with_docs_sync }} Complete dependency-ready tasks appended for {{ inputs.spec }} only after they are mapped to the currently approved slice fingerprint; stop for renewed slice approval if the mapping changed, and preserve slice boundaries." }
-      - id: quality-appended
-        command: speckit.quality.check
-        integration: "{{ inputs.integration }}"
-        input: { args: "lane=feature delivery_run={{ inputs.delivery_run }} scope=outgoing-diff {{ inputs.spec }}" }
-      - id: standards-appended
-        command: speckit.review.standards
-        integration: "{{ inputs.integration }}"
-        input: { args: "lane=feature delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md scope=outgoing-diff {{ inputs.spec }} Resolve and validate this packet's approved plan identity before reviewing its applicable Architecture constraints." }
+  - id: standards-after-ralph-runtime-record
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+      --run {{ inputs.delivery_run }} --stage standards
+
+  - id: converge-runtime-begin
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+      --run {{ inputs.delivery_run }} --stage converge
+
+  - id: converge
+    command: speckit.converge
+    integration: "{{ inputs.integration }}"
+    input:
+      args: >-
+        lane=feature delivery_run={{ inputs.delivery_run }}
+        runtime_stage=converge runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-converge.json
+        exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md {{ inputs.spec }}
+        Read .specify/extensions/delivery/templates/core-adapter.md and
+        .specify/extensions/delivery/templates/runtime.md in full, plus the pending input. Assess
+        the current code against Spec/Plan/Tasks append-only; do not rewrite or
+        execute the queue. Write a native report, machine native receipt, and normalized envelope defined by runtime.md at the
+        supplied path. If no gap exists, leave tasks.md byte-identical.
+
+  - id: converge-runtime-record
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+      --run {{ inputs.delivery_run }} --stage converge
+
+  - id: convergence-needs
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} needs
+      --run {{ inputs.delivery_run }} --kind convergence
+
+  - id: convergence-if-needed
+    type: if
+    condition: "{{ steps.convergence-needs.output.stdout == 'true' }}"
+    then:
+      - id: convergence-loop
+        type: do-while
+        condition: "{{ steps.convergence-next.output.stdout == 'true' }}"
+        max_iterations: 3
+        steps:
+          - id: convergence-reserve
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} reserve
+              --run {{ inputs.delivery_run }} --kind convergence
+              --scope outgoing-diff --plain
+
+          - id: convergence-slice
+            command: speckit.delivery.slice
+            integration: "{{ inputs.integration }}"
+            input:
+              args: >-
+                lane=feature delivery_run={{ inputs.delivery_run }}
+                exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
+                slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md
+                design_approval={{ steps.plan-gate.output.choice }} {{ inputs.spec }}
+                Plan a renewed slice mapping for every actual appended TaskID.
+                Preserve prior receipt history and boundaries; mark the changed
+                mapping pending until the new combined gate. Do not edit tasks.md.
+
+          - id: convergence-analyze-runtime-begin
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+              --run {{ inputs.delivery_run }} --stage analyze
+
+          - id: convergence-analyze
+            command: speckit.analyze
+            integration: "{{ inputs.integration }}"
+            input:
+              args: >-
+                lane=feature delivery_run={{ inputs.delivery_run }} runtime_stage=analyze
+                runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-analyze.json
+                exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
+                slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md {{ inputs.spec }}
+                Read .specify/extensions/delivery/templates/runtime.md and
+                .specify/extensions/delivery/templates/core-adapter.md in full.
+                Analyze the appended queue against the Slice owner's newly
+                presented mapping. Validate coverage read-only; never assign or
+                edit a slice yourself. Write the native report, machine native receipt, and normalized envelope defined by runtime.md.
+
+          - id: convergence-analyze-runtime-record
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+              --run {{ inputs.delivery_run }} --stage analyze
+
+          - id: convergence-analyze-require
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} require
+              --run {{ inputs.delivery_run }} --kind analyze
+
+          - id: convergence-execution-present
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} present
+              --run {{ inputs.delivery_run }} --name execution --binding spec --binding plan --binding tasks
+              --input .specify/delivery/{{ inputs.delivery_run }}/slices.md
+
+          - id: convergence-slice-gate
+            type: gate
+            show_file: ".specify/delivery/{{ inputs.delivery_run }}/slices.md"
+            message: "Approve the newly presented appended-task mapping and execution readiness only after current Analyze passed. Preserve prior completed-slice evidence; a material scope/design change returns to its owning gate."
+            options: [approve, reject]
+            on_reject: abort
+
+          - id: convergence-execution-decide
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} decide
+              --run {{ inputs.delivery_run }} --name execution --choice {{ steps.convergence-slice-gate.output.choice }}
+
+          - id: convergence-slice-approval
+            command: speckit.delivery.slice
+            integration: "{{ inputs.integration }}"
+            input:
+              args: >-
+                action=record-approval lane=feature delivery_run={{ inputs.delivery_run }}
+                exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
+                slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md
+                design_approval={{ steps.plan-gate.output.choice }}
+                slice_approval={{ steps.convergence-slice-gate.output.choice }} {{ inputs.spec }}
+                Record only this actual renewed gate choice against its unchanged
+                presented mapping; preserve the prior approval/receipt history.
+
+          - id: convergence-checkpoint-begin
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+              --run {{ inputs.delivery_run }} --stage checkpoint
+
+          - id: convergence-checkpoint
+            command: speckit.delivery.route
+            integration: "{{ inputs.integration }}"
+            input:
+              args: >-
+                action=checkpoint stage=converge lane=feature delivery_run={{ inputs.delivery_run }}
+                runtime_stage=checkpoint runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-checkpoint.json
+                exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
+                slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md {{ inputs.spec }}
+                Use only the project's existing Git authorization for the exact
+                appended planning paths; changed slice mapping returns for renewed
+                approval. Preserve the Analyze result and write the native handoff
+                plus normalized checkpoint result before Ralph.
+
+          - id: convergence-checkpoint-record
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+              --run {{ inputs.delivery_run }} --stage checkpoint
+
+          - id: convergence-planning-checkpoint
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} require
+              --run {{ inputs.delivery_run }} --kind planning
+
+          - id: convergence-ralph
+            command: speckit.ralph.run
+            integration: "{{ inputs.integration }}"
+            input:
+              args: >-
+                lane=feature delivery_run={{ inputs.delivery_run }}
+                exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
+                slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md
+                slice_approval={{ steps.convergence-slice-gate.output.choice }}
+                with_docs_sync={{ inputs.with_docs_sync | to_json }} {{ inputs.spec }}
+                Complete only dependency-ready tasks appended by the current
+                Converge result after the planning checkpoint; preserve the sole
+                tasks.md queue and approved slice mapping.
+
+          - id: convergence-quality-begin
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+              --run {{ inputs.delivery_run }} --stage quality
+
+          - id: convergence-quality
+            command: speckit.quality.check
+            integration: "{{ inputs.integration }}"
+            input:
+              args: >-
+                lane=feature delivery_run={{ inputs.delivery_run }} scope=outgoing-diff
+                runtime_stage=quality runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-quality.json
+                {{ inputs.spec }} Refresh original check receipts after appended-task execution.
+
+          - id: convergence-quality-record
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+              --run {{ inputs.delivery_run }} --stage quality
+
+          - id: convergence-standards-begin
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+              --run {{ inputs.delivery_run }} --stage standards
+
+          - id: convergence-standards
+            command: speckit.review.standards
+            integration: "{{ inputs.integration }}"
+            input:
+              args: >-
+                lane=feature delivery_run={{ inputs.delivery_run }} scope=outgoing-diff
+                runtime_stage=standards runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-standards.json
+                exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md {{ inputs.spec }}
+                Refresh the standards report for the appended-task contents and policy.
+
+          - id: convergence-standards-record
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+              --run {{ inputs.delivery_run }} --stage standards
+
+          - id: convergence-recheck-begin
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+              --run {{ inputs.delivery_run }} --stage converge
+
+          - id: convergence-recheck
+            command: speckit.converge
+            integration: "{{ inputs.integration }}"
+            input:
+              args: >-
+                lane=feature delivery_run={{ inputs.delivery_run }} runtime_stage=converge
+                runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-converge.json
+                exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md {{ inputs.spec }}
+                Read .specify/extensions/delivery/templates/core-adapter.md and
+                .specify/extensions/delivery/templates/runtime.md in full. Reassess
+                after this bounded appended-task pass. Preserve append-only
+                tasks.md and write the native report, machine native receipt, and normalized envelope defined by runtime.md.
+
+          - id: convergence-recheck-record
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+              --run {{ inputs.delivery_run }} --stage converge
+
+          - id: convergence-complete
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} complete
+              --run {{ inputs.delivery_run }} --kind convergence
+              --scope outgoing-diff --attempt {{ steps.convergence-reserve.output.stdout }}
+
+          - id: convergence-next
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} needs
+              --run {{ inputs.delivery_run }} --kind convergence
+
+  - id: convergence-require
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} require
+      --run {{ inputs.delivery_run }} --kind convergence
+
+  - id: simplify-runtime-begin
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+      --run {{ inputs.delivery_run }} --stage simplify
 
   - id: simplify-scan
     command: speckit.simplify.scan
     integration: "{{ inputs.integration }}"
-    input: { args: "lane=feature delivery_run={{ inputs.delivery_run }} scope=diff {{ inputs.spec }}" }
+    input:
+      args: >-
+        lane=feature delivery_run={{ inputs.delivery_run }} scope=diff
+        runtime_stage=simplify runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-simplify.json
+        {{ inputs.spec }} Read the pending runtime input and write only this run's canonical simplifications.md plus the machine native receipt and normalized envelope; do not edit source or tasks.md.
 
-  - id: simplify-gate
-    type: gate
-    message: "Review simplification candidates and confirm accepted candidates are routed."
-    options: [approve, reject]
-    on_reject: abort
+  - id: simplify-runtime-record
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+      --run {{ inputs.delivery_run }} --stage simplify
 
-  - id: simplify-tasks-analyze
-    command: speckit.analyze
-    integration: "{{ inputs.integration }}"
-    continue_on_error: true
-    input: { args: "lane=feature delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md slice_approval={{ steps.slice-gate.output.choice }} Analyze any tasks appended by simplification for {{ inputs.spec }}. Map each task to an approved slice or stop for a renewed slice gate when the append changes the approved task mapping/fingerprint; never reuse stale approval." }
+  - id: simplify-needs
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} needs
+      --run {{ inputs.delivery_run }} --kind simplification
 
-  - id: simplify-tasks-run
-    command: speckit.ralph.run
-    integration: "{{ inputs.integration }}"
-    input: { args: "lane=feature delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md slice_approval={{ steps.slice-gate.output.choice }} with_docs_sync={{ inputs.with_docs_sync }} Complete accepted simplification tasks for {{ inputs.spec }} only within the currently approved slice fingerprint; stop for renewed slice approval if the mapping changed." }
+  - id: simplify-if-needed
+    type: if
+    condition: "{{ steps.simplify-needs.output.stdout == 'true' }}"
+    then:
+      - id: simplify-present
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} present
+          --run {{ inputs.delivery_run }} --name simplify
+          --input .specify/delivery/{{ inputs.delivery_run }}/simplifications.md
+      - id: simplify-gate
+        type: gate
+        show_file: ".specify/delivery/{{ inputs.delivery_run }}/simplifications.md"
+        message: "Approve the presented candidate IDs for the existing Feature owner to apply, or reject all candidates and continue this delivery without simplification. Scope/design expansion requires its owning approval."
+        options: [approve, reject]
+        on_reject: skip
+      - id: simplify-decide
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} decide
+          --run {{ inputs.delivery_run }} --name simplify
+          --choice {{ steps.simplify-gate.output.choice }}
+      - id: simplify-accepted
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} needs
+          --run {{ inputs.delivery_run }} --kind accepted-simplification
+      - id: simplify-apply-if-accepted
+        type: if
+        condition: "{{ steps.simplify-accepted.output.stdout == 'true' }}"
+        then:
+          - id: simplify-apply
+            command: speckit.delivery.route
+            integration: "{{ inputs.integration }}"
+            input:
+              args: >-
+                action=apply-simplification lane=feature delivery_run={{ inputs.delivery_run }}
+                exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
+                slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md
+                with_docs_sync={{ inputs.with_docs_sync | to_json }} {{ inputs.spec }}
+                Read the immutable proposal and actual runtime gate receipt. Route
+                accepted IDs through Core-owned Tasks, Analyze, renewed slice
+                approval if mapping changes, an authorized planning checkpoint,
+                and Ralph. Keep the proposal unchanged and tasks.md the only queue.
+          - id: simplify-verify-begin
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+              --run {{ inputs.delivery_run }} --stage simplify-verify
+          - id: simplify-verify
+            command: speckit.simplify.verify
+            integration: "{{ inputs.integration }}"
+            input:
+              args: >-
+                lane=feature delivery_run={{ inputs.delivery_run }}
+                runtime_stage=simplify-verify runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-simplify-verify.json
+                {{ inputs.spec }} Verify every actual accepted candidate after lane-owned application; keep the immutable proposal and write the native verification report under runtime.
+          - id: simplify-verify-record
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+              --run {{ inputs.delivery_run }} --stage simplify-verify
+          - id: simplify-verify-require
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} require
+              --run {{ inputs.delivery_run }} --kind simplify-verify
 
   - id: docs-sync
     type: if
@@ -267,39 +818,197 @@ steps:
     integration: "{{ inputs.integration }}"
     input: { args: "delivery_run={{ inputs.delivery_run }} lane=feature repair=0 scope=outgoing-diff {{ inputs.spec }} Derive from actual package contents and changed surfaces; emit PACKAGE_README_VERDICT and INPUT_IDENTITY." }
 
-  - id: quality-after-simplify
+  - id: quality-before-review-begin
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+      --run {{ inputs.delivery_run }} --stage quality
+
+  - id: quality-before-review
     command: speckit.quality.check
     integration: "{{ inputs.integration }}"
-    input: { args: "lane=feature delivery_run={{ inputs.delivery_run }} scope=outgoing-diff {{ inputs.spec }}" }
+    input:
+      args: >-
+        lane=feature delivery_run={{ inputs.delivery_run }} scope=outgoing-diff
+        runtime_stage=quality runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-quality.json
+        {{ inputs.spec }} Refresh quality after package/docs synchronization.
 
-  - id: standards-after-simplify
+  - id: quality-before-review-record
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+      --run {{ inputs.delivery_run }} --stage quality
+
+  - id: standards-before-review-begin
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+      --run {{ inputs.delivery_run }} --stage standards
+
+  - id: standards-before-review
     command: speckit.review.standards
     integration: "{{ inputs.integration }}"
-    input: { args: "lane=feature delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md scope=outgoing-diff {{ inputs.spec }} Resolve and validate this packet's approved plan identity before reviewing its applicable Architecture constraints." }
+    input:
+      args: >-
+        lane=feature delivery_run={{ inputs.delivery_run }}
+        exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
+        scope=outgoing-diff runtime_stage=standards
+        runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-standards.json
+        {{ inputs.spec }} Refresh standards after package/docs synchronization.
 
-  # Safe no-op slots after a current pass; semantic verdicts are checked at the gate.
-  - id: review-loop
-    type: do-while
-    condition: "true"
-    max_iterations: 3
-    steps:
-      - id: review
-        command: speckit.review.run
-        integration: "{{ inputs.integration }}"
-        input: { args: "delivery_run={{ inputs.delivery_run }} lane=feature exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md scope=outgoing-diff slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md {{ inputs.spec }} Reuse only a complete current snapshot-bound pass; otherwise independently review all six dimensions, account for previous findings, and cover cross-slice integration as well as per-slice changes." }
-      - id: review-fix
-        command: speckit.delivery.review-fix
-        integration: "{{ inputs.integration }}"
-        input: { args: "delivery_run={{ inputs.delivery_run }} lane=feature exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md scope=outgoing-diff repair_slots=3 slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md slice_approval={{ steps.slice-gate.output.choice }} with_docs_sync={{ inputs.with_docs_sync }} {{ inputs.spec }} One repair pass only; current pass is no-op. Preserve attempts and task queue ownership; stop source edits on cap, stale report, missing evidence, or scope change." }
+  - id: standards-before-review-record
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+      --run {{ inputs.delivery_run }} --stage standards
 
-  - id: review-final
+  - id: review-initial-begin
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+      --run {{ inputs.delivery_run }} --stage review
+
+  - id: review-initial
     command: speckit.review.run
     integration: "{{ inputs.integration }}"
-    input: { args: "delivery_run={{ inputs.delivery_run }} lane=feature exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md scope=outgoing-diff slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md {{ inputs.spec }} Verify after the last repair slot or reuse a still-current complete pass; do not add another repair round. Present all six verdicts, coverage, cross-slice integration evidence, and unresolved finding IDs." }
+    input:
+      args: >-
+        delivery_run={{ inputs.delivery_run }} lane=feature runtime_stage=review
+        runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-review.json
+        exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
+        scope=outgoing-diff slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md {{ inputs.spec }}
+        Independently review all six dimensions, cross-slice integration, and prior
+        finding IDs. Read the pending runtime input and write the native report, machine native receipt, and normalized envelope defined by runtime.md; a complete pass is reusable only while its inputs remain current.
+
+  - id: review-initial-record
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+      --run {{ inputs.delivery_run }} --stage review
+
+  - id: review-needs-repair
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} needs
+      --run {{ inputs.delivery_run }} --kind repair
+
+  - id: review-repair-if-needed
+    type: if
+    condition: "{{ steps.review-needs-repair.output.stdout == 'true' }}"
+    then:
+      - id: review-repair-loop
+        type: do-while
+        condition: "{{ steps.review-next.output.stdout == 'true' }}"
+        max_iterations: 3
+        steps:
+          - id: review-reserve
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} reserve
+              --run {{ inputs.delivery_run }} --kind review --scope outgoing-diff --plain
+
+          - id: review-fix
+            command: speckit.delivery.review-fix
+            integration: "{{ inputs.integration }}"
+            input:
+              args: >-
+                delivery_run={{ inputs.delivery_run }} lane=feature scope=outgoing-diff
+                repair_slots=3 attempt={{ steps.review-reserve.output.stdout }}
+                design_approval={{ steps.plan-gate.output.choice }} checkpoint_stage=outgoing-repair
+                exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
+                slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md
+                slice_approval={{ steps.slice-gate.output.choice }}
+                with_docs_sync={{ inputs.with_docs_sync | to_json }} {{ inputs.spec }}
+                Apply one verified repair pass only; preserve the task queue and finding IDs.
+
+          - id: review-repair-quality-begin
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+              --run {{ inputs.delivery_run }} --stage quality
+
+          - id: review-repair-quality
+            command: speckit.quality.check
+            integration: "{{ inputs.integration }}"
+            input:
+              args: >-
+                lane=feature delivery_run={{ inputs.delivery_run }} scope=outgoing-diff
+                runtime_stage=quality runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-quality.json
+                {{ inputs.spec }} Refresh Quality for the repaired contents.
+
+          - id: review-repair-quality-record
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+              --run {{ inputs.delivery_run }} --stage quality
+
+          - id: review-repair-standards-begin
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+              --run {{ inputs.delivery_run }} --stage standards
+
+          - id: review-repair-standards
+            command: speckit.review.standards
+            integration: "{{ inputs.integration }}"
+            input:
+              args: >-
+                lane=feature delivery_run={{ inputs.delivery_run }} scope=outgoing-diff
+                runtime_stage=standards runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-standards.json
+                exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md {{ inputs.spec }} Refresh Standards for the repaired contents.
+
+          - id: review-repair-standards-record
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+              --run {{ inputs.delivery_run }} --stage standards
+
+          - id: review-recheck-begin
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+              --run {{ inputs.delivery_run }} --stage review
+
+          - id: review-recheck
+            command: speckit.review.run
+            integration: "{{ inputs.integration }}"
+            input:
+              args: >-
+                delivery_run={{ inputs.delivery_run }} lane=feature runtime_stage=review
+                runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-review.json
+                exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
+                scope=outgoing-diff slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md {{ inputs.spec }}
+                Re-review the repaired contents independently, retaining every prior
+                finding ID and recording explicit resolution evidence.
+
+          - id: review-recheck-record
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+              --run {{ inputs.delivery_run }} --stage review
+
+          - id: review-complete
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} complete
+              --run {{ inputs.delivery_run }} --kind review --scope outgoing-diff
+              --attempt {{ steps.review-reserve.output.stdout }}
+
+          - id: review-next
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} needs
+              --run {{ inputs.delivery_run }} --kind repair
+
+  - id: review-final
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} require
+      --run {{ inputs.delivery_run }} --kind review
 
   - id: review-gate
     type: gate
-    message: "Approve only a complete current snapshot-bound REVIEW_VERDICT: pass across all six dimensions, with actual independence or explicitly accepted self-review degradation, full required coverage, and every prior blocker verified resolved/dismissed. No user gate, repair no-op, test pass, or round limit overrides blocked/incomplete. Otherwise stop with open findings and recovery instructions."
+    message: "Approve only a complete current snapshot-bound REVIEW_VERDICT: pass across all six dimensions, with actual independence or explicitly accepted self-review degradation, full required coverage, and every prior blocker verified resolved/dismissed. No user gate, repair no-op, test pass, or round limit overrides blocked/incomplete."
     options: [approve, reject]
     on_reject: abort
 
@@ -313,22 +1022,132 @@ steps:
     integration: "{{ inputs.integration }}"
     input: { args: "lane=feature delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md {{ inputs.spec }} Validate the same run's ADR links and implementation; missing/ambiguous run identity blocks." }
 
-  - id: simplify-verify
-    command: speckit.simplify.verify
-    integration: "{{ inputs.integration }}"
-    input: { args: "lane=feature delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md {{ inputs.spec }} Verify only this run's approved simplification candidates." }
+  - id: simplify-final-needed
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} needs
+      --run {{ inputs.delivery_run }} --kind simplification-verification
 
-  - id: review-close
-    command: speckit.review.run
-    integration: "{{ inputs.integration }}"
-    input: { args: "delivery_run={{ inputs.delivery_run }} lane=feature exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md scope=outgoing-diff slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md {{ inputs.spec }} Reuse the final pass only if contents and requirements still match after ADR/finalization checks; otherwise refresh review. Do not reset repair attempts or hide ADR changes. A stale/blocked/incomplete result stops evidence and handoff." }
+  - id: simplify-verify-final
+    type: if
+    condition: "{{ steps.simplify-final-needed.output.stdout == 'true' }}"
+    then:
+      - id: simplify-final-begin
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+          --run {{ inputs.delivery_run }} --stage simplify-verify
+      - id: simplify-verify-final-run
+        command: speckit.simplify.verify
+        integration: "{{ inputs.integration }}"
+        input:
+          args: >-
+            lane=feature delivery_run={{ inputs.delivery_run }}
+            runtime_stage=simplify-verify runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-simplify-verify.json
+            {{ inputs.spec }} Recheck the accepted candidate IDs only after final decision/input changes; preserve the immutable proposal.
+      - id: simplify-final-record
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+          --run {{ inputs.delivery_run }} --stage simplify-verify
+      - id: simplify-final-require
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} require
+          --run {{ inputs.delivery_run }} --kind simplify-verify
+
+  - id: review-close-needed
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} needs
+      --run {{ inputs.delivery_run }} --kind review
+
+  - id: review-close-if-stale
+    type: if
+    condition: "{{ steps.review-close-needed.output.stdout == 'true' }}"
+    then:
+      - id: close-quality-begin
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+          --run {{ inputs.delivery_run }} --stage quality
+      - id: close-quality
+        command: speckit.quality.check
+        integration: "{{ inputs.integration }}"
+        input:
+          args: >-
+            lane=feature delivery_run={{ inputs.delivery_run }} scope=outgoing-diff
+            runtime_stage=quality runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-quality.json
+            {{ inputs.spec }} Refresh original Quality receipts after post-review input changes; reuse only exact original checked-input evidence.
+      - id: close-quality-record
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+          --run {{ inputs.delivery_run }} --stage quality
+      - id: close-standards-begin
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+          --run {{ inputs.delivery_run }} --stage standards
+      - id: close-standards
+        command: speckit.review.standards
+        integration: "{{ inputs.integration }}"
+        input:
+          args: >-
+            lane=feature delivery_run={{ inputs.delivery_run }} scope=outgoing-diff
+            exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
+            runtime_stage=standards runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-standards.json
+            {{ inputs.spec }} Refresh Standards for post-review ADR and policy changes.
+      - id: close-standards-record
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+          --run {{ inputs.delivery_run }} --stage standards
+      - id: review-close-begin
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} begin
+          --run {{ inputs.delivery_run }} --stage review
+      - id: review-close
+        command: speckit.review.run
+        integration: "{{ inputs.integration }}"
+        input:
+          args: >-
+            delivery_run={{ inputs.delivery_run }} lane=feature runtime_stage=review
+            runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-review.json
+            exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
+            scope=outgoing-diff slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md {{ inputs.spec }}
+            Refresh the final review after post-review decision changes; do not add a repair round.
+      - id: review-close-record
+        type: shell
+        run: >-
+          {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} record
+          --run {{ inputs.delivery_run }} --stage review
+
+  - id: review-close-final
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} require
+      --run {{ inputs.delivery_run }} --kind review
 
   - id: evidence
     command: speckit.evidence.collect
     integration: "{{ inputs.integration }}"
     input: { args: "lane=feature delivery_run={{ inputs.delivery_run }} evidence=.specify/delivery/{{ inputs.delivery_run }}/evidence.md exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md {{ inputs.spec }} Read and update only this run's canonical evidence record; bind it to the actual reviewed content, approved requirements, and PR identity." }
 
+  - id: runtime-require-evidence
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} require
+      --run {{ inputs.delivery_run }} --kind evidence
+
   - id: handoff
     command: speckit.delivery.handoff
     integration: "{{ inputs.integration }}"
     input: { args: "delivery_run={{ inputs.delivery_run }} lane=feature slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md mode=auto {{ inputs.spec }} Render the final release-slice or rollup PR body from the approved slice plan. Include the merge plan, but do not push, create, or merge the PR." }
+
+  - id: runtime-phase-handoff
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} phase
+      --run {{ inputs.delivery_run }} --name handoff

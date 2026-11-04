@@ -10,6 +10,20 @@ description: "Review a task or batch diff against project standards and return a
 $ARGUMENTS
 ```
 
+When `runtime_stage=standards` and `runtime_result=<path>` are supplied, require
+`delivery_run=<id>` and read the installed
+`.specify/extensions/delivery/templates/runtime.md` plus
+`.specify/delivery/<delivery_run>/runtime/input-standards.json` before the native
+review. Preserve this native standards report under the same run with its explicit
+`STANDARDS_VERDICT` header. Then write the machine `native_receipt` and the exact
+normalized envelope at the supplied path, copying the pending `scope`, ticket, and
+input fingerprint and referencing the real report bytes. The native receipt must
+bind the same report/data/evidence. The runtime envelope is transport validation
+only; this command's semantic standards verdict remains authoritative. Missing,
+stale, or incomplete native evidence must be represented as blocked/incomplete,
+never upgraded because the host exited zero. Without both runtime arguments, do
+not create runtime state.
+
 Resolve the live base, HEAD, task or batch scope, and changed paths. Read only
 the applicable policy sources configured in
 `.specify/extensions/quality/quality-config.yml`, relevant ADRs, and the
