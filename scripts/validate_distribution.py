@@ -731,8 +731,13 @@ def validate(root: Path, expected_version: str | None = None) -> list[str]:
                 if not resource.is_file():
                     errors.append(f"{manifest_path}: missing {required_runtime_resource}")
             runtime_template = manifest_path.parent / "templates" / "runtime.md"
-            if runtime_template.is_file() and "runtime_stage" not in runtime_template.read_text(encoding="utf-8"):
-                errors.append(f"{runtime_template}: missing runtime_stage result contract")
+            if runtime_template.is_file():
+                runtime_text = runtime_template.read_text(encoding="utf-8")
+                for needle in ("runtime_stage", "owner-result"):
+                    if needle not in runtime_text:
+                        errors.append(
+                            f"{runtime_template}: missing {needle} result contract"
+                        )
             core_adapter = manifest_path.parent / "templates" / "core-adapter.md"
             if core_adapter.is_file() and "SD_CORE_HANDOFF: PASS" not in core_adapter.read_text(encoding="utf-8"):
                 errors.append(f"{core_adapter}: missing planning checkpoint handoff marker")
@@ -857,10 +862,15 @@ def validate(root: Path, expected_version: str | None = None) -> list[str]:
             ralph_command = manifest_path.parent / "commands" / "speckit.ralph.run.md"
             if ralph_command.is_file():
                 text = ralph_command.read_text(encoding="utf-8")
-                for needle in ("DOCS_REFRESH", "with_docs_sync"):
+                for needle in (
+                    "DOCS_REFRESH",
+                    "with_docs_sync",
+                    "speckit.quality.brief",
+                    "task's target paths",
+                ):
                     if needle not in text:
                         errors.append(
-                            f"{ralph_command}: missing task-closure documentation gate {needle!r}"
+                            f"{ralph_command}: missing task-closure gate {needle!r}"
                         )
         if extension_id == "review":
             template = manifest_path.parent / "templates" / "reviewer.md"

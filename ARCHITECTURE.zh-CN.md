@@ -107,8 +107,9 @@ integration Rollup 使用 merge commit，禁止 squash 最终 Rollup、rebase �
 `speckit.quality.brief` 是编辑前的提醒层，`speckit.quality.check` 是编辑后的机械关闭闸门；
 `speckit.review.standards` 对 DRY、归属、分层方向、公共接口、注释意图和 ADR 影响给出
 语义关闭判定。
-宿主支持 Hook 时可以调用 Brief；即使没有 Hook，Workflow 也会主动调用它，因此跨宿主
-流程仍然有效。
+宿主支持 Hook 时可以调用 Brief；Bugfix 与 Lightweight Workflow 会直接调用它。
+Feature Delivery 把 Brief 委托给 Ralph 的逐任务迭代，使每个任务获得精确的目标路径
+上下文，同时避免重复的整轮调用；因此跨宿主流程仍然有效。
 
 Code Review 复用有效检查回执，但独立覆盖需求符合性、代码质量、架构与设计规范、运行
 正确性、安全与兼容性、测试有效性。遵循 Plan 不能掩盖有证据的设计缺陷，重大重设计返回

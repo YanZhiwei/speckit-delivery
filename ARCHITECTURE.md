@@ -155,5 +155,7 @@ fix/test reports and adding per-attempt evidence rather than bypassing their
 automated overwrite refusal. Initial Bug commands remain unchanged.
 
 `speckit.quality.brief` is the pre-edit advisory layer; `speckit.quality.check`
-is the post-edit closure gate. Host hooks may call the brief, but the workflow
-also invokes it so the portable path does not depend on hook support.
+is the post-edit closure gate. Host hooks may call the brief, and Bugfix and
+Lightweight workflows invoke it directly. Feature Delivery delegates the brief
+to Ralph's task iteration so each task gets the exact target-path context without
+a second whole-run dispatch; the portable path does not depend on hook support.

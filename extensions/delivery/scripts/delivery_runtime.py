@@ -1040,6 +1040,123 @@ class Runtime:
                 found.extend(self._evidence_references(child))
         return found
 
+    def _fill_evidence_hashes(self, value: Any) -> Any:
+        """Fill empty sha256 fields for exact native evidence references.
+
+        A native owner may cite a real run-local file as
+        ``{"path": "...", "sha256": ""}``. The helper hashes those actual bytes
+        instead of requiring the model to compute and copy the digest. Complete
+        references are retained and validated by ``record``.
+        """
+        if isinstance(value, dict):
+            if set(value) == {"path", "sha256"}:
+                path_value = value.get("path")
+                hash_value = value.get("sha256")
+                if not isinstance(path_value, str) or not isinstance(hash_value, str):
+                    raise ProtocolError("Evidence shorthand needs string path and sha256 fields.")
+                if hash_value:
+                    return {"path": path_value, "sha256": hash_value}
+                path = self.inside(path_value)
+                if not path.is_relative_to(self.directory) or not path.is_file() or path.is_symlink():
+                    raise ProtocolError(f"Evidence shorthand is not an existing regular file inside this canonical run: {path_value}")
+                return {"path": self.relative(path), "sha256": digest(path.read_bytes())}
+            return {key: self._fill_evidence_hashes(child) for key, child in value.items()}
+        if isinstance(value, list):
+            return [self._fill_evidence_hashes(child) for child in value]
+        return value
+
+    def owner_result(
+        self,
+        stage: str | None,
+        report: str | None,
+        data_file: str | None,
+        verdict: str | None,
+        output: str | None = None,
+        receipt: str | None = None,
+        record_result: bool = False,
+        operation_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Build the machine receipt/result for a pending native owner stage.
+
+        The native owner still judges the verdict and supplies its report/data.
+        This operation only fills the transport identity from the pending ticket
+        and hashes real evidence bytes. ``record_result`` delegates validation to
+        the existing ``record`` transition; it does not bypass it.
+        """
+        if not report or not data_file or not verdict:
+            raise ProtocolError("owner-result requires --report, --data, and --verdict.")
+        state = self.load()
+        pending_stages = list(state["pending"])
+        if stage is None:
+            if len(pending_stages) != 1:
+                raise ProtocolError("owner-result needs --stage when zero or multiple owner stages are pending.")
+            stage = pending_stages[0]
+        if stage not in VERDICTS:
+            raise ProtocolError("Unknown owner stage.")
+        pending = state["pending"].get(stage)
+        if not pending:
+            raise ProtocolError(f"No pending {stage} input; begin the owner stage before generating its result.")
+        if verdict not in VERDICTS[stage]:
+            raise ProtocolError(f"Verdict {verdict!r} is not valid for {stage}.")
+        report_path = self.inside(report)
+        if not report_path.is_relative_to(self.directory) or not report_path.is_file() or report_path.is_symlink():
+            raise ProtocolError("The native owner report must be an existing regular non-symlink file inside this canonical run.")
+        data_path = self.inside(data_file)
+        if not data_path.is_relative_to(self.directory) or not data_path.is_file() or data_path.is_symlink():
+            raise ProtocolError("owner-result needs a JSON data file inside this canonical run.")
+        data = self._fill_evidence_hashes(read_json(data_path))
+        report_ref = {"path": self.relative(report_path), "sha256": digest(report_path.read_bytes())}
+        expected_head = self.snapshot(state)["head"] if stage == "checkpoint" else pending["snapshot"]["head"]
+        receipt_value = {
+            "schema_version": NATIVE_RECEIPT_SCHEMA,
+            "receipt_type": "delivery-native-owner",
+            "delivery_run": self.run,
+            "lane": state["lane"],
+            "stage": stage,
+            "scope": pending.get("scope", "outgoing-diff"),
+            "ticket": pending["ticket"],
+            "input_fingerprint": pending["input_fingerprint"],
+            "verdict": verdict,
+            "report": report_ref,
+            "head": expected_head,
+            "evidence": self._evidence_references(data),
+            "data": data,
+        }
+        receipt_path = self.inside(receipt) if receipt else self.local / f"native-receipt-{stage}-{pending['ticket']}.json"
+        if not receipt_path.is_relative_to(self.local) or receipt_path.is_symlink():
+            raise ProtocolError("Generated native receipts must stay in this run's non-symlink runtime directory.")
+        atomic_json(receipt_path, receipt_value)
+        result_value = {
+            "schema_version": SCHEMA,
+            "delivery_run": self.run,
+            "lane": state["lane"],
+            "stage": stage,
+            "scope": pending.get("scope", "outgoing-diff"),
+            "ticket": pending["ticket"],
+            "input_fingerprint": pending["input_fingerprint"],
+            "verdict": verdict,
+            "report": report_ref,
+            "native_receipt": {
+                "path": self.relative(receipt_path),
+                "sha256": digest(receipt_path.read_bytes()),
+            },
+            "data": data,
+        }
+        output_path = self.inside(output) if output else self.local / f"result-{stage}.json"
+        if not output_path.is_relative_to(self.local) or output_path.is_symlink():
+            raise ProtocolError("Generated results must stay in this run's non-symlink runtime directory.")
+        atomic_json(output_path, result_value)
+        generated = {
+            "stage": stage,
+            "ticket": pending["ticket"],
+            "verdict": verdict,
+            "result": self.relative(output_path),
+            "native_receipt": self.relative(receipt_path),
+        }
+        if record_result:
+            return {"generated": generated, "recorded": self.record(stage, self.relative(output_path), operation_id)}
+        return {"generated": generated}
+
     def _explicit_report_verdict(self, path: Path, stage: str) -> str | None:
         try:
             text = path.read_text(encoding="utf-8")
@@ -2193,8 +2310,8 @@ class Runtime:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("operation", choices=(
-        "init", "bind", "phase", "begin", "record", "needs", "require", "reserve",
-        "complete", "present", "decide", "status", "resume", "outcome",
+        "init", "bind", "phase", "begin", "record", "owner-result", "needs", "require",
+        "reserve", "complete", "present", "decide", "status", "resume", "outcome",
         "task-start", "task-gate", "task-record", "close-record",
     ))
     parser.add_argument("--root", type=Path, default=Path.cwd())
@@ -2210,6 +2327,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--operation-id", help="stable occurrence key used to replay one completed helper mutation")
     parser.add_argument("--stage", choices=sorted(VERDICTS))
     parser.add_argument("--file")
+    parser.add_argument("--report", help="native owner report used by owner-result")
+    parser.add_argument("--data", help="JSON data object used by owner-result")
+    parser.add_argument("--verdict", help="native owner verdict used by owner-result")
+    parser.add_argument("--output", help="generated normalized result path (default runtime/result-<stage>.json)")
+    parser.add_argument("--receipt", help="generated native receipt path")
+    parser.add_argument("--record-result", action="store_true", help="validate and record the generated owner result in one call")
     parser.add_argument("--planning-manifest", help="exact project-relative checkpoint manifest under this run's runtime directory")
     parser.add_argument("--kind")
     parser.add_argument("--scope", default="outgoing-diff")
@@ -2247,7 +2370,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise ProtocolError("An explicit --run is required; use status to list available runs.")
             runtime = Runtime(args.root, args.run)
             operation = args.operation
-            mutation_operations = {"init", "bind", "phase", "begin", "record", "reserve", "complete", "present", "decide"}
+            mutation_operations = {"init", "bind", "phase", "begin", "record", "owner-result", "reserve", "complete", "present", "decide"}
             if args.workflow_run and args.operation_id:
                 raise ProtocolError("Use either --workflow-run for engine occurrence journaling or an explicit --operation-id, not both.")
             operation_id = args.operation_id
@@ -2266,6 +2389,17 @@ def main(argv: list[str] | None = None) -> int:
                 result = runtime.begin(args.stage, bool(args.resume), args.scope, operation_id)
             elif operation == "record":
                 result = runtime.record(args.stage, args.file, operation_id, args.planning_manifest)
+            elif operation == "owner-result":
+                result = runtime.owner_result(
+                    args.stage,
+                    args.report,
+                    args.data,
+                    args.verdict,
+                    args.output,
+                    args.receipt,
+                    args.record_result,
+                    operation_id,
+                )
             elif operation == "needs":
                 sys.stdout.write("true" if runtime.needs(args.kind) else "false")
                 return 0

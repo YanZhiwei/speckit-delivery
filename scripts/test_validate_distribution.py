@@ -327,7 +327,21 @@ class DistributionContractTest(unittest.TestCase):
             encoding="utf-8",
         )
         errors = validator.validate(root)
-        self.assertTrue(any("documentation gate" in error for error in errors), errors)
+        self.assertTrue(any("task-closure gate" in error for error in errors), errors)
+
+    def test_ralph_must_keep_the_task_scoped_quality_brief(self) -> None:
+        root = self.fixture()
+        path = root / "extensions/ralph/commands/speckit.ralph.run.md"
+        path.write_text(
+            path.read_text(encoding="utf-8").replace(
+                "speckit.quality.brief", "speckit.quality.check"
+            ),
+            encoding="utf-8",
+        )
+        errors = validator.validate(root)
+        self.assertTrue(
+            any("speckit.quality.brief" in error for error in errors), errors
+        )
 
     def test_reviewer_report_must_carry_method_receipt(self) -> None:
         root = self.fixture()

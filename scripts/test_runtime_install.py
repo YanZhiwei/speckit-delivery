@@ -119,6 +119,7 @@ def ensure_git_fixture(project: Path) -> tuple[Path, bytes]:
 
 
 def write_owner_result(
+    helper: Path,
     project: Path,
     pending: dict[str, Any],
     data: dict[str, Any],
@@ -129,55 +130,31 @@ def write_owner_result(
     report = local / f"native-{stage}-report.txt"
     report.parent.mkdir(parents=True, exist_ok=True)
     report.write_text(report_text, encoding="utf-8")
-    report_ref = reference(project, report)
-
-    evidence: list[dict[str, str]] = []
-
-    def collect(value: Any) -> None:
-        if isinstance(value, dict):
-            if set(value) == {"path", "sha256"}:
-                evidence.append({"path": value["path"], "sha256": value["sha256"]})
-            else:
-                for child in value.values():
-                    collect(child)
-        elif isinstance(value, list):
-            for child in value:
-                collect(child)
-
-    collect(data)
-    result = {
-        "schema_version": pending["schema_version"],
-        "delivery_run": pending["delivery_run"],
-        "lane": pending["lane"],
-        "stage": pending["stage"],
-        "scope": pending.get("scope", "outgoing-diff"),
-        "ticket": pending["ticket"],
-        "input_fingerprint": pending["input_fingerprint"],
-        "verdict": "pass",
-        "report": report_ref,
-        "data": data,
-    }
-    receipt = {
-        "schema_version": 1,
-        "receipt_type": "delivery-native-owner",
-        "delivery_run": result["delivery_run"],
-        "lane": result["lane"],
-        "stage": result["stage"],
-        "scope": result["scope"],
-        "ticket": result["ticket"],
-        "input_fingerprint": result["input_fingerprint"],
-        "verdict": result["verdict"],
-        "report": report_ref,
-        "evidence": evidence,
-        "data": data,
-        "head": pending["snapshot"]["head"],
-    }
-    receipt_path = local / f"native-{stage}-receipt.json"
-    receipt_path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
-    result["native_receipt"] = reference(project, receipt_path)
-
+    data_path = local / f"data-{stage}.json"
+    data_path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
     result_path = local / f"result-{stage}.json"
-    result_path.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+    generated = json_output(
+        runtime_cli(
+            helper,
+            project,
+            "owner-result",
+            "--run",
+            pending["delivery_run"],
+            "--stage",
+            stage,
+            "--report",
+            relative(project, report),
+            "--data",
+            relative(project, data_path),
+            "--verdict",
+            "pass",
+            "--output",
+            relative(project, result_path),
+            "--json",
+        )
+    )
+    if generated.get("generated", {}).get("ticket") != pending["ticket"]:
+        raise RuntimeError("installed owner-result helper changed the pending ticket")
     return result_path
 
 
@@ -219,6 +196,7 @@ def run_planning_checkpoint_smoke(
         runtime_cli(helper, project, "begin", "--run", run, "--stage", "analyze", "--json")
     )
     write_owner_result(
+        helper,
         project,
         analyze,
         {"coverage": "complete"},
@@ -262,6 +240,7 @@ def run_planning_checkpoint_smoke(
     )
     branch = git(project, "branch", "--show-current").stdout.strip()
     write_owner_result(
+        helper,
         project,
         checkpoint,
         {
@@ -369,6 +348,7 @@ def run_lightweight_quality_smoke(
         ]
     }
     write_owner_result(
+        helper,
         project,
         pending,
         data,

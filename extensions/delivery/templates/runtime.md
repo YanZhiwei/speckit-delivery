@@ -122,6 +122,25 @@ coordinator follows this sequence. The independent reviewer remains read-only.
    host CLI exited zero. A resumed consumer does not rely on another process's
    conversation or stdout.
 
+Instead of hand-writing the envelope and receipt, a coordinator may run:
+
+```text
+<python> .specify/extensions/delivery/scripts/delivery_runtime.py owner-result --run <id> \
+  --stage <stage> --report <native-report> --data <data.json> --verdict <verdict> \
+  [--output runtime/result-<stage>.json] [--receipt runtime/native-receipt-<stage>-<ticket>.json] \
+  [--record-result]
+```
+
+`owner-result` copies the exact pending ticket, scope, input fingerprint, lane,
+and input HEAD into both files, hashes the real report bytes, and collects
+evidence recursively from `data`. A data evidence value may use
+`{"path": "...", "sha256": ""}` to ask the helper to hash that run-local file;
+nonempty hashes are preserved and still validated. `--record-result` delegates to
+the same `record` validation described below; it is not a bypass. Workflows that
+already declare adjacent `begin` and `record` steps should build without
+`--record-result` and keep that explicit transition. The native owner still
+supplies the verdict and semantic report; the helper makes no quality judgment.
+
 Envelope (exact keys; no extras):
 
 ```json

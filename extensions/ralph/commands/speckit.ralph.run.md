@@ -254,8 +254,12 @@ the remaining dependency graph, or the configured iteration limit is reached:
 
     In an SD run, transport each owner result through `begin`/`record` with
     runtime scope `task-<TaskID>` as defined by the central runtime contract.
-    Preserve immutable native report/check paths per task and ticket. Final
-    `outgoing-diff` reports cannot stand in for a task's pre-commit passes.
+    Use `delivery_runtime.py owner-result` with the native report and a stage
+    data JSON to generate the machine receipt and normalized result instead of
+    hand-writing their identity fields; add `--record-result` only when no
+    adjacent workflow `record` step exists. Preserve immutable native report/
+    check paths per task and ticket. Final `outgoing-diff` reports cannot stand
+    in for a task's pre-commit passes.
 
     For confirmed blockers, invoke `speckit.delivery.review-fix` with
     `lane=feature scope=task task=<id>`, the supplied `delivery_run`, exact

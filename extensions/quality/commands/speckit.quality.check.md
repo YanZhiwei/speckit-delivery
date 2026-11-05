@@ -15,8 +15,9 @@ When `runtime_stage=quality` and `runtime_result=<path>` are supplied, require
 `.specify/extensions/delivery/templates/runtime.md` plus
 `.specify/delivery/<delivery_run>/runtime/input-quality.json` before running the
 native contract. Preserve the original per-check execution receipts in a native
-report that includes the explicit `QUALITY_VERDICT` header. Then write both exact
-artifacts the runtime contract defines: the machine `native_receipt` binding this
+report that includes the explicit `QUALITY_VERDICT` header. Use the runtime
+`owner-result` helper with this report and a stage data JSON, or write the two
+exact artifacts the runtime contract defines: the machine `native_receipt` binding this
 stage's identity, verdict, HEAD, report, `evidence` list, and `data`, and the
 normalized envelope at the supplied `runtime_result` path with the pending
 `scope`, ticket, and input fingerprint. A pass cannot have a failing/missing

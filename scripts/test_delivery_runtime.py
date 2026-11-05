@@ -413,6 +413,80 @@ class DeliveryRuntimeTest(unittest.TestCase):
         with self.assertRaises(RUNTIME.ProtocolError):
             runtime.require("quality")
 
+    def test_owner_result_builds_receipt_and_can_record_without_manual_hashes(self) -> None:
+        runtime = self.new_runtime("owner-result", "lightweight")
+        pending = runtime.begin("quality")
+        check = self.native_file(runtime, "checks", "owner-check", "fixture check: exit 0\n")
+        report = self.native_file(
+            runtime, "reports", "quality-native", "QUALITY_VERDICT: pass\n"
+        )
+        data = {
+            "checks": [
+                {
+                    "command": "fixture-check",
+                    "exit_code": 0,
+                    "evidence": {"path": self.relative(check), "sha256": ""},
+                }
+            ]
+        }
+        data_path = self.write(
+            ".specify/delivery/owner-result/runtime/data-quality.json",
+            json.dumps(data),
+        )
+        built = self.cli(
+            "owner-result",
+            "owner-result",
+            stage="quality",
+            report=self.relative(report),
+            data=self.relative(data_path),
+            verdict="pass",
+            record_result=True,
+        )
+        payload = json.loads(built.stdout)
+        self.assertEqual(payload["generated"]["ticket"], pending["ticket"])
+        self.assertTrue(payload["recorded"]["verdict"] == "pass")
+        self.assertTrue(runtime.current(runtime.load(), "quality", "pass"))
+        stored = runtime.load()["stages"]["quality"]
+        self.assertEqual(
+            stored["data"]["checks"][0]["evidence"]["sha256"],
+            RUNTIME.digest(check.read_bytes()),
+        )
+        self.assertTrue((runtime.local / f"result-quality.json").is_file())
+        self.assertTrue(
+            (runtime.local / f"native-receipt-quality-{pending['ticket']}.json").is_file()
+        )
+
+    def test_owner_result_build_only_keeps_pending_and_rejects_wrong_stage_verdict(self) -> None:
+        runtime = self.new_runtime("owner-result-build", "lightweight")
+        runtime.begin("standards")
+        report = self.native_file(
+            runtime, "reports", "standards-native", "STANDARDS_VERDICT: pass\n"
+        )
+        data_path = self.write(
+            ".specify/delivery/owner-result-build/runtime/data-standards.json",
+            json.dumps({"coverage": "complete"}),
+        )
+        built = self.cli(
+            "owner-result",
+            "owner-result-build",
+            stage="standards",
+            report=self.relative(report),
+            data=self.relative(data_path),
+            verdict="pass",
+        )
+        self.assertIn("standards", runtime.load()["pending"])
+        self.assertTrue(json.loads(built.stdout)["generated"]["result"].endswith("result-standards.json"))
+        rejected = self.cli(
+            "owner-result",
+            "owner-result-build",
+            stage="standards",
+            report=self.relative(report),
+            data=self.relative(data_path),
+            verdict="converged",
+            expected=1,
+        )
+        self.assertIn("not valid for standards", rejected.stderr)
+
     def test_status_and_resume_are_read_only_with_pending_owner_input(self) -> None:
         runtime = self.new_runtime("status-run")
         runtime.begin("review")
