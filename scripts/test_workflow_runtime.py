@@ -1399,6 +1399,7 @@ class WorkflowRuntimeTest(unittest.TestCase):
         self.assertEqual(fake.stage_counts.get("quality"), 1)
         self.assertEqual(fake.stage_counts.get("standards"), 1)
         self.assertEqual(fake.checkpoint_stages, ["initial"])
+        self.assertNotIn("speckit.quality.brief", fake.calls)
         self.assertIn("speckit.evidence.collect", fake.calls)
         self.assertIn("speckit.delivery.handoff", fake.calls)
         packet = root / ".specify" / "delivery" / "feature-initial" / "exploration.md"

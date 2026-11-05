@@ -384,11 +384,6 @@ steps:
       {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} phase
       --run {{ inputs.delivery_run }} --name execution
 
-  - id: quality-brief-before-ralph
-    command: speckit.quality.brief
-    integration: "{{ inputs.integration }}"
-    input: { args: "scope=implementation lane=feature delivery_run={{ inputs.delivery_run }} exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md {{ inputs.spec }} Read the exact approved plan recorded in this packet and carry applicable Architecture constraint rows into the pre-edit brief." }
-
   - id: ralph
     command: speckit.ralph.run
     integration: "{{ inputs.integration }}"

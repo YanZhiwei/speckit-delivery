@@ -24,9 +24,10 @@ run root. Follow the central owner at
 `.specify/extensions/delivery/templates/runtime.md`. When either
 `runtime_stage` or `runtime_result` is supplied, require the canonical
 `delivery_run`, read that file in full, and follow its runtime contract; do not
-invent helper flags, paths, or result schemas. Write the native verification
-report plus the exact machine `native_receipt` and normalized envelope the
-contract defines, covering exactly the runtime-accepted candidate IDs. With
+invent helper flags, paths, or result schemas. Use the runtime `owner-result`
+helper with the native verification report and a stage data JSON, or write the
+exact machine `native_receipt` and normalized envelope the contract defines,
+covering exactly the runtime-accepted candidate IDs. With
 neither argument, do not create runtime state here.
 
 A standalone invocation without `delivery_run` may compare the supplied diff and

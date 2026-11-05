@@ -15,7 +15,8 @@ When `runtime_stage=standards` and `runtime_result=<path>` are supplied, require
 `.specify/extensions/delivery/templates/runtime.md` plus
 `.specify/delivery/<delivery_run>/runtime/input-standards.json` before the native
 review. Preserve this native standards report under the same run with its explicit
-`STANDARDS_VERDICT` header. Then write the machine `native_receipt` and the exact
+`STANDARDS_VERDICT` header. Use the runtime `owner-result` helper with this report
+and a stage data JSON, or write the machine `native_receipt` and the exact
 normalized envelope at the supplied path, copying the pending `scope`, ticket, and
 input fingerprint and referencing the real report bytes. The native receipt must
 bind the same report/data/evidence. The runtime envelope is transport validation

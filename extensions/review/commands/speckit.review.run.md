@@ -16,7 +16,8 @@ When `runtime_stage=review` and `runtime_result=<path>` are supplied, require
 `.specify/delivery/<delivery_run>/runtime/input-review.json` before reviewing.
 The native report remains the source of semantic truth. After the read-only
 review, write the complete native report under this run with its explicit
-`REVIEW_VERDICT` header and exact snapshot/finding data. Then write both exact
+`REVIEW_VERDICT` header and exact snapshot/finding data. Use the runtime
+`owner-result` helper with this report and a stage data JSON, or write both exact
 artifacts the runtime contract defines: the machine `native_receipt` (binding this
 stage's identity, verdict, HEAD, report, ordered `evidence` references, and
 `data`) and the normalized envelope at the exact supplied `runtime_result` path,

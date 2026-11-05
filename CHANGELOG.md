@@ -2,6 +2,29 @@
 
 All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and Semantic Versioning.
 
+## [0.4.3] - 2026-11-06
+
+### Added
+
+- `delivery_runtime.py owner-result` builds the machine native receipt and
+  normalized result from the exact pending ticket, native report, and stage
+  data. It hashes run-local evidence paths, can fill empty `sha256` fields, and
+  optionally delegates to the normal `record` validation, removing manual
+  ticket/fingerprint/hash copying without weakening freshness checks.
+
+### Changed
+
+- Feature Delivery no longer dispatches a whole-run Quality Brief before Ralph.
+  Ralph's task-scoped Brief remains the pre-edit advisory for each task, so the
+  normal Feature path loses one redundant model round while preserving target
+  paths and applicable plan constraints.
+
+### Tests
+
+- Runtime regressions cover generated owner results, evidence hashing, and
+  one-call recording. Workflow and distribution checks assert that Feature has no
+  duplicate global Brief and Ralph retains its task-scoped Brief.
+
 ## [0.4.2] - 2026-11-05
 
 ### Added

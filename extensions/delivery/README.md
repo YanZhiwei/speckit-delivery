@@ -160,7 +160,10 @@ remain. Runtime checks identity, freshness, completeness, report/evidence hashes
 and the exact machine owner receipt that binds a normalized result to its native
 report, HEAD, verdict, and evidence; Quality, Standards, Reviewer, Core, and Ralph
 remain the semantic owners. A valid envelope or exit code is not automatic
-semantic judging.
+semantic judging. `delivery_runtime.py owner-result` builds both files from the
+pending ticket, native report, and a stage data JSON; it can fill empty evidence
+hashes and optionally delegate to the normal `record` transition, removing manual
+ticket/fingerprint/hash copying without weakening those checks.
 
 Feature execution reads the SD-scoped Core compatibility contract at
 [`templates/core-adapter.md`](templates/core-adapter.md). Core Tasks/Analyze/

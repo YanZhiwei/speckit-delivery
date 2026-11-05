@@ -3,6 +3,26 @@
 所有重要变更遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)
 和语义化版本规范。
 
+## [0.4.3] - 2026-11-06
+
+### 新增
+
+- `delivery_runtime.py owner-result`：从准确的 pending ticket、原生报告和阶段
+  data 生成机器 `native_receipt` 与规范 envelope。它会哈希运行目录内的证据路径，
+  可补全空的 `sha256` 字段，并可选择交给现有 `record` 校验记录，消除手工复制
+  ticket／fingerprint／哈希，同时不削弱新鲜度检查。
+
+### 变更
+
+- Feature Delivery 不再在 Ralph 之前单独调度整轮 Quality Brief。Ralph 的逐任务
+  Brief 仍是每个任务编辑前的提醒，保留目标路径和适用 Plan 约束，同时从正常
+  Feature 路径移除一次重复的模型轮次。
+
+### 测试
+
+- Runtime 回归覆盖生成的 owner result、证据哈希和一次调用记录；Workflow 与分发
+  检查确认 Feature 不再重复全局 Brief，且 Ralph 保留逐任务 Brief。
+
 ## [0.4.2] - 2026-11-05
 
 ### 新增

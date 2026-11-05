@@ -24,8 +24,9 @@ that same run root. Per-run operational state/results belong under
 `.specify/extensions/delivery/templates/runtime.md`. When either `runtime_stage` or `runtime_result` is supplied, require the
 canonical `delivery_run`, read `.specify/extensions/delivery/templates/runtime.md`
 in full, and follow that runtime contract; do not invent helper flags, paths, or
-result schemas. Write the native candidate report plus the exact machine
-`native_receipt` and normalized envelope the contract defines, with the real
+result schemas. Use the runtime `owner-result` helper with the native candidate
+report and a stage data JSON, or write the exact machine `native_receipt` and
+normalized envelope the contract defines, with the real
 candidate ID list and report bytes. With neither argument, do not create runtime
 state here.
 
