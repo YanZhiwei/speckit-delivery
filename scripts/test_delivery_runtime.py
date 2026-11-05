@@ -639,6 +639,122 @@ class DeliveryRuntimeTest(unittest.TestCase):
         with self.assertRaises(RUNTIME.ProtocolError):
             runtime.load()
 
+    def test_outgoing_review_history_survives_task_reviews_and_pending_task_status_is_visible(self) -> None:
+        runtime, feature = self.feature_runtime(
+            "review-history-task-scope",
+            tasks=(
+                "# Tasks\n\n"
+                "- [ ] T001 Implement the task-scoped change\n"
+                "- [ ] T002 Follow-up task\n"
+            ),
+        )
+        branch = self.git("branch", "--show-current").stdout.strip()
+        runtime.task_start("T001", branch, ["src/app.py"])
+        started_status = runtime.status()
+        self.assertEqual(started_status["pending_tasks"][0]["task"], "T001")
+        self.assertEqual(started_status["pending_tasks"][0]["status"], "started")
+
+        keep = {"id": "F-KEEP", "status": "open", "blocking": True}
+        outgoing = runtime.begin("review", scope="outgoing-diff")
+        self.result_file(
+            runtime,
+            outgoing,
+            "blocked",
+            self.review_data(runtime, findings=[keep], repairable=True),
+            report_text="REVIEW_VERDICT: blocked\n",
+        )
+        outgoing_record = runtime.record("review")
+        outgoing_fingerprint = outgoing_record["input_fingerprint"]
+
+        task_minor = {"id": "F-MINOR", "status": "open", "blocking": False}
+        task_quality = runtime.begin("quality", scope="task-T001")
+        self.result_file(
+            runtime,
+            task_quality,
+            "pass",
+            self.quality_data(runtime),
+            report_text="QUALITY_VERDICT: pass\n",
+        )
+        task_quality_record = runtime.record("quality")
+        task_standards = runtime.begin("standards", scope="task-T001")
+        self.result_file(
+            runtime,
+            task_standards,
+            "pass",
+            {"coverage": "complete"},
+            report_text="STANDARDS_VERDICT: pass\n",
+        )
+        task_standards_record = runtime.record("standards")
+        task_review = runtime.begin("review", scope="task-T001")
+        self.result_file(
+            runtime,
+            task_review,
+            "pass",
+            self.review_data(runtime, findings=[task_minor]),
+            report_text="REVIEW_VERDICT: pass\n",
+        )
+        task_record = runtime.record("review")
+        self.assertEqual(task_record["scope"], "task-T001")
+        self.assertEqual(task_record["input_fingerprint"], outgoing_fingerprint)
+        self.assertEqual(task_quality_record["scope"], "task-T001")
+        self.assertEqual(task_standards_record["scope"], "task-T001")
+
+        docs = runtime.local / "docs-refresh.json"
+        docs.write_text(
+            '{"required": false, "reason": "No public documentation changed."}\n',
+            encoding="utf-8",
+        )
+        runtime.task_gate("T001", self.relative(docs))
+        gated_status = runtime.status()
+        self.assertEqual(gated_status["pending_tasks"][0]["task"], "T001")
+        self.assertEqual(gated_status["pending_tasks"][0]["status"], "gated")
+        self.assertTrue(feature.joinpath("tasks.md").is_file())
+
+        # A different task scope does not inherit T001's open minor finding.
+        task_two_quality = runtime.begin("quality", scope="task-T002")
+        self.result_file(
+            runtime,
+            task_two_quality,
+            "pass",
+            self.quality_data(runtime),
+            report_text="QUALITY_VERDICT: pass\n",
+        )
+        runtime.record("quality")
+        task_two_standards = runtime.begin("standards", scope="task-T002")
+        self.result_file(
+            runtime,
+            task_two_standards,
+            "pass",
+            {"coverage": "complete"},
+            report_text="STANDARDS_VERDICT: pass\n",
+        )
+        runtime.record("standards")
+        task_two_review = runtime.begin("review", scope="task-T002")
+        self.result_file(
+            runtime,
+            task_two_review,
+            "pass",
+            self.review_data(runtime),
+            report_text="REVIEW_VERDICT: pass\n",
+        )
+        self.assertEqual(runtime.record("review")["scope"], "task-T002")
+
+        outgoing_retry = runtime.begin("review", scope="outgoing-diff")
+        self.result_file(
+            runtime,
+            outgoing_retry,
+            "blocked",
+            self.review_data(runtime, findings=[], repairable=True),
+            report_text="REVIEW_VERDICT: blocked\n",
+        )
+        with self.assertRaisesRegex(RUNTIME.ProtocolError, "unresolved finding"):
+            runtime.record("review")
+
+        state = runtime.load()
+        self.assertEqual(state["stages"]["review"]["scope"], "task-T002")
+        self.assertEqual(state["outgoing_review"]["scope"], "outgoing-diff")
+        self.assertEqual(state["outgoing_review"]["data"]["findings"], [keep])
+
     def test_review_requires_complete_six_axes_and_current_quality_and_standards(self) -> None:
         runtime, _ = self.feature_runtime("review-contract")
 
@@ -825,7 +941,7 @@ class DeliveryRuntimeTest(unittest.TestCase):
         self.assertEqual(source.read_bytes(), source_before)
         self.assertEqual(self.git("status", "--short").stdout, status_before)
 
-    def test_converge_is_append_only_tracks_actual_ids_and_converged_keeps_bytes(self) -> None:
+    def test_converge_is_append_only_but_converged_requires_task_closure_receipts(self) -> None:
         original_tasks = (
             "# Tasks\n\n"
             "- [ ] T1 Implement the change\n"
@@ -863,13 +979,9 @@ class DeliveryRuntimeTest(unittest.TestCase):
             "converged",
             {"appended_tasks": []},
         )
-        runtime.record("converge")
+        with self.assertRaisesRegex(RUNTIME.ProtocolError, "closure record"):
+            runtime.record("converge")
         self.assertEqual(tasks_path.read_bytes(), before_converged)
-        self.assertFalse(runtime.needs("convergence"))
-        self.assertEqual(
-            runtime.require("convergence"),
-            {"required": "convergence", "ready": True},
-        )
 
         rewritten = runtime.begin("converge")
         current = tasks_path.read_text(encoding="utf-8")
@@ -1425,9 +1537,57 @@ class DeliveryRuntimeTest(unittest.TestCase):
             runtime.outcome("closed", True, None)
 
     def test_handoff_ready_is_distinct_from_delivered_terminal_scope(self) -> None:
-        runtime, _ = self.feature_runtime("handoff-run")
-        self.record_pass_quality_and_standards(runtime)
-        self.record_pass_review(runtime)
+        runtime, feature = self.feature_runtime(
+            "handoff-run",
+            tasks="# Tasks\n\n- [ ] T001 Implement the change\n",
+        )
+        branch = self.git("branch", "--show-current").stdout.strip()
+        runtime.task_start("T001", branch, ["src/app.py"])
+        self.write("src/app.py", "VALUE = 2\n")
+
+        quality = runtime.begin("quality", scope="task-T001")
+        self.result_file(
+            runtime,
+            quality,
+            "pass",
+            self.quality_data(runtime),
+            report_text="QUALITY_VERDICT: pass\n",
+        )
+        runtime.record("quality")
+        standards = runtime.begin("standards", scope="task-T001")
+        self.result_file(
+            runtime,
+            standards,
+            "pass",
+            {"coverage": "complete"},
+            report_text="STANDARDS_VERDICT: pass\n",
+        )
+        runtime.record("standards")
+        review = runtime.begin("review", scope="task-T001")
+        self.result_file(
+            runtime,
+            review,
+            "pass",
+            self.review_data(runtime),
+            report_text="REVIEW_VERDICT: pass\n",
+        )
+        runtime.record("review")
+
+        docs = runtime.local / "docs-refresh.json"
+        docs.write_text(
+            '{"required": false, "reason": "No public documentation changed."}\n',
+            encoding="utf-8",
+        )
+        runtime.task_gate("T001", self.relative(docs))
+        tasks = feature / "tasks.md"
+        tasks.write_text(
+            tasks.read_text(encoding="utf-8").replace("- [ ] T001", "- [x] T001"),
+            encoding="utf-8",
+        )
+        self.git("add", "--", "src/app.py", self.relative(tasks))
+        self.git("commit", "--quiet", "-m", "T001 implement the reviewed change")
+        runtime.task_record("T001", self.git("rev-parse", "HEAD").stdout.strip())
+
         evidence = self.write(
             ".specify/delivery/handoff-run/evidence.md",
             "delivery_run: handoff-run\n"
@@ -1440,6 +1600,34 @@ class DeliveryRuntimeTest(unittest.TestCase):
             "# Handoff\n\nNative Handoff body.\n",
         )
         runtime.require("evidence")
+
+        final_quality = runtime.begin("quality", scope="outgoing-diff")
+        self.result_file(
+            runtime,
+            final_quality,
+            "pass",
+            self.quality_data(runtime),
+            report_text="QUALITY_VERDICT: pass\n",
+        )
+        runtime.record("quality")
+        final_standards = runtime.begin("standards", scope="outgoing-diff")
+        self.result_file(
+            runtime,
+            final_standards,
+            "pass",
+            {"coverage": "complete"},
+            report_text="STANDARDS_VERDICT: pass\n",
+        )
+        runtime.record("standards")
+        final_review = runtime.begin("review", scope="outgoing-diff")
+        self.result_file(
+            runtime,
+            final_review,
+            "pass",
+            self.review_data(runtime),
+            report_text="REVIEW_VERDICT: pass\n",
+        )
+        runtime.record("review")
 
         handoff = runtime.phase("handoff")
         self.assertEqual(handoff["status"], "handoff-ready")

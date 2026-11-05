@@ -67,15 +67,26 @@ choose the newest record, or repair the mismatch by changing metadata.
 
 ### 2. Bind evidence to this reviewed change
 
-Resolve the live base, HEAD, merge-base, outgoing diff, and changed paths,
-including staged, unstaged, deleted, and relevant untracked content. Read the
-applicable project verification configuration, CI definitions, hooks, and changed
-code. Map every material surface to the narrowest credible evidence: build or
-typecheck for compiled code, focused tests for behavior, integration or migration
-checks for data boundaries, contract checks for APIs, browser evidence for user
-flows, documentation/link checks for docs, and security checks for trust-boundary
-changes. Record commands, working directory, relevant environment, exit status,
-and concise results, including disclosed CI or human follow-up gaps.
+Resolve the live base, `reviewed_head`, merge-base, outgoing diff, and changed
+paths, including staged, unstaged, deleted, and relevant untracked content. Read
+the applicable project verification configuration, CI definitions, hooks, and
+changed code. Map every material surface to the narrowest credible evidence:
+build or typecheck for compiled code, focused tests for behavior, integration or
+migration checks for data boundaries, contract checks for APIs, browser evidence
+for user flows, documentation/link checks for docs, and security checks for
+trust-boundary changes. Record commands, working directory, relevant environment,
+exit status, and concise results, including disclosed CI or human follow-up gaps.
+
+`reviewed_head` is the exact historical revision whose bytes the native Review
+and Evidence consumed. Record it explicitly; do not leave only a generic `HEAD`
+label. It is immutable review provenance and must never be replaced with a later
+squash or merge commit. Before publication, `original_pr_head` is
+`pending`/`not-yet-published`. Once a verified PR publication observation exists,
+record its `head_revision` as `original_pr_head`; that value remains historical
+and is not the effective delivered head. If publication changes the PR head after
+review, bind the tracker head explicitly as `published_head` and record the
+content-equivalence or exact bookkeeping/archive proof; never silently absorb a
+source change into the old review.
 
 Read the actual requirement source for the lane: Feature's approved exploration
 and Spec/Plan/ADR inputs, Bugfix's exact exploration and assessment plus the
@@ -86,8 +97,11 @@ to create another review or task queue.
 
 Record deterministic identities for the evidence:
 
-- base, HEAD, merge-base, scope, changed-path manifest, and a content fingerprint
-  of the reviewed bytes/modes;
+- `base_revision`, `reviewed_head`, merge-base, scope, changed-path/mode
+  manifest, and a content fingerprint of the reviewed bytes;
+- `original_pr_head` (or explicit pending/not-yet-published before publication)
+  and, only when the PR head differs after review, explicit `published_head` plus
+  its proof reference;
 - the requirements/design/policy inputs and a requirements fingerprint, including
   the selected optional method config/resource identity when one was used;
 - `lane`, `delivery_run`, and the exact `evidence_path`;
@@ -96,8 +110,9 @@ Record deterministic identities for the evidence:
 
 The fingerprints must cover actual reviewed content and requirements, not HEAD
 alone. A new commit, relevant working-tree change, changed requirement, or changed
-policy invalidates stale evidence. Do not invent a squash merge or other future
-revision. If a supplied `pr=` conflicts with the existing same-run record, stop.
+policy invalidates stale evidence. Do not invent a squash merge, a future
+`merged_revision`, or an effective post-merge head here. If a supplied `pr=`
+conflicts with the existing same-run record, stop.
 
 ### 3. Reuse checks without relabeling old work
 
@@ -127,6 +142,9 @@ lane-specific fields that do not apply):
 - **lane**: feature | bugfix | lightweight
 - **evidence_path**: .specify/delivery/<run id>/evidence.md
 - **exploration_path**: .specify/delivery/<run id>/exploration.md  # Feature/Bugfix
+- **base_revision**: <base SHA used by this validation snapshot>
+- **reviewed_head**: <exact SHA reviewed by native Review and Evidence>
+- **original_pr_head**: pending | not-yet-published | <verified historical PR head SHA>
 - **content_fingerprint**: <method and digest>
 - **requirements_fingerprint**: <method and digest>
 - **method_identity**: <selected builtin or external config/resource receipt, or not-applicable>
@@ -138,23 +156,40 @@ lane-specific fields that do not apply):
 
 For an existing file, validate these fields before writing. A missing or
 malformed same-run identity is a blocking ambiguity, not permission to infer or
-relabel. For a matching run, append the new verification/history entry or update
-only the current summary while preserving prior history and the original Quality
-receipts. Keep the record self-contained and disclose every material evidence
-gap. A later Feature location or Bug identity is metadata inside this record; it
-never changes the canonical path.
+relabel. For a matching run, append an immutable **historical validation
+snapshot** with `observed_at`, `reviewed_head`, the requirements/content
+identities, results, and limitations, or update only the Evidence-owned
+pre-publication summary while preserving prior history and the original Quality
+receipts. Every limitation such as "awaits CI" or "not merged" must be scoped to
+that snapshot; do not write an unscoped sentence that can contradict a later
+Close outcome. A later Feature location or Bug identity is metadata inside this
+record; it never changes the canonical path.
 
-Do not write or change `status`, `outcome_recorded_at`, `merged_revision`,
-`superseded_by`, or the retirement reason here. The durable record stays active
-until `speckit.delivery.close` verifies the actual PR outcome and records
-`delivered`, `abandoned`, or `superseded`.
+If a PR publication changes the head, add the verified `published_head` binding
+and its exact content-equivalence/archive proof to the historical snapshot. Do
+not overwrite `reviewed_head`, native Review report heads, or old limitations.
+Do not fabricate an archive from a fingerprint: an archive proof must identify
+its base, PR head, changed paths/modes and bytes/patch plus a digest. When used,
+keep the exact bindings in `reviewed_diff_archive`,
+`reviewed_diff_archive_sha256`, `reviewed_diff_archive_base`,
+`reviewed_diff_archive_head`, and `reviewed_diff_archive_reviewed_head`.
+
+Do not write or change the Close-owned `status`, `outcome`,
+`outcome_recorded_at`, `merged_revision`, `effective_head`, `superseded_by`, or
+the retirement reason here. The durable record stays active until
+`speckit.delivery.close` verifies the actual PR outcome and writes the unique
+`DELIVERY_CURRENT_OUTCOME_BEGIN` / `DELIVERY_CURRENT_OUTCOME_END` block. Close
+updates only that current block; it retains these validation snapshots and
+original reports unchanged.
 
 ## Completion
 
-Print the exact `EVIDENCE_PATH`, `DELIVERY_RUN`, `LANE`, reviewed HEAD/content and
-requirements identities, pull-request reference state, verification results, and
-follow-up gaps. The command is complete only when every material changed surface
-has credible evidence or a clearly owned disclosed gap, the on-disk record is at
-the validated canonical path, and its metadata matches the same run. A blocked
+Print the exact `EVIDENCE_PATH`, `DELIVERY_RUN`, `LANE`, `reviewed_head`,
+`original_pr_head`/publication state, content and requirements identities,
+pull-request reference state, verification results, and follow-up gaps. The
+command is complete only when every material changed surface has credible
+evidence or a clearly owned disclosed gap, the on-disk record is at the
+validated canonical path, and its metadata matches the same run. A blocked
 identity or unverifiable receipt returns concrete recovery guidance instead of a
-new or guessed record.
+new or guessed record. Evidence completion is not a merge claim and never
+changes the Close-owned current outcome block.

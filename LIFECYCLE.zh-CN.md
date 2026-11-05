@@ -17,7 +17,7 @@
 | Review 修复检查点 | 编排器 | 与 Run 相同 | 跨恢复／新 HEAD 保留尝试次数、上限和未解决 ID |
 | Quality Verdict | Task/Ralph | 默认临时 | HEAD、范围、Profile、检查和结果 |
 | Standards Verdict | Task/Ralph | 默认临时 | HEAD、范围、语义规范判定和阻断项 |
-| Evidence 报告 | 交付运行/PR | 持久摘要 | 命令、结果、环境风险，以及实际记录的 PR 结果（`delivered`／`abandoned`／`superseded`） |
+| Evidence 报告 | 交付运行/PR | 持久摘要 | 不可变的 Review／发布快照，加上一份由 Close 负责的当前结果块（`delivered`／`abandoned`／`superseded`） |
 | `.specify/delivery/<run>/pull-request.md` | Delivery Handoff | 遵循 `artifact_policy` | 渲染后的 PR 正文和 `gh pr create --body-file` 路径；不是 GitHub UI 模板 |
 | PR 正文 | Pull Request | 持久 | 变更、风险、决策和证据 |
 | Package README | 包负责人／Docs Sync | 持久 | 面向使用者的安装／API／限制，以及面向维护者的开发／发布契约；内容取自真实包内容 |
@@ -55,6 +55,14 @@ Issue、ADR 和交接摘要不能依赖其路径或对话历史。
 需要 PATH 中有 Python 3.11 或更高版本以及 Git；Helper 只使用标准库和 Git，
 不会调用模型、执行项目测试、修改产品代码或 Task、创建提交，或联系 Tracker。
 状态 Schema 和负责人边界以[Delivery Runtime 契约](extensions/delivery/templates/runtime.md)为准。
+
+`close-record` 是唯一明确由 Close 负责的持久化例外。标准库模块
+`.specify/extensions/delivery/scripts/delivery_outcome.py` 核验已验证的
+Tracker 观察，并以原子方式只写 Evidence 的当前结果块；它不会联系
+Tracker 或创建提交。`delivery_runtime.py close-record` 只有在 Evidence 成功写入后
+才刷新带哈希绑定的 `evidence_observation`；校验失败时 Evidence 和 Runtime 状态
+都不会变化。其他 Runtime 操作仍然只是编排记账，不会因此获得写入持久 Evidence
+的权限。
 
 `.specify/delivery/<run>/runtime/` 是编排记账目录；Spec Kit 的
 `.specify/workflows/runs/` 运行账本同样属于本地状态。已声明的 Run 运维记录
@@ -96,12 +104,103 @@ Feature 的规划到执行检查点遵循 Core 适配契约，要求明确的批
 
 `evidence.md` 是持久记录。`.specify/delivery/<run>/` 根下的文件是运行工作区，遵循
 `artifact_policy`；其中的 `runtime/` 是上文所述的本地编排记账目录。策略为临时时，
-exploration、slices、回执、verdict、Review 报告
-和渲染后的 PR 正文只保留在本地，通过 PR 正文发布。证据绑定 PR 实际发布的已审阅
-HEAD 与 PR 引用；合并版本在事后记录，不在发布前虚构。复用已批准的规划或证据输入
-必须保持相关字节和需求／策略指纹不变。项目授权的规划提交只有在内容等价且仅涉及
-批准路径时才能关联原批准；路径或字节变化必须重新展示并重新批准，不能给旧结果
-补一个新哈希。
+exploration、slices、回执、verdict、Review 报告和渲染后的 PR 正文只保留在本地，
+通过 PR 正文发布。Evidence 分为两层：唯一一份由 Close 负责的当前结果块，以及追加
+保留的验证／Review／CI／限制快照。只有当前结果块是现在的 Terminal 状态权威；“等待
+CI”或“尚未合并”这类文字只对其记录的观察时间有效，必须带有 `reviewed_head` 和
+对应限制上下文。
+
+### Head 身份与合并证明
+
+交付记录必须区分以下身份：
+
+- `reviewed_head` 是原生 Review 和 Evidence 实际核验的字节与需求所在版本。
+  原生报告和回执必须不可变地保留它。
+- `original_pr_head` 是从 Tracker 观察到的历史 PR head（已验证观察中的
+  `head_revision`）。它可以等于 `reviewed_head`，但绝不能改名为合并结果。
+- `base_revision` 是 Tracker 观察到、用于内容比较的目标／基线版本。
+- `merged_revision` 是 Tracker 给出的实际合并提交，也是已经交付内容的有效 Head。
+  Squash 或 merge commit 通常不同于两个历史身份；不能把 Review 改标成对它的 Review。
+
+发布前，Evidence 将 `original_pr_head` 记为 pending。发布后，Close 把已核验的
+Tracker `head_revision` 绑定到 `original_pr_head`。如果它与 `reviewed_head` 不同，
+Evidence 必须有明确的 `published_head` 绑定，以及内容等价、或精确的记账／归档证明；
+归档绑定使用 `reviewed_diff_archive`、`reviewed_diff_archive_sha256`、
+`reviewed_diff_archive_base`、`reviewed_diff_archive_head` 和
+`reviewed_diff_archive_reviewed_head`；字段不完整或不匹配都阻断。不能把源码变化吞成
+“仅记账差异”。旧 reviewed／PR Git 对象缺失本身不是重写 Git 的理由：当可信的已验证
+Tracker head 等于记录的 `reviewed_head` 时，可以接受历史映射
+（`tracker-head-mapped`），但当前结果块仍必须说明 Review 属于历史版本。如果两者不同
+且没有证明，Close 必须 fail closed。
+
+对于 `merged`，Tracker 观察必须给出实际合并提交，且 `merged_revision` 必须是本地可达
+的提交。PR head 对象仍在本地时，比较 base 到 PR head 与 base 到 merge 的完整路径、模式
+和字节内容；对象不存在时，如有精确不可变 Evidence 归档，则要求它记录同一 base、PR
+head、变更路径／模式、字节或 patch 及摘要。单独的 fingerprint、URL、报告或限制文字
+不算归档。历史 head 不可达且等于 `reviewed_head` 时，只有可信 Tracker 映射可作为 clean
+clone 的降级依据；这绝不声称重新 Review 了合并提交。不要为了补回旧对象而任意 fetch、
+reset、重写、强制更新或删除 ref。
+
+只读 Tracker 响应保存于精确的 Run 相对路径
+`.specify/delivery/<delivery_run>/runtime/observed-pr.json`，Schema 为 1 且不允许额外字段：
+
+```json
+{
+  "schema_version": 1,
+  "delivery_run": "<id>",
+  "lane": "feature|bugfix|lightweight",
+  "provider": "github",
+  "repository": "owner/name",
+  "number": 31,
+  "state": "MERGED",
+  "head_revision": "<PR head SHA>",
+  "base_revision": "<base SHA>",
+  "merged_revision": "<merge commit SHA>",
+  "merged_at": "<RFC3339 timestamp>",
+  "observed_at": "<RFC3339 timestamp>",
+  "url": "https://github.com/owner/name/pull/31"
+}
+```
+
+`CLOSED` 观察保留 head/base 和观察字段，但 `merged_revision`、`merged_at` 必须为 null。
+已验证的 PR 输入必须与 provider、repository、number 相同。取得该只读观察后，在项目根目录运行：
+
+```text
+<python> .specify/extensions/delivery/scripts/delivery_runtime.py close-record --run <id> --outcome merged --pr <number-or-url> --verified --file runtime/observed-pr.json
+```
+
+该操作核验精确 JSON、同 Run／Lane／PR 身份、本地合并可达性和可用的 head／内容证明，
+然后原子替换当前结果块。它不会联系 Tracker、创建提交或写 Runtime 状态。失败时
+Evidence 和 Runtime 状态都不得改变。
+
+结果块使用稳定分隔符，避免历史内容中的同名字段被当成当前权威：
+
+```text
+<!-- DELIVERY_CURRENT_OUTCOME_BEGIN -->
+## Current delivery outcome
+
+- **delivery_run**: <id>
+- **lane**: feature | bugfix | lightweight
+- **status**: delivered | abandoned | superseded
+- **outcome**: merged | closed | superseded
+- **pull_request**: <canonical provider/repository/number or URL>
+- **reviewed_head**: <historical reviewed SHA>
+- **original_pr_head**: <historical tracker head SHA>
+- **published_head_proof**: tracker-head-mapped | published-content-equivalent | published-evidence-archive
+- **base_revision**: <tracker base SHA>
+- **merged_revision**: <reachable effective merge SHA or null>
+- **effective_head**: <merged_revision or null>
+- **merged_at**: <tracker merge time or null>
+- **observed_at**: <tracker observation time>
+- **outcome_recorded_at**: <RFC3339 timestamp>
+- **verification_file**: .specify/delivery/<id>/runtime/observed-pr.json
+- **merge_proof**: diff-equivalent | evidence-archive | tracker-head-mapped | not-applicable
+<!-- DELIVERY_CURRENT_OUTCOME_END -->
+```
+
+Close 只更新这一份当前结果块，保留原生报告、历史快照和限制文字不变。没有该结果块的
+Legacy 记录可以增加一处结构性的历史快照标记，但既有字节必须原样保留。重复执行相同的
+已验证操作必须幂等；不同的具体 PR 或 Terminal 结果是冲突，需要走授权恢复路径。
 
 [Doctor](extensions/delivery/commands/speckit.delivery.doctor.md) 会按当前阶段和检查点判断
 缺少 Evidence 是否真的是缺口：在合法的 Evidence 前置阶段、Run 仍处于活动状态时，
@@ -114,10 +213,10 @@ Handoff ready 不是 Terminal 结果：`HANDOFF_READY: ready` 只表示 Review �
 正文已准备好，仍需单独授权发布并等待实际结果。PR 合并或关闭后，由
 `speckit.delivery.close` 记录真实结果。`merged` 记为 `delivered`；未合并而关闭记为
 `abandoned`，只保留一份自包含的退役说明；被替代的运行记为 `superseded`，并给出可解析
-的 `superseded_by`。如果 PR、Tracker、凭据或结果无法核验，Close 返回 `unverified`，
-并在写入 Terminal 状态／历史或删除任何工作区之前停止。没有 `status` 表示仍在进行；
-与实际 PR 结果矛盾的记录不算收口。退役只删除该 Run 允许的工作区文件，绝不删除
-`evidence.md` 或其他 Run。
+的 `superseded_by`。如果 PR、Tracker、凭据、结果、合并提交或证明无法核验，Close 返回
+`unverified`，并在写入 Terminal 状态／历史或删除任何工作区之前停止。没有 `status` 表示
+仍在进行；与实际 PR 结果矛盾的记录不算收口。退役只删除该 Run 允许的工作区文件，绝不
+删除 `evidence.md` 或其他 Run。
 
 安装、升级、初始化脚手架和手工治理动作是运维性一次性记录，不是交付运行。其权威
 记录应放在项目持久证据根目录，不要在 `.specify/delivery/` 下维护第二份副本。

@@ -245,6 +245,8 @@ context_files: [AGENT_GUIDE.md, docs/architecture/boundaries.md]
 context_files: [AGENT_GUIDE.md, docs/engineering/quality.md]
 adr_directories: [docs/architecture/adr]
 docs_sync: auto
+# off=one internal slice/one PR; single=multiple internal slices/one PR;
+# auto|stacked|integration resolve protected publication before execution.
 pr_slicing: auto
 slice_warn_files: 20
 slice_warn_lines: 400

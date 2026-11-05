@@ -78,6 +78,9 @@ Review。
 并跨宿主进程保存 owner 输入和结果。只有当前且完整的结果才能跳过调度；缺失、过期、
 格式错误或被篡改的证据会阻断而不会变成 pass。Quality、Standards、Reviewer、Core、
 Ralph、Evidence 和 Close 仍分别拥有语义判定以及产品／Git／远端变更。
+随包的任务关闭模块会验证原始逐任务凭证与实际 Git 提交关联，再允许 Feature 完成，
+但不选择任务、不修改 checkbox。结果收口模块是 Close 所有的原子证据写入器，使用
+编排者已核验的 tracker 观察更新规范证据的当前结果，并保留历史已审阅 HEAD 的来源。
 
 Ralph 只把 `tasks.md` 当作执行队列；已批准的 `slices.md` 只提供评审／合并边界，
 不得增删或重排 Task。可移植协议是在干净的 `ralph/<feature>` 分支上每轮执行一个

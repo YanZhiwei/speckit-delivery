@@ -54,6 +54,8 @@ def check_delivery_install(
             "templates/runtime.md",
             "templates/core-adapter.md",
             "scripts/delivery_runtime.py",
+            "scripts/delivery_tasks.py",
+            "scripts/delivery_outcome.py",
         ),
         "review": ("commands/speckit.review.run.md", "commands/speckit.review.standards.md", "templates/reviewer.md"),
         "quality": (
@@ -93,6 +95,7 @@ def check_delivery_install(
         ("speckit.review.run", "REVIEW_VERDICT"),
         ("speckit.delivery.review-fix", "REVIEW_FIX_STATUS"),
         ("speckit.ralph.run", "REVIEW_VERDICT=pass"),
+        ("speckit.ralph.run", "ALL_TASKS_DONE"),
         ("speckit.quality.brief", "QUALITY_BRIEF"),
         ("speckit.quality.check", "CHECK_RECEIPTS:"),
         ("speckit.review.standards", "POLICY_FINGERPRINT:"),
@@ -168,6 +171,31 @@ def check_router_alias(project: Path, integration: str) -> tuple[Path, Path]:
         raise RuntimeError(f"{integration} sd alias differs from the installed router")
     if "$ARGUMENTS" not in alias_text:
         raise RuntimeError(f"{integration} sd alias lost its request argument")
+    runtime_reference = ".specify/extensions/delivery/scripts/delivery_runtime.py"
+    if runtime_reference not in router_text or runtime_reference not in alias_text:
+        raise RuntimeError(f"{integration} route/alias lost its installed runtime helper reference")
+    source_route = (ROOT / "extensions/delivery/commands/speckit.delivery.route.md").read_text(
+        encoding="utf-8"
+    )
+    closure_markers = (
+        "task-closure",
+        "task_closure",
+        "audit_task_closure",
+        "all_tasks_done",
+        "all-tasks-done",
+        "task closure",
+    )
+    source_closure_markers = {
+        marker.lower()
+        for marker in closure_markers
+        if marker.lower() in source_route.lower()
+    }
+    if source_closure_markers and not any(
+        marker in alias_text.lower() for marker in source_closure_markers
+    ):
+        raise RuntimeError(
+            f"{integration} route/alias lost the installed task-closure guard reference"
+        )
     if integration == "codex":
         if not re.search(r"^name: speckit-sd$", alias_text, re.MULTILINE):
             raise RuntimeError("Codex alias skill has the wrong name")
@@ -179,6 +207,61 @@ def check_router_alias(project: Path, integration: str) -> tuple[Path, Path]:
         raise RuntimeError(f"{integration} registry does not assign both router names to Delivery")
     print(f"{integration} sd alias, request input, and Delivery ownership verified.", flush=True)
     return router, alias
+
+
+def check_controlled_alias_upgrade(
+    project: Path,
+    specify: str,
+    integration: str,
+    original_config: bytes,
+    config_path: Path,
+) -> None:
+    """Exercise adoption of an old custom sd shim through the normal update path."""
+    _router, alias = check_router_alias(project, integration)
+    legacy_marker = "# legacy custom sd forwarding shim"
+    if integration == "codex":
+        legacy = (
+            "---\n"
+            "name: speckit-sd\n"
+            "description: Legacy local Delivery shortcut\n"
+            "---\n\n"
+            f"{legacy_marker}\n"
+            "Delegate to the old Delivery route with the request below.\n"
+            "$ARGUMENTS\n"
+        )
+    else:
+        legacy = (
+            "---\n"
+            "description: Legacy local Delivery shortcut\n"
+            "---\n\n"
+            f"{legacy_marker}\n"
+            "Delegate to the old Delivery route with the request below.\n"
+            "$ARGUMENTS\n"
+        )
+    alias.write_text(legacy, encoding="utf-8")
+
+    registry_path = project / ".specify/extensions/.registry"
+    registry = json.loads(registry_path.read_text(encoding="utf-8"))
+    registered = registry["extensions"]["delivery"]["registered_commands"].get(integration, [])
+    if not isinstance(registered, list):
+        raise RuntimeError(f"{integration} registry has no command ownership list to upgrade")
+    registry["extensions"]["delivery"]["registered_commands"][integration] = [
+        name for name in registered if name != "sd"
+    ]
+    registry_path.write_text(json.dumps(registry, indent=2) + "\n", encoding="utf-8")
+    if legacy_marker not in alias.read_text(encoding="utf-8"):
+        raise RuntimeError(f"{integration} legacy alias fixture was not written")
+
+    run(
+        [specify, "bundle", "update", "speckit-delivery", "--integration", integration],
+        project,
+    )
+    check_router_alias(project, integration)
+    if legacy_marker in alias.read_text(encoding="utf-8"):
+        raise RuntimeError(f"{integration} controlled Bundle update kept the old sd forwarding shim")
+    if config_path.read_bytes() != original_config:
+        raise RuntimeError("Controlled Bundle update overwrote the project configuration")
+    print(f"{integration} controlled update adopted the Delivery-owned sd alias.", flush=True)
 
 
 def run(command: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
@@ -340,6 +423,25 @@ def main() -> int:
             encoding="utf-8",
         )
         original_config = config_path.read_bytes()
+        installed_helper = project / ".specify/extensions/delivery/scripts/delivery_runtime.py"
+        run(
+            [
+                sys.executable,
+                str(ROOT / "scripts/test_runtime_install.py"),
+                "--project",
+                str(project),
+                "--helper",
+                str(installed_helper),
+            ],
+            project,
+        )
+        check_controlled_alias_upgrade(
+            project,
+            args.specify,
+            args.integration,
+            original_config,
+            config_path,
+        )
         alias.unlink()
         run([args.specify, "extension", "add", "delivery", "--force"], project)
         check_router_alias(project, args.integration)

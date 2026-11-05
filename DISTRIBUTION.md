@@ -64,6 +64,8 @@ uv run --with pyyaml python scripts/validate_distribution.py
 uv run --with pyyaml python scripts/test_validate_distribution.py
 uv run --with pyyaml python scripts/test_stamp_release.py
 python scripts/test_delivery_runtime.py
+python scripts/test_task_closure.py
+python scripts/test_delivery_outcome.py
 python scripts/test_workflow_runtime.py
 python scripts/test_bundle_install.py
 python scripts/test_bundle_install.py --integration codex
@@ -86,7 +88,10 @@ the active host renders the commands, and all three installed workflows match so
 It also checks that the `sd` alias shares the router body/input and registry owner,
 is restored by reinstall, and is removed with Delivery while configuration survives.
 Its default host is OpenCode; the Codex variant verifies Skills-mode rendering.
-Structural checks do not prove semantic
+Both variants execute the installed helper for identity/resume, hash-bound check
+reuse, planning handoff and checkbox-only closure rejection, then exercise an
+older forwarding-alias upgrade while preserving project configuration.
+Structural and fake-owner behavioral checks do not prove semantic
 research quality or user approval; behavioral prompts live in `evals/evals.json`.
 
 `scripts/test_workflow_handoff.py` additionally probes the real Spec Kit

@@ -214,6 +214,53 @@ Each result records the snapshot it validated. A stored pass is reusable only
 while that snapshot still matches, its native report/evidence bytes are unchanged,
 the stage has no unfinished pending ticket, and any declared dependency receipts
 remain current. Review depends on current Quality and Standards results.
+## Task-close transport
+
+Ralph owns the task outcome and Git commit. For every SD Feature task, the
+coordinator must execute these helper operations, using the project's verified
+Python invocation. A human-readable `task-verdicts.yml` remains Ralph's native
+receipt; machine associations live only under `runtime/task-closures/<TaskID>.json`.
+They are evidence for the existing queue, never a second queue.
+
+1. Before edits, `task-start --run <run> --task T001 --branch <approved-branch>
+   --input <allowed-path> ...` requires the selected unchecked Task ID, actual
+   branch, clean entry, and exact allowed paths/directory prefixes. It preserves
+   the original task-start HEAD and queue. A resumed task cannot reset these.
+2. After implementation, use the existing owner `begin`/`record` transport for
+   Quality, Standards and Review with runtime `--scope task-T001`. The native
+   commands still receive `scope=task task=T001`, their pending input and exact
+   result path. Keep each task/ticket's native reports and check evidence immutable.
+   All three passes must bind the same current pre-commit code/requirements
+   snapshot, complete six-dimensional review, and accepted actual independence.
+3. Write `runtime/docs-refresh-T001.json`: either
+   `{"required": false, "reason": "concrete applicability reason"}` or
+   `{"required": true, "verdict": "pass", "input_fingerprint": "exact pending fingerprint", "report": {"path": "native run-local report", "sha256": "original hash"}}`.
+   `updated` and `unchanged` are also accepted passing docs verdicts; blocked or
+   stale docs cannot close. Then run `task-gate --run <run> --task T001 --file
+   <exact applicability path>`. The helper archives the owner results and reviewed
+   Git blob/mode projection without editing the queue or creating a commit.
+4. Only after the gate passes may Ralph change that task's checkbox, persist its
+   native receipt, stage the verified task paths and create its one-task commit.
+   `task-record --run <run> --task T001 --commit <full-SHA>` verifies the sole
+   parent, exact Task ID, actual committed blobs/modes, unchanged requirements,
+   selected-checkbox-only queue transition and clean execution worktree. It
+   associates the original reports with that commit without relabeling them as
+   reviews of a later HEAD. It never commits or marks a task itself.
+5. Before `ALL_TASKS_DONE`, Converge closure, Evidence and Handoff, run
+   `require --run <run> --kind task-closure`. Every checked Task ID must have its
+   own complete, reachable, hash-valid committed association in queue order.
+   Checkbox-only completion, a final outgoing-diff report, missing/tampered
+   native evidence or a mismatched commit cannot replace a task receipt. The
+   Feature Workflow invokes this read-only guard after every Ralph dispatch and
+   before Evidence, independently of the agent's completion claim.
+
+A legacy run without these original task receipts needs explicit recovery from
+its original evidence. Do not fabricate task passes or import a final review as
+historical task approvals. A standalone Ralph installation with no Delivery run
+retains its native closure contract and must report that it lacks this machine
+transport. A current version number or successful installation is not proof that
+an existing run used the helper.
+
 ## Conditional loops and persistent budgets
 
 `needs --kind review` is true until a complete current pass exists. It never

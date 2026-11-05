@@ -30,19 +30,22 @@ task shape and planning transition. A material scope change reopens approval; if
 the lane is wrong, stop this workflow and carry evidence to the correct lane.
 
 After task generation, `speckit.delivery.slice` binds the real task IDs to
-reviewable slices and derives the merge mode. Analyze runs against the planned
-mapping; a runtime guard then requires a current passing Analyze result before one
-combined execution/slice gate reviews task coverage, trunk-safety evidence, diff
-budgets, flags, merge method, and rollback. The Delivery
-`action=record-approval` writer records the actual choice and unchanged
-fingerprint. A project-authorized planning checkpoint follows before Ralph.
-`tasks.md` remains the only execution queue; `slices.md` is boundary metadata and
-cannot add, remove, or reorder tasks. Ralph stops at each slice boundary for the
-declared prefix/flag/checkpoint verification. A failed prefix check reopens slice
-planning instead of continuing the stack. Render each verified layer with
-`speckit.delivery.handoff slice=<id>`; the workflow's final handoff uses
-`mode=auto` for the release slice or integration rollup. Creating, pushing, or
-merging a PR still requires separate authorization.
+internal review slices and resolves the execution mode, publication mode, and
+slice-to-publication-group map. Analyze runs against the planned mapping; a
+runtime guard then requires a current passing Analyze result before one combined
+execution/slice gate reviews task coverage, trunk-safety evidence, risk-based
+behavioral probes, diff budgets, flags, merge method, publication groups, and
+rollback. The Delivery `action=record-approval` writer records the actual choice
+and unchanged fingerprint. A project-authorized planning checkpoint follows
+before Ralph. `tasks.md` remains the only execution queue; `slices.md` is
+boundary/publication metadata and cannot add, remove, or reorder tasks. Ralph
+stops at each internal boundary for the declared prefix/flag/checkpoint and
+behavioral-probe verification. A failed classification-specific check reopens
+slice planning instead of continuing the plan. `handoff slice=<id>` renders an approved layer
+or internal boundary artifact; under `Publication mode: single` it does not
+imply a separate PR. The workflow's final `mode=auto` handoff follows the
+approved publication groups. Creating, pushing, or merging a PR still requires
+separate authorization.
 
 If Converge appends tasks, the workflow routes them through Delivery Slice again,
 a fresh Analyze, a renewed combined gate and approval writer, the planning

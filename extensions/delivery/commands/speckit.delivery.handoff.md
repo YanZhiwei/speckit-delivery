@@ -31,9 +31,13 @@ exploration reference; validate the safe id and do not silently select another
 Feature/run's pass. Include Bugfix continuation evidence when repairs followed
 the original official fix/test reports.
 
-Resolve the final base/head diff and read the durable Issue, accepted ADRs,
-final review verdict, evidence report, documentation status, compatibility
-impact, and rollback path.
+Resolve the final `base_revision`/`reviewed_head` diff and read the durable
+Issue, accepted ADRs, final review verdict, evidence report, documentation
+status, compatibility impact, and rollback path. Keep the historical
+`reviewed_head` explicit in the handoff. If a published PR head is already
+verified, record it separately as `original_pr_head`/`published_head`; otherwise
+say that publication has not yet established it. Handoff must never invent or
+substitute a future `merged_revision`.
 
 ## Template resolution
 
@@ -57,33 +61,46 @@ without `--body-file` read the target repository's `.github` template. Only
 `speckit.delivery.init`, with explicit user approval, may install a static
 project template; this command always renders the current change.
 
-## Slice and rollup modes
+## Slice and publication modes
 
 Read the approved
-`.specify/delivery/<delivery_run>/slices.md` when present and select the mode
-from the actual request, not from a default:
+`.specify/delivery/<delivery_run>/slices.md` when present. The Delivery Slice
+command owns the resolved `Execution mode`, `Publication mode`, and explicit
+publication-group map; Handoff only renders that approved plan and must not
+choose single versus stacked, create a late rollup, or repartition slices to
+match observed PRs.
 
-- `slice=<id>`: render one layer's PR body. State its goal, base branch,
-  dependencies, reviewed task range, "not in this layer" deferrals, flag or
-  migration behavior, merge method, and rollback. Include the stack map when
-  available. This body must stand alone for a reviewer who has not read lower
-  layers.
-- `mode=rollup`: render the integration-to-target PR body. List every slice and
-  its reviewed PR, aggregate CI/review evidence, green checkpoints, sync state,
-  final merge method, and whole-feature rollback. State plainly that slice-level
-  reviews are in the linked PRs and this body is an integration review, not a
-  request to re-review unchanged lines.
-- `mode=auto`: use the last release slice (or the final slice when none is marked
-  release) for `merge_mode: stacked`, and the rollup for
-  `merge_mode: integration`. A single-slice or `single` plan uses the ordinary
-  PR body.
-- If the merge mode, slice approval, or exact `slices.md` path is missing or
-  stale, stop. Do not infer a stack from branch names or a rollup from the
-  outgoing diff.
+Require both modes, the requested `pr_slicing` value, the complete group map,
+and the unchanged slice approval/snapshot before rendering. A missing, stale,
+`undecided`, or classification-inconsistent value blocks. Slice approval is not
+remote publication authorization.
 
-The PR body must include a **Slice / stack** table for a layer and a **Rollup**
-table for the final integration PR. Lower layers use `Part of #<issue>`; only the
-release or rollup uses `Closes #<issue>`. Never cite internal task IDs as the
+- `slice=<id>`: render the approved internal layer/review artifact. State its
+  goal, base branch, dependencies, reviewed task range, "not in this layer"
+  deferrals, classification/probe evidence, flag or migration behavior, merge
+  method, publication group, and rollback. Include the stack map when available.
+  Under `Publication mode: single`, this artifact is an internal boundary
+  summary; it is not a separate PR request.
+- `mode=rollup`: render the approved integration-to-target publication group
+  only when the plan contains a `rollup` group. List every mapped slice and its
+  review evidence, aggregate CI/review evidence,
+  green checkpoints, sync state, final merge method, and whole-feature rollback.
+  State plainly that slice-level reviews are linked internal evidence or linked
+  PRs according to the approved publication groups, and do not request a second
+  review of unchanged lines.
+- `mode=auto`: follow the approved publication groups: one ordinary PR for
+  `Publication mode: single`, one layer body per group for `stacked`, and the
+  approved slice groups plus rollup for `integration`. This mode renders; it
+  never resolves a missing mode or amends the plan.
+- If the execution/publication mode, publication groups, slice approval, or exact
+  `slices.md` path is missing or stale, stop. Do not infer a stack from branch
+  names, a rollup from the outgoing diff, or single publication from a one-slice
+  observation.
+
+The body must include a **Slice / stack** table for each approved layer or
+internal boundary and a **Rollup** table for the final integration group when
+one exists. Lower published layers use `Part of #<issue>`; only the final
+published group uses `Closes #<issue>`. Never cite internal task IDs as the
 requirement source.
 
 ## Required sections
@@ -109,6 +126,11 @@ Write a self-contained body that covers:
 - **Architecture decisions**: links to the ADRs that constrain this work, or an
   explicit statement that no decision changed.
 - **Behavior and acceptance**: requirement, result, evidence.
+- **Review provenance and PR head**: `base_revision`, `reviewed_head`, content
+  and requirements fingerprints, native report references, and the verified
+  `original_pr_head`/`published_head` when available. State plainly that these
+  are historical review/publication identities; `merged_revision` is absent
+  until Close verifies the tracker outcome.
 - **Verification**: build, tests, standards and spec review, ADR consistency,
   diff-scoped simplification, and any repository-specific install check.
 - **Documentation**, **Rollback**, **AI assistance**, **Review notes**, and a
@@ -120,17 +142,21 @@ Impact, Verification, and Checklist.
 
 ## Merge plan
 
-For a sliced delivery, include a merge plan derived from `slices.md` and the
-project's `merge_policy`:
+For a sliced delivery, include the approved execution/publication plan from
+`slices.md` and the project's `merge_policy`:
 
+- resolved execution mode and Ralph branch/topology;
+- publication mode and the exact slice-to-publication-group map;
 - order and base branch of every slice;
 - slice merge method (default `squash`) and final merge method (default
   `merge-commit` for integration, never `squash`);
 - target-to-integration sync method (default `merge`, never rebase a shared
   branch);
 - merge queue/freeze/delete-branch behavior;
-- per-slice and whole-feature rollback;
-- issue-closing rule (`Part of` versus `Closes`).
+- per-slice, per-group, and whole-feature rollback;
+- issue-closing rule (`Part of` versus `Closes`);
+- explicit statement that publication/merge still requires separate user
+  authorization.
 
 Emit suggested commands only when they are applicable to the verified provider.
 A native stack command, a manual bottom-up rebase sequence, and an integration
@@ -146,22 +172,32 @@ When `delivery_run` is supplied, write the complete body only to the exact run
 workspace path, honoring `artifact_policy`:
 
 - single, final, or rollup: `.specify/delivery/<delivery_run>/pull-request.md`
-- one slice: `.specify/delivery/<delivery_run>/pull-request-<slice>.md`
+- one approved layer or internal boundary: `.specify/delivery/<delivery_run>/pull-request-<slice>.md`
 
-Overwrite only the same mode/slice's prior body, and never clobber unrelated
-records. When no run is supplied, render the complete body inline and do not
-create or discover a Feature directory; use `PR_BODY_PATH: inline`.
+For `Publication mode: single`, a `pull-request-<slice>.md` file is an internal
+review/boundary artifact and the run-level `pull-request.md` is the only body
+eligible for the separately authorized one-PR publication. Overwrite only the
+same mode/slice's prior body, and never clobber unrelated records. When no run is
+supplied, render the complete body inline and do not create or discover a Feature
+directory; use `PR_BODY_PATH: inline`.
 
 Handoff readiness is distinct from terminal Delivery. A successful render emits
 `HANDOFF_READY: ready`, but this command never writes a delivered/abandoned/
-superseded terminal outcome, never changes `evidence.md` status, and never
-publishes, merges, closes, or mutates a tracker/PR. Before a concrete PR is
-observed, the truthful state is `waiting-for-publication`; after a concrete PR is
-recorded but before its merged/closed outcome is verified, it is
+superseded terminal outcome, never changes the Close-owned current outcome block,
+and never publishes, merges, closes, or mutates a tracker/PR. Before a concrete
+PR is observed, the truthful state is `waiting-for-publication`; after a concrete
+PR is recorded but before its merged/closed outcome is verified, it is
 `waiting-for-outcome`. If an already terminal record is merely read, report
 `terminal-recorded` with its observed status and do not alter it. A blocked or
 stale input emits `HANDOFF_READY: blocked` and names the exact refresh or
 approval needed.
+
+When rendering validation gaps or limitations, label each one with its
+`observed_at` snapshot and `reviewed_head`. For example, write "CI was awaiting
+at the 2026-11-05 snapshot for reviewed_head=<sha>" rather than an unscoped
+current claim that can contradict a later merge. Preserve the historical wording
+in `evidence.md`; Close's unique current outcome block is the only place that
+states the current terminal result.
 
 Print:
 
@@ -169,6 +205,8 @@ Print:
 HANDOFF_READY: ready | blocked
 DELIVERY_STATUS: waiting-for-publication | waiting-for-outcome | terminal-recorded | blocked
 PR_BODY_PATH: <actual path or inline>
+REVIEWED_HEAD: <historical reviewed SHA or unresolved>
+ORIGINAL_PR_HEAD: <verified historical PR head, pending, or unresolved>
 PR_CREATE_HINT: <run-bound verified gh pr create --body-file hint, or omitted>
 PR_CLOSE_HINT: <after verified outcome, run speckit.delivery.close with this lane/run/ref, or omitted>
 NEXT_ACTION: <one exact next action; publication or close only after its stated precondition>
@@ -193,11 +231,15 @@ The rendered body is run workspace, not a second durable record. Under
 Before final handoff, require the Review template's complete current
 `REVIEW_VERDICT: pass` across six dimensions with coverage, accepted actual
 independence, and verified prior-finding closure. Compare content/requirements
-fingerprints including uncommitted files, not just HEAD. If ADR finalization,
-documentation, evidence generation, or another late step changed governed inputs,
-refresh review/check evidence; only explicitly declared report bookkeeping may
-be excluded. Stale, blocked, or incomplete results stop handoff even if a human
-clicked the earlier gate. Do not reset the repair budget to obtain a pass.
+fingerprints including uncommitted files, not just HEAD. Keep the native Review
+report's `reviewed_head` and content fingerprint immutable. If a publication head
+is later different, require an explicit `published_head` binding and
+content-equivalence/bookkeeping proof; do not stamp the merged revision onto the
+Review report. If ADR finalization, documentation, evidence generation, or
+another late step changed governed inputs, refresh review/check evidence; only
+explicitly declared report bookkeeping may be excluded. Stale, blocked, or
+incomplete results stop handoff even if a human clicked the earlier gate. Do not
+reset the repair budget to obtain a pass.
 
 Do not cite ignored Spec/Plan files, task identifiers, review rounds, agent
 identities, conversation history, or obsolete command output. Link durable

@@ -483,6 +483,23 @@ def _check_runtime_guards(
     if not final or final.get("type") != "shell" or "require" not in str(final.get("run", "")) or "--kind review" not in str(final.get("run", "")):
         errors.append(f"{label}: review-final must be the runtime review requirement")
     if workflow_id == "feature-delivery":
+        def task_guards(sequence: list[Any]) -> None:
+            for index, node in enumerate(sequence):
+                if not isinstance(node, dict):
+                    continue
+                if node.get("command") == "speckit.ralph.run":
+                    guard = sequence[index + 1] if index + 1 < len(sequence) else {}
+                    if not isinstance(guard, dict) or guard.get("type") != "shell" or " require " not in str(guard.get("run", "")) or "--kind task-closure" not in str(guard.get("run", "")) or guard.get("continue_on_error"):
+                        errors.append(f"{label}: every Ralph dispatch needs an immediately following aborting task-closure audit")
+                for key in ("steps", "then", "else"):
+                    children = node.get(key)
+                    if isinstance(children, list):
+                        task_guards(children)
+        task_guards(steps)
+        evidence_index = top_ids.index("evidence") if "evidence" in top_ids else -1
+        before_evidence = steps[evidence_index - 1] if evidence_index > 0 else {}
+        if not isinstance(before_evidence, dict) or "--kind task-closure" not in str(before_evidence.get("run", "")) or before_evidence.get("continue_on_error"):
+            errors.append(f"{label}: Evidence needs an immediately preceding aborting task-closure audit")
         needs_shell("convergence-needs", "convergence")
         convergence_if = top.get("convergence-if-needed")
         if not convergence_if or convergence_if.get("type") != "if" or "steps.convergence-needs.output.stdout == 'true'" not in str(convergence_if.get("condition")):
@@ -707,6 +724,8 @@ def validate(root: Path, expected_version: str | None = None) -> list[str]:
                 "templates/runtime.md",
                 "templates/core-adapter.md",
                 "scripts/delivery_runtime.py",
+                "scripts/delivery_tasks.py",
+                "scripts/delivery_outcome.py",
             ):
                 resource = manifest_path.parent / required_runtime_resource
                 if not resource.is_file():
@@ -773,6 +792,8 @@ def validate(root: Path, expected_version: str | None = None) -> list[str]:
                     )
                 for needle in (
                     "scripts/delivery_runtime.py",
+                    "scripts/delivery_tasks.py",
+                    "scripts/delivery_outcome.py",
                     "templates/runtime.md",
                     "templates/core-adapter.md",
                 ):

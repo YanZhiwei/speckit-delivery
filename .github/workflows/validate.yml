@@ -35,6 +35,8 @@ jobs:
       - name: Validate Delivery runtime and real workflow engine
         run: |
           python scripts/test_delivery_runtime.py
+          python scripts/test_task_closure.py
+          python scripts/test_delivery_outcome.py
           uv run --with specify-cli==1.2.3 python scripts/test_workflow_handoff.py
           uv run --with specify-cli==1.2.3 python scripts/test_workflow_runtime.py
 

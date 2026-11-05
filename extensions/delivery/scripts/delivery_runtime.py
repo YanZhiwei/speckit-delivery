@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import base64
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -23,6 +24,7 @@ from typing import Any
 
 SCHEMA = 1
 NATIVE_RECEIPT_SCHEMA = 1
+TASK_CLOSURE_SCHEMA = 1
 LANES = {"feature", "bugfix", "lightweight"}
 PHASES = {"intake", "exploration", "planning", "tasks", "execution", "verification", "handoff"}
 DIMENSIONS = {
@@ -308,6 +310,11 @@ class Runtime:
             if stage not in VERDICTS or not isinstance(result, dict):
                 raise ProtocolError("Checkpoint contains an unknown or malformed completed stage.")
             self._validate_result_shape(state, stage, result, stored=True, dynamic=False)
+        outgoing = state.get("outgoing_review")
+        if outgoing is not None:
+            if not isinstance(outgoing, dict) or outgoing.get("scope") != "outgoing-diff":
+                raise ProtocolError("Integrated Review history is malformed; recover its original finding states.")
+            self._validate_result_shape(state, "review", outgoing, stored=True, dynamic=False)
         for key, budget in state["attempts"].items():
             if not isinstance(key, str) or not isinstance(budget, dict):
                 raise ProtocolError("Checkpoint attempt accounting is malformed; do not allocate a replacement budget.")
@@ -420,13 +427,49 @@ class Runtime:
         for association in history:
             self._validate_checkpoint_association(association, state)
 
+    def _component(self, name: str) -> Any:
+        path = Path(__file__).with_name(f"delivery_{name}.py")
+        spec = importlib.util.spec_from_file_location(f"delivery_{name}", path)
+        if spec is None or spec.loader is None:
+            raise ProtocolError(f"Installed Delivery {name} helper is missing; refresh the Delivery installation.")
+        module = importlib.util.module_from_spec(spec)
+        # Loading an installed companion must not create __pycache__ inside a
+        # consumer project and dirty an otherwise read-only status/checkpoint.
+        exec(compile(path.read_bytes(), str(path), "exec"), module.__dict__)
+        return module
+
+    def task_start(self, task: str, branch: str, inputs: list[str]) -> dict[str, Any]:
+        return self._component("tasks").TaskClosure(self, ProtocolError).start(task, branch, inputs)
+
+    def task_gate(self, task: str, file: str | None = None) -> dict[str, Any]:
+        return self._component("tasks").TaskClosure(self, ProtocolError).gate(task, file)
+
+    def task_record(self, task: str, commit: str) -> dict[str, Any]:
+        return self._component("tasks").TaskClosure(self, ProtocolError).record(task, commit)
+
+    def audit_task_closure(self, state: dict[str, Any] | None = None) -> dict[str, Any]:
+        return self._component("tasks").TaskClosure(self, ProtocolError).audit(state)
+
+    def close_record(self, outcome: str, verified: bool, pr: str | None, file: str | None) -> dict[str, Any]:
+        # The Close companion validates everything and writes Evidence first;
+        # only after that succeeds may the coordinator refresh its hash-bound
+        # observation. A failed validation therefore cannot advance state.
+        try:
+            result = self._component("outcome").close_record(self, outcome, verified, pr, file)
+        except ValueError as exc:
+            raise ProtocolError(str(exc)) from exc
+        state = self.load()
+        state["evidence_observation"] = self._observe_evidence(state)
+        self.save(state)
+        return result
+
 
     def _operational_record(self, name: str) -> bool:
         """Declared coordinator records never block execution entry."""
         run_prefix = f".specify/delivery/{self.run}/"
         if name.startswith(run_prefix):
             relative = name[len(run_prefix):]
-            if relative.split("/", 1)[0] in {"runtime", "reviews", "receipts"}:
+            if relative.split("/", 1)[0] in {"runtime", "reviews", "receipts", "checks"}:
                 return True
             if relative in {
                 "task-verdicts.yml", "slice-verdicts.yml", "evidence.md",
@@ -435,14 +478,25 @@ class Runtime:
         return name.startswith(".specify/workflows/runs/")
 
     def execution_dirty_paths(self) -> list[str]:
-        raw = self.git("status", "--short", "--untracked-files=all").decode("utf-8", errors="replace")
+        entries = self.git("status", "--porcelain=v1", "-z", "--untracked-files=all").split(b"\0")
         dirty: list[str] = []
-        for line in raw.splitlines():
-            if len(line) < 4:
+        index = 0
+        while index < len(entries):
+            entry = entries[index]
+            index += 1
+            if not entry:
                 continue
-            name = line[3:].strip().replace("\\", "/")
-            if name and not self._operational_record(name):
-                dirty.append(name)
+            if len(entry) < 4 or entry[2:3] != b" ":
+                raise ProtocolError("Malformed Git status entry; recover the index before execution.")
+            names = [os.fsdecode(entry[3:]).replace("\\", "/")]
+            if b"R" in entry[:2] or b"C" in entry[:2]:
+                if index >= len(entries) or not entries[index]:
+                    raise ProtocolError("Git rename/copy status has no original path.")
+                names.append(os.fsdecode(entries[index]).replace("\\", "/"))
+                index += 1
+            for name in names:
+                if name and not self._operational_record(name) and name not in dirty:
+                    dirty.append(name)
         return dirty
 
     def save(self, state: dict[str, Any]) -> None:
@@ -1422,8 +1476,10 @@ class Runtime:
                 elif "evidence" in finding:
                     self.reference(finding["evidence"])
                 known[finding["id"]] = finding
-            previous_result = state["stages"].get("review")
-            if previous_result is result or (isinstance(previous_result, dict) and previous_result.get("ticket") == result.get("ticket")):
+            previous_result = state.get("outgoing_review") if result.get("scope") == "outgoing-diff" else None
+            if previous_result is None:
+                previous_result = state["stages"].get("review")
+            if previous_result is result or (isinstance(previous_result, dict) and (previous_result.get("ticket") == result.get("ticket") or previous_result.get("scope") != result.get("scope"))):
                 previous_result = None
             previous = previous_result.get("data", {}).get("findings", []) if isinstance(previous_result, dict) else []
             for item in previous:
@@ -1498,6 +1554,7 @@ class Runtime:
                         raise ProtocolError("Converged must leave tasks.md byte-equivalent.")
                     if any(mark == " " for mark, _ in TASK.findall(before_text)):
                         raise ProtocolError("Converged requires zero unchecked bound Tasks; run Ralph before convergence can close.")
+                    self.audit_task_closure(state)
         if stage == "clarify" and type(data.get("needs_approval")) is not bool:
             raise ProtocolError("Clarify must explicitly identify a real approval decision.")
         if stage == "simplify":
@@ -1680,6 +1737,10 @@ class Runtime:
         if operation_id is not None:
             stored["operation_id"] = self._operation_id(operation_id)
         state["stages"][stage] = stored
+        if stage == "review" and stored.get("scope") == "outgoing-diff":
+            # Task reviews during a repair must not erase unresolved integrated
+            # findings before the next outgoing-diff reviewer reconciles them.
+            state["outgoing_review"] = stored
         del state["pending"][stage]
         state["phase"] = "verification" if stage in {"quality", "standards", "review"} else "planning"
         self._operation_store(state, operation_id, "record", request, stored)
@@ -1916,7 +1977,11 @@ class Runtime:
                 raise ProtocolError("Record a current passing SD Core planning checkpoint through Delivery Route before Ralph.")
             state["execution_head"] = self.git("rev-parse", "HEAD").decode().strip()
             self.save(state)
+        elif kind == "task-closure":
+            return {"required": kind, "ready": True, **self.audit_task_closure(state)}
         elif kind == "evidence":
+            if state["lane"] == "feature":
+                self.audit_task_closure(state)
             state["evidence_observation"] = self._observe_evidence(state)
             self.save(state)
         else:
@@ -1999,6 +2064,8 @@ class Runtime:
             raise ProtocolError("Invalid phase or terminal run; do not reopen an outcome with a phase update.")
         if name == "handoff":
             self.require("review")
+            if state["lane"] == "feature":
+                self.audit_task_closure(state)
             state["evidence_observation"] = self._observe_evidence(state)
             state["handoff_observation"] = self._require_handoff_native(state, persist=False)
         state["phase"] = name
@@ -2096,6 +2163,7 @@ class Runtime:
                 blockers.extend(self._handoff_blockers(state))
                 status = "handoff-ready" if not blockers else "verification-required"
         pending = list(state["pending"])
+        pending_tasks = self._component("tasks").TaskClosure(self, ProtocolError).pending() if state["lane"] == "feature" else []
         reservations = {key: value for key, value in state["attempts"].items() if value["pending"] is not None}
         if blockers:
             next_action = blockers[0]
@@ -2105,6 +2173,9 @@ class Runtime:
             next_action = "Resume the named reserved pass; do not allocate or reset its attempt."
         elif pending:
             next_action = "Recover the pending owner result or explicitly resume its unchanged input ticket."
+        elif pending_tasks:
+            task = pending_tasks[0]
+            next_action = f"Recover task {task['task']} ({task['status']}) on {task['branch']}; retain its original HEAD/owner receipts and use task-record for an already-created closure commit."
         elif status == "handoff-ready":
             next_action = "Await separately authorized publication and the observed PR outcome, then close this run."
         else:
@@ -2114,6 +2185,7 @@ class Runtime:
             "phase": phase, "status": status, "bindings": state["bindings"],
             "approvals": {key: value["choice"] for key, value in state["approvals"].items()},
             "attempts": state["attempts"], "pending_stages": pending,
+            "pending_tasks": pending_tasks,
             "blockers": blockers, "next_action": next_action,
         }
 
@@ -2123,6 +2195,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("operation", choices=(
         "init", "bind", "phase", "begin", "record", "needs", "require", "reserve",
         "complete", "present", "decide", "status", "resume", "outcome",
+        "task-start", "task-gate", "task-record", "close-record",
     ))
     parser.add_argument("--root", type=Path, default=Path.cwd())
     parser.add_argument("--run")
@@ -2147,6 +2220,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--outcome", choices=("merged", "closed", "superseded", "unverified"))
     parser.add_argument("--verified", action="store_true")
     parser.add_argument("--pr")
+    parser.add_argument("--task", help="exact bound Task ID for a Ralph closure transition")
+    parser.add_argument("--branch", help="approved execution branch required before task edits")
+    parser.add_argument("--commit", help="exact task closure commit to associate with pre-commit evidence")
     parser.add_argument("--plain", action="store_true", help="print a reservation attempt as a shell-safe scalar")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
@@ -2208,6 +2284,14 @@ def main(argv: list[str] | None = None) -> int:
                 result = runtime.decide(args.name, args.choice, operation_id)
             elif operation == "outcome":
                 result = runtime.outcome(args.outcome, args.verified, args.pr)
+            elif operation == "close-record":
+                result = runtime.close_record(args.outcome, args.verified, args.pr, args.file)
+            elif operation == "task-start":
+                result = runtime.task_start(args.task, args.branch, args.input)
+            elif operation == "task-gate":
+                result = runtime.task_gate(args.task, args.file)
+            elif operation == "task-record":
+                result = runtime.task_record(args.task, args.commit)
             else:
                 result = runtime.status()
         print(json.dumps(result, indent=2, ensure_ascii=False))

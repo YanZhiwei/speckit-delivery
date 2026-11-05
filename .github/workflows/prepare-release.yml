@@ -89,6 +89,8 @@ jobs:
           uv run --with pyyaml python scripts/validate_distribution.py --version "$VERSION"
           uv run --with pyyaml python scripts/test_validate_distribution.py
           python scripts/test_delivery_runtime.py
+          python scripts/test_task_closure.py
+          python scripts/test_delivery_outcome.py
           uv run --with specify-cli==1.2.3 python scripts/test_workflow_runtime.py
           python scripts/test_bundle_install.py --version "$VERSION"
           python scripts/package_components.py --version "$VERSION" --output dist

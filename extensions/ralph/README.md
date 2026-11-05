@@ -30,8 +30,9 @@ one Git commit in the shared worktree:
    commit the verified task paths with
    `feat(ralph): <task-id> - <task-title>`.
 9. Verify the new `HEAD` and a clean worktree before starting the next task.
-10. Emit `<promise>ALL_TASKS_DONE</promise>` only when every task is committed
-   and has a passing snapshot-bound receipt associated with its verified commit.
+10. For an SD run, use the [runtime task-close transport](../delivery/templates/runtime.md#task-close-transport): `task-start` before edits, task-scoped owner results, `task-gate` before the checkbox, and `task-record` after the commit. Run `require --kind task-closure` before completion. Workflow repeats the audit after Ralph, at Converge closure, and before Evidence/Handoff.
+11. Emit `<promise>ALL_TASKS_DONE</promise>` only when every task is committed
+   and has a passing snapshot-bound receipt associated with its verified commit. Checked boxes or one final outgoing-diff review cannot replace missing task receipts.
 
 For a direct sliced invocation, pass the workflow's exact
 `delivery_run`, `exploration`, `slices`, and `slice_approval` arguments. The

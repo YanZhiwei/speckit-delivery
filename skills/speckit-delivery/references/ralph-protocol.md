@@ -7,15 +7,18 @@ each worker an isolated worktree and an explicit integration contract.
 
 Before task selection, worker dispatch, quality briefing, or the first edit,
 resolve the active feature, capture the clean baseline, and execute the branch
-gate: create or reuse `ralph/<feature-slug>` (or the configured prefix), then
-verify that it is the active branch. When an approved `slices.md` exists, use
-`ralph/<feature-slug>/<slice>` instead: a stacked slice starts from the previous
-slice's verified HEAD (the bottom starts from the target), while an integration
-slice starts from the integration branch. Verify the recorded base SHA and a
-clean worktree before every slice. Stating that the branch will be created is
-not execution. Never stash, reset, clean, or stage pre-existing user changes. A
-missing Git repository, dirty baseline, or unsafe branch transition is a
-blocker.
+gate. Without an approved `slices.md`, create or reuse
+`ralph/<feature-slug>` (or the configured prefix) and verify it is active. For
+an approved `slices.md`, first consume the Delivery Slice command's resolved
+execution/publication modes and publication-group map. `single` keeps
+or creates `ralph/<feature-slug>` even when the plan has multiple internal review
+slices; `stacked`/`integration` use `ralph/<feature-slug>/<slice>`, with a
+stacked slice starting from the previous slice's verified HEAD (the bottom
+starts from the target) and an integration slice starting from the integration
+branch. Verify the recorded base SHA and a clean worktree before every slice.
+Stating that the branch will be created is not execution. Never stash, reset,
+clean, or stage pre-existing user changes. A missing Git repository, dirty
+baseline, or unsafe branch transition is a blocker.
 
 ## Slice boundaries
 
@@ -28,13 +31,17 @@ sequence in another workflow reference.
 
 The durable invariants are: use the exact
 `.specify/delivery/<delivery_run>/slices.md` and its persisted approved snapshot;
-accept only `single`, `stacked`, or `integration`; keep `tasks.md` as the sole
-queue; select one dependency-ready task at a time; require a clean worktree and
-per-task Quality, Standards, independent six-dimensional Review, and Git commit;
-write the existing run `slice-verdicts.yml`; and emit `SLICE_READY` only after
-classification-specific evidence passes. A failed, stale, or unknown boundary
-never advances to the next slice. `single` preserves the ordinary Ralph branch
-contract, while the template governs slice branches for the other modes.
+accept only resolved `Execution mode` and `Publication mode` values of `single`,
+`stacked`, or `integration`; require the complete publication-group map; keep
+`tasks.md` as the sole queue; select one dependency-ready task at a time;
+require a clean worktree and per-task Quality, Standards, independent
+six-dimensional Review, and Git commit; write the existing run
+`slice-verdicts.yml`; and emit `SLICE_READY` only after classification-specific
+evidence passes. A failed, stale, unknown, or unapproved boundary never advances
+to the next slice. `single` preserves the ordinary Ralph branch contract even
+with multiple internal slices; the installed slice-execution template governs
+its boundaries and the other mode-specific branches. Publication remains a
+separate user-authorized Handoff/remote outcome.
 
 `ALL_TASKS_DONE` is valid only after every task is closed and every approved
 slice is ready. Ralph never creates, pushes, or merges a PR; Handoff and the
@@ -54,6 +61,11 @@ user-story labels, file targets, and verification instructions. Treat file
 overlap, shared public contracts, migrations, and unresolved design decisions
 as blocking edges even when tasks carry `[P]`. Give the worker exactly one
 task, including the acceptance condition and relevant Spec/Plan/ADR excerpts.
+When the approved slice plan names an applicable assembly, concurrency, or
+recovery probe, keep that executable check with the behavior-changing task/slice;
+the final rollup is not a substitute. The [Delivery Slice command](../../../extensions/delivery/commands/speckit.delivery.slice.md)
+owns the full probe assignment rule, so this reference links to that owner
+rather than copying it.
 
 The worker returns changed paths, commands, results, residual risk, and
 blockers. It does not edit the task checkbox or create the closure commit. The
