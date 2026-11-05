@@ -109,7 +109,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "$BRANCH"
-          git add -- bundle catalogs extensions workflows CHANGELOG.md CHANGELOG.zh-CN.md
+          git add -- bundle catalogs extensions workflows CHANGELOG.md CHANGELOG.zh-CN.md README.md README.en.md
           git diff --cached --check
           git commit -m "chore(release): prepare $TAG"
           git push origin "$BRANCH"
