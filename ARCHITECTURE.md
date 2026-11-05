@@ -93,6 +93,11 @@ inputs/results across host processes. It can skip a dispatch only from a current
 valid result; missing, stale, malformed, or tampered evidence blocks instead of
 becoming a pass. Quality, Standards, Reviewer, Core, Ralph, Evidence, and Close
 remain the owners of semantic judgments and product/Git/remote mutations.
+The packaged task-close companion validates original per-task owner receipts and
+the exact Git commit association before Feature completion; it never selects or
+closes a task. The outcome companion is a Close-owned atomic writer for the
+canonical evidence header/current-outcome view, preserving historical review
+identity and using the verified tracker observation supplied by the coordinator.
 
 Ralph consumes only `tasks.md` as its execution queue. An approved `slices.md`
 supplies review/merge boundaries only: it cannot add, remove, or reorder tasks.

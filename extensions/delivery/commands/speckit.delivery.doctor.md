@@ -57,7 +57,11 @@ installation missing these contracts as stale; do not modify it silently.
 
 Also verify Delivery ships `speckit.delivery.slice`, `templates/slices.md`, the
 central `templates/runtime.md`, `templates/core-adapter.md`, and
-`scripts/delivery_runtime.py`. Confirm the guarded workflows use a verified
+`scripts/delivery_runtime.py`, `scripts/delivery_tasks.py`, and
+`scripts/delivery_outcome.py`. Verify inline `/sd` also initializes/consumes the
+same-run guards and Feature completion has `require --kind task-closure` after
+Ralph and before Evidence. A checked queue without original task receipts is
+not complete. Confirm the guarded workflows use a verified
 Python 3.11+ invocation and the Spec Kit `>=1.2.3` control-flow surface; a missing
 runtime resource or older host is stale, not compatible by assumption. Verify the
 Feature workflow uses this exact order after plan approval/task generation:
@@ -78,13 +82,18 @@ run identity. A workflow that skips this order, lets Ralph run before the
 checkpoint, or lacks the post-gate approval record is stale.
 
 Validate `pr_slicing`, `slice_warn_files`, `slice_warn_lines`,
-`slice_requires_approval`, `stack_provider`, and `merge_policy`. Reject an
-unknown slicing mode, non-positive budgets, `integration` with `final: squash`,
-a shared integration branch configured for rebase sync, or a stacked mode that
-cannot name a provider or documented manual fallback. If `slice_requires_approval`
-is true, require a recorded `SLICE_APPROVAL: approved` before Ralph. Verify
-`slices.md` is presented as boundary metadata, not as a second execution queue;
-`tasks.md` must remain the only source of task selection and ordering.
+`slice_requires_approval`, `stack_provider`, and `merge_policy`. Accept only
+`off|single|auto|stacked|integration`; `single` must be documented as allowing
+multiple internal review slices on the ordinary Ralph branch with one eventual
+publication group. Reject non-positive budgets, `integration` with
+`final: squash`, a shared integration branch configured for rebase sync, or a
+stacked mode that cannot name a provider or documented manual fallback. If
+`slice_requires_approval` is true, require a recorded `SLICE_APPROVAL: approved`
+before Ralph. Verify the approved `slices.md` contains resolved execution and
+publication modes plus a complete slice-to-publication-group map; the map is
+not publication authorization. Verify `slices.md` is presented as boundary
+metadata, not as a second execution queue; `tasks.md` must remain the only
+source of task selection and ordering.
 
 Verify Docs Sync ships `speckit.docs-sync.run`,
 `speckit.docs-sync.package-readme`, and `templates/package-readme.md`, and that
@@ -199,7 +208,7 @@ WORKFLOWS:
 POLICY_COVERAGE:
 - <rule/profile>: covered | gap — <owner and mechanism>
 SLICE_POLICY:
-- mode: <off|auto|stacked|integration>; provider: <verified|manual|missing>
+- mode: <off|single|auto|stacked|integration>; provider: <verified|manual|missing>
 - gate: <present|missing>; merge: <slice/final/sync>
 METHOD_ADAPTERS:
 - <design|diagnose|review>: builtin | skill-verified | builtin-fallback | blocked — <origin/revision/entrypoint, resource status, fallback reason>

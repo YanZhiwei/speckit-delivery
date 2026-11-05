@@ -114,6 +114,28 @@ provisional, proportional lane; confirm or change it after investigation:
 Before mutation, announce the lane, durable records, Spec artifact policy,
 integration capability, and verification entry points.
 
+## Runtime admission for new work
+
+For every new delivery run, including inline `/sd` orchestration, verify the
+installed runtime and its task/outcome companion helpers before planning or
+execution. Resolve and announce one explicit safe `delivery_run`; a new run may
+use a descriptive or generated safe ID without an extra approval question.
+Reuse a supplied ID unchanged. Run the helper's `init` for the selected lane,
+and use the same `begin`/`record`, decision, checkpoint and `require` transitions
+as the installed lane Workflow. Once Core emits the real Feature path, bind that
+path; never derive or relocate the run from it. Prefer running the installed
+Workflow when the host supports it; inline orchestration has the same machine
+guards and may not replace them with prose verdicts.
+
+An older installation or a legacy run without original state/receipts must be
+reported before execution with its concrete upgrade/recovery action. Version
+registration and an installed `/sd` alias alone are insufficient. Do not upgrade
+an active run by inventing task passes or resetting its repair counters. Preserve
+project configuration and already recorded approvals on a controlled update.
+Feature continuation must run `require --kind task-closure` after Ralph, before
+Converge closes, and before Evidence/Handoff. The central runtime contract owns
+the task-close transport; native Ralph remains its task/commit owner.
+
 When invoking direct YAML workflows, obtain an explicit safe `delivery_run` id
 and pass it unchanged (including resume and lane changes). Their command steps
 are separate host processes: Explore must persist the canonical run packet before
@@ -188,21 +210,23 @@ clarification, plan, and analysis gates just as the Feature YAML workflow does:
 
 Slice planning runs after task generation so it binds real task IDs. It does not
 rewrite or replace `tasks.md`; `tasks.md` remains the only execution queue and
-`slices.md` only supplies review/merge boundaries. Present the slice table,
-trunk-safety evidence, merge mode, and any exception or open decision at
-`slice-gate` after analysis has resolved blocking task-map/coverage findings.
-After the gate, the Delivery-owned `action=record-approval` writer records the
-actual choice and unchanged fingerprint; Ralph consumes that record, not a
-context-only or pre-analysis approval. A `needs_decision` result is not approval:
-present bounded options with a recommendation and stop until the user chooses.
-If a task spans slices,
+`slices.md` supplies internal review boundaries plus the approved execution/
+publication plan. Present the slice table, trunk-safety evidence, resolved
+execution/publication modes, publication-group map, merge policy, and any
+exception or open decision at `slice-gate` after analysis has resolved blocking
+task-map/coverage findings. After the gate, the Delivery-owned
+`action=record-approval` writer records the actual choice and unchanged
+fingerprint; Ralph consumes that record, not a context-only or pre-analysis
+approval. A `needs_decision` result is not approval: present bounded options with
+a recommendation and stop until the user chooses. If a task spans slices,
 return to `speckit.tasks`; do not hand-edit the queue. Material scope or design
 changes reopen the relevant approval and slice planning.
 
-At each verified slice boundary, use `speckit.delivery.handoff slice=<id>` to
-render that layer's PR body; the final handoff uses `mode=auto` for the release
-slice or integration rollup. Do not push, create, or merge a PR without separate
-user authorization.
+At each verified slice boundary, `speckit.delivery.handoff slice=<id>` may
+render an internal boundary artifact or an approved layer body; under
+`Publication mode: single` it does not imply a separate remote PR. The final
+handoff uses `mode=auto` strictly according to the approved publication groups.
+Do not push, create, or merge a PR without separate user authorization.
 
 Treat `tasks.md` as the only execution queue. When a standards, review, or convergence
 finding remains, have the Core task owner (append-only Converge or a Tasks

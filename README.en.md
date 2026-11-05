@@ -73,6 +73,8 @@ Three gates separate "think it through" from "write code": **scope approval** be
 
 Use `/sd action=status delivery_run=<id>` to inspect phase, pending owners, stale results, and remaining attempts; `action=resume` recovers only the same run's pending ticket. Delivery installs a standard-library runtime helper that keeps local coordinator state under `.specify/delivery/<run>/runtime/` and validates native report/machine-receipt references, input fingerprints, and six-dimensional Review completeness. A current Review pass skips unnecessary Repair dispatch; unresolved work at a repair/convergence cap fails the final machine guard. Quality, Standards, Reviewer, Core, and Ralph remain the semantic owners.
 
+Starting with `0.4.2`, new inline `/sd` runs execute the runtime guards as well. Feature completion, convergence and handoff audit each task's original owner receipts and actual commit; checked boxes or a final integrated review cannot replace missing task evidence. Internal slices and remote PR grouping are resolved before execution, and `pr_slicing: single` may retain multiple internal slices inside one PR. Close preserves historical review identity while atomically recording the verified merge outcome.
+
 The Feature Plan records architecture constraint sources, affected paths, design responses, verification owners, and evidence gaps, carrying IDs into Tasks, Brief, and Review. Optional open-source skill methods inform alternatives, interfaces, and failure modes under project governance; see the pinned [method review](REFERENCE-REVIEW.md#architecture-skill-methods).
 
 `method_adapters` in `delivery-config.yml` can select design, diagnosis/testing, and review methods separately. The default `builtin` needs no external skill or extra model round. An explicit external method must bind a local entrypoint, fixed revision, resource manifest, and SHA-256 digests, and returns analysis only to the existing phase: no second plan, queue, commit, or review-closure authority. See the [method contract](extensions/delivery/templates/method-adapter.md).
@@ -123,15 +125,15 @@ Initialization creates `.specify/` and the host command surface; it does not rep
 
 ```bash
 specify extension catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.1/catalogs/extensions.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.2/catalogs/extensions.json \
   --name speckit-delivery --install-allowed
 
 specify workflow catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.1/catalogs/workflows.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.2/catalogs/workflows.json \
   --name speckit-delivery
 
 specify bundle catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.1/catalogs/bundles.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.2/catalogs/bundles.json \
   --id speckit-delivery --policy install-allowed
 
 specify bundle install speckit-delivery
@@ -145,7 +147,7 @@ Back up project configuration and core template customizations first, then run `
 This example assumes all three existing catalogs are named `speckit-delivery` and the Workflow source has index `0`; substitute its actual index and retain unrelated sources.
 
 ```powershell
-$base = 'https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.1/catalogs'
+$base = 'https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.2/catalogs'
 specify extension catalog remove speckit-delivery
 specify extension catalog add "$base/extensions.json" --name speckit-delivery --install-allowed
 specify workflow catalog remove 0

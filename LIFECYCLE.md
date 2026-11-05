@@ -17,7 +17,7 @@
 | Review repair checkpoint | Coordinator | Same run lifetime | Attempt count/cap and unresolved IDs preserved across resume/new HEAD |
 | Quality verdict | Task/Ralph run | Ephemeral by default | HEAD, scope, profiles, checks, pass/blocked |
 | Standards verdict | Task/Ralph run | Ephemeral by default | Snapshot/scope, semantic rules and blockers |
-| Evidence report | Delivery run/PR | Durable summary | Commands, results, caveats, and the recorded PR outcome (`delivered` / `abandoned` / `superseded`) |
+| Evidence report | Delivery run/PR | Durable summary | Immutable reviewed/publication snapshots plus one Close-owned current outcome block (`delivered` / `abandoned` / `superseded`) |
 | `.specify/delivery/<run>/pull-request.md` | Delivery Handoff | Follows `artifact_policy` | Rendered PR body and body path for `gh pr create --body-file`; not the GitHub UI template |
 | PR body | Pull request | Durable | Change, risk, decisions, evidence |
 | Package README | Package owner / Docs Sync | Durable | User install/API/limits and maintainer development/release contract derived from real package contents |
@@ -66,6 +66,17 @@ project root with Python 3.11 or later and Git on `PATH`; it uses the standard
 library and Git only. It does not invoke a model, run project tests, edit
 product code or tasks, create commits, or contact a tracker. The exact state
 schema and owner boundaries belong to the [Delivery runtime contract](extensions/delivery/templates/runtime.md).
+
+`close-record` is the one explicit Close-owned durability exception. The
+standard-library module at
+`.specify/extensions/delivery/scripts/delivery_outcome.py` validates a
+verified tracker observation and atomically writes only the Evidence current
+outcome block; it does not contact the tracker or create a commit. The
+`delivery_runtime.py close-record` wrapper refreshes the hash-bound
+`evidence_observation` only after that Evidence write succeeds; a failed
+validation leaves Evidence and runtime state unchanged. Other Runtime
+operations remain coordinator bookkeeping and do not gain durable
+Evidence-writing authority by analogy.
 
 The `.specify/delivery/<run>/runtime/` directory is coordinator bookkeeping;
 Spec Kit's `.specify/workflows/runs/` operational ledger is likewise local.
@@ -122,13 +133,121 @@ contracts.
 `runtime/` child is the local coordinator bookkeeping described above. When the
 policy is ephemeral, exploration, slices, receipts, verdicts, review reports,
 and the rendered PR body stay local and are published only through the PR body.
-Evidence binds to the reviewed head the PR publishes plus the PR reference; the
-merge revision is recorded later, not invented before publication. Reusing an
-approved planning or evidence input requires unchanged relevant bytes and the
-same requirements/policy fingerprint. A project-authorized planning commit may
-be associated with the original approval only when it is content-equivalent and
-limited to the approved paths; a changed path or byte requires fresh presentation
-and approval. Never relabel an old result with a new hash.
+Evidence has two layers: one unique Close-owned current outcome block and
+append-only validation/review/CI/limitation snapshots. The current block is the
+only authority for the present terminal status. Snapshot text such as "awaits
+CI" or "not merged" remains true only for its recorded observation time and
+must carry its `reviewed_head` and limitation context.
+
+### Head identity and merge proof
+
+A Delivery record keeps these identities separate:
+
+- `reviewed_head` is the exact revision whose bytes and requirements native
+  Review and Evidence validated. Native reports and receipts retain this value
+  immutably.
+- `original_pr_head` is the historical PR head observed from the tracker
+  (`head_revision` in the verified observation). It may equal `reviewed_head`,
+  but it is never renamed to the merge result.
+- `base_revision` is the tracker-observed target/base used for content comparison.
+- `merged_revision` is the actual tracker merge commit and the effective
+  delivered head. Squash and merge commits normally differ from both historical
+  identities; no Review is relabeled as a Review of this commit.
+
+Before publication, Evidence records `original_pr_head` as pending. After
+publication, Close binds the verified tracker `head_revision` to
+`original_pr_head`. If that head differs from `reviewed_head`, Evidence must
+contain an explicit `published_head` binding and content-equivalence or exact
+bookkeeping/archive proof. An archive binding uses
+`reviewed_diff_archive`, `reviewed_diff_archive_sha256`,
+`reviewed_diff_archive_base`, `reviewed_diff_archive_head`, and
+`reviewed_diff_archive_reviewed_head`; partial or mismatched bindings block. A
+source change cannot be hidden as a bookkeeping change. A missing old reviewed/PR
+object is not itself a reason to rewrite Git:
+when the trusted verified tracker head equals the recorded `reviewed_head`, it is
+an accepted historical mapping (`tracker-head-mapped`) and the current block
+still says that the Review was historical. If the heads differ and proof is
+missing, Close fails closed.
+
+For `merged`, the tracker observation must provide the actual merge commit;
+`merged_revision` must be a locally reachable commit. When the PR head object is
+available, compare the complete base-to-PR-head and base-to-merge path/mode/byte
+content. When it is unavailable, use an exact immutable evidence archive with
+the same base, PR head, changed paths/modes, bytes or patch, and digest when one
+exists; a bare fingerprint, URL, report, or limitation is not an archive. The
+trusted tracker mapping is the only clean-clone fallback when the historical
+head is absent and it equals `reviewed_head`; it never claims a new review of
+the merge commit. Do not fetch arbitrary branches, reset, rewrite, force-update,
+or delete refs to repair a missing old object.
+
+The read-only tracker response is saved at the exact run-relative
+`.specify/delivery/<run>/runtime/observed-pr.json` path and has schema version 1
+with no extra keys:
+
+```json
+{
+  "schema_version": 1,
+  "delivery_run": "<id>",
+  "lane": "feature|bugfix|lightweight",
+  "provider": "github",
+  "repository": "owner/name",
+  "number": 31,
+  "state": "MERGED",
+  "head_revision": "<PR head SHA>",
+  "base_revision": "<base SHA>",
+  "merged_revision": "<merge commit SHA>",
+  "merged_at": "<RFC3339 timestamp>",
+  "observed_at": "<RFC3339 timestamp>",
+  "url": "https://github.com/owner/name/pull/31"
+}
+```
+
+A `CLOSED` observation keeps the head/base and observation fields but uses null
+`merged_revision` and `merged_at`. The verified PR input must match its provider,
+repository, and number. After obtaining this read-only observation, Close runs
+from the project root:
+
+```text
+<python> .specify/extensions/delivery/scripts/delivery_runtime.py close-record --run <id> --outcome merged --pr <number-or-url> --verified --file runtime/observed-pr.json
+```
+
+The operation validates the exact JSON, same-run/lane/PR identity, local merge
+reachability, and the available head/content proof, then atomically replaces
+only the current block. It does not contact the tracker, create a commit, or
+write runtime state. A failure leaves both Evidence and runtime state unchanged.
+
+The block uses stable delimiters and fields so old occurrences cannot become
+current authority:
+
+```text
+<!-- DELIVERY_CURRENT_OUTCOME_BEGIN -->
+## Current delivery outcome
+
+- **delivery_run**: <id>
+- **lane**: feature | bugfix | lightweight
+- **status**: delivered | abandoned | superseded
+- **outcome**: merged | closed | superseded
+- **pull_request**: <canonical provider/repository/number or URL>
+- **reviewed_head**: <historical reviewed SHA>
+- **original_pr_head**: <historical tracker head SHA>
+- **published_head_proof**: tracker-head-mapped | published-content-equivalent | published-evidence-archive
+- **base_revision**: <tracker base SHA>
+- **merged_revision**: <reachable effective merge SHA or null>
+- **effective_head**: <merged_revision or null>
+- **merged_at**: <tracker merge time or null>
+- **observed_at**: <tracker observation time>
+- **outcome_recorded_at**: <RFC3339 timestamp>
+- **verification_file**: .specify/delivery/<id>/runtime/observed-pr.json
+- **merge_proof**: diff-equivalent | evidence-archive | tracker-head-mapped | not-applicable
+<!-- DELIVERY_CURRENT_OUTCOME_END -->
+```
+
+Close updates only this current block and preserves native reports, historical
+snapshots, and limitations unchanged. A legacy record without the block may
+receive one structural historical-snapshot label while its existing bytes remain
+verbatim. Repeating the same verified operation is idempotent; a different
+concrete PR or terminal outcome is a conflict and needs the authorized recovery
+path.
 
 [Doctor](extensions/delivery/commands/speckit.delivery.doctor.md) is phase-aware
 when it audits missing evidence. In a legitimate active pre-Evidence phase, an
@@ -145,11 +264,11 @@ waiting for publication or its observed outcome. After the pull request merges o
 closes, `speckit.delivery.close` records the actual outcome. `merged` becomes
 `delivered`; `closed` without merge becomes `abandoned` and keeps one self-contained
 retirement note; a replaced run becomes `superseded` with a resolvable
-`superseded_by`. If the PR, tracker, credentials, or outcome cannot be verified,
-Close returns `unverified` and stops before writing terminal status/history or
-deleting any workspace. Absence of `status` means active, and a record that
-contradicts the real PR outcome is not closed. Retirement deletes only that run's
-allowlisted workspace artifacts and never `evidence.md` or another run.
+`superseded_by`. If the PR, tracker, credentials, outcome, merge commit, or proof
+cannot be verified, Close returns `unverified` and stops before writing terminal
+status/history or deleting any workspace. Absence of `status` means active, and a
+record that contradicts the real PR outcome is not closed. Retirement deletes only
+that run's allowlisted workspace artifacts and never `evidence.md` or another run.
 
 Installation, upgrade, bootstrap, and manual governance actions are operational
 one-offs, not delivery runs. Their authoritative record belongs to the project's

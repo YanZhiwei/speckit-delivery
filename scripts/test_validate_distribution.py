@@ -45,6 +45,23 @@ class DistributionContractTest(unittest.TestCase):
     def test_repository_contract_is_valid(self) -> None:
         self.assertEqual(validator.validate(ROOT), [])
 
+    def test_feature_task_closure_guards_cannot_be_omitted_or_waived(self) -> None:
+        for action in ("remove-after-ralph", "waive-before-evidence", "remove-convergence-guard"):
+            with self.subTest(action=action):
+                root = self.fixture()
+                path = root / "workflows/feature-delivery/workflow.yml"
+                workflow = yaml.safe_load(path.read_text(encoding="utf-8"))
+                if action == "remove-after-ralph":
+                    workflow["steps"] = [step for step in workflow["steps"] if step["id"] != "task-closure-after-ralph"]
+                elif action == "waive-before-evidence":
+                    next(step for step in workflow["steps"] if step["id"] == "task-closure-before-evidence")["continue_on_error"] = True
+                else:
+                    loop = next(step for step in workflow["steps"] if step["id"] == "convergence-if-needed")["then"][0]
+                    loop["steps"] = [step for step in loop["steps"] if step["id"] != "convergence-task-closure"]
+                path.write_text(yaml.safe_dump(workflow, sort_keys=False), encoding="utf-8")
+                errors = validator.validate(root)
+                self.assertTrue(any("task-closure audit" in error for error in errors), errors)
+
     def test_workflow_catalog_requires_must_match_yaml(self) -> None:
         root = self.fixture()
         catalog_path = root / "catalogs" / "workflows.json"

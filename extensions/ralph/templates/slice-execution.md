@@ -5,7 +5,10 @@ and is the detailed slice-boundary contract for the installed
 `.specify/extensions/ralph/commands/speckit.ralph.run.md` command. When that
 command receives `slices=<path>`, it must read this file in full before preflight
 and apply the sequence below. The command remains the execution owner; this
-template adds no runtime, extension, or state engine.
+template adds no runtime, extension, or state engine. The Delivery Slice command
+owns derivation and validation of internal boundaries, execution mode,
+publication mode, and publication groups; this template enforces the approved
+snapshot.
 
 For an SD Feature handoff, also read the installed
 `.specify/extensions/delivery/templates/core-adapter.md` in full. It owns the
@@ -77,11 +80,18 @@ For a sliced invocation:
    current plan, requirements, policy inputs, task mapping, and relevant
    working-tree contents. A missing, changed, stale, or context-only approval
    blocks direct execution; do not replace a fingerprint to make it fit.
-6. Read the plan's approved `Merge mode` and accept only `single`, `stacked`, or
-   `integration`. `undecided`, an unknown slice classification, an incomplete
-   task map, or a task mapped to more than one slice blocks execution; every
-   `tasks.md` task must be mapped exactly once. A `single` plan has one slice and
-   uses the ordinary Ralph branch/queue contract.
+6. Read the plan's approved `Execution mode` and `Publication mode` (accept
+   `Merge mode` only as the legacy execution-mode alias) and accept only
+   `single`, `stacked`, or `integration` for each. If the legacy alias is
+   present, it must equal `Execution mode`; do not choose between conflicting
+   fields. Both modes, the requested `pr_slicing` value, and the complete
+   publication-group map must be present in the approved snapshot; `undecided`,
+   an unknown slice classification, an
+   incomplete task map, or a task mapped to more than one slice blocks
+   execution. A `single` plan may contain one or more internal review slices,
+   but all use the ordinary Ralph branch/queue contract and one approved
+   publication group. Do not infer remote PR count from slice count or amend the
+   grouping at final handoff.
 
 When `slices` is absent, preserve the existing non-sliced Ralph behavior: the
 ordinary feature branch, the active Feature's `tasks.md`, one ready task per
@@ -134,10 +144,14 @@ from the approved planning baseline. Do not advance to a slice task while that
 blocker holds.
 
 For `single`, keep the existing ordinary feature branch and target-base behavior;
-do not add a slice suffix, and still require the planning baseline transfer. For
-every sliced mode, record the selected slice, mode, prefix, branch, declared
-base, execution base, planning commit, and approved snapshot before task
-selection.
+do not add a slice suffix, even when the approved plan has multiple internal
+review slices, and still require the planning baseline transfer. Execute those
+slices sequentially on that branch and stop at each approved boundary; a single
+branch does not remove per-slice classification or checkpoint evidence. For
+every sliced mode, record the selected slice, execution mode, publication mode,
+publication group, prefix, branch, declared base, execution base, planning
+commit, and approved snapshot before task selection. Publication remains
+pending separate user authorization.
 
 ## Queue and task sequence
 
@@ -148,14 +162,19 @@ independently verifiable, reviewable green commit; it is not a TDD-only step.
 Setup, red/green behavior checks, implementation, and related docs may stay in
 one vertical task when that is what makes the outcome independently reviewable.
 Use the project's risk-based testing policy and meaningful checks for the
-changed surface. Never add, remove, reorder, silently merge, or synthesize a
-task because a slice needs one. A task spanning slices, a task missing from the
-approved map, or an appended task not assigned to an existing approved slice
-blocks and returns to the Core/Delivery planning sequence. If Converge reports
-any `appendedTaskIDs`, even a task assigned to an existing slice requires the
-adapter's renewed Delivery Slice mapping, Analyze result, combined gate,
-approval writer, and planning checkpoint; a same-slice label does not preserve
-stale approval.
+changed surface. Execute every applicable assembly, concurrency, or recovery
+probe recorded for the current behavior-changing slice with its owning task;
+the final rollup/outgoing review may confirm integration but cannot substitute
+for that probe. The full probe assignment and validation rule lives in the
+[Delivery Slice command](../../delivery/commands/speckit.delivery.slice.md); do
+not copy or weaken it here. Never add, remove,
+reorder, silently merge, or synthesize a task because a slice needs one. A task
+spanning slices, a task missing from the approved map, or an appended task not
+assigned to an existing approved slice blocks and returns to the Core/Delivery
+planning sequence. If Converge reports any `appendedTaskIDs`, even a task
+assigned to an existing slice requires the adapter's renewed Delivery Slice
+mapping, Analyze result, combined gate, approval writer, and planning
+checkpoint; a same-slice label does not preserve stale approval.
 
 Within the current slice, repeatedly use the command's normal one-task sequence:
 
@@ -219,8 +238,11 @@ slice plan and approval before checking it; a changed plan or snapshot blocks.
 - `flagged`: verify the named flag, its default and kill switch, flag-off
   behavior, the flag-off regression test, and then the flag-on path. Missing or
   failed flag evidence blocks; do not infer safety from a passing task review.
-- `integration-only`: run the exact declared checkpoints on the integration
-  branch and record their results. Do not claim target-branch prefix safety.
+- `integration-only`: run the exact declared checkpoints against the declared
+  integration branch and record their results, even when `Execution mode:
+  single` keeps task execution on the ordinary Ralph branch. Do not claim
+  target-branch prefix safety or silently replace the integration checkpoint
+  with the ordinary branch's task checks.
 - `unknown`: block. An approved execution mode may not continue with unknown
   boundary evidence.
 
@@ -229,10 +251,10 @@ slice plan and approval before checking it; a changed plan or snapshot blocks.
 Write or update only the exact run workspace receipt at
 `.specify/delivery/<delivery_run>/slice-verdicts.yml`, honoring the already
 approved `artifact_policy`; never write a Feature-derived slice path when
-`delivery_run` is supplied. Capture the task-commit `verified_head` and the
-original check execution identity (commands, inputs, fingerprints, and evidence)
-before writing. A receipt write is coordinator-owned boundary bookkeeping, not a
-change to the task outcome.
+`delivery_run` is supplied. Capture the task-commit `verified_head`, approved execution/publication modes,
+publication group, and the original check execution identity (commands, inputs,
+fingerprints, and evidence) before writing. A receipt write is
+coordinator-owned boundary bookkeeping, not a change to the task outcome.
 
 For `artifact_policy: tracked`, use this authorization-aware transition after
 every boundary receipt, including a blocked receipt:
@@ -272,5 +294,5 @@ is ready. Coordinator/runtime bookkeeping remains in the local run runtime
 area and is not appended to this receipt merely to record a transition.
 
 Ralph does not create, push, or merge a PR, mutate a remote, or silently extend
-the approved slice plan. Handoff and the separately authorized PR outcome own
-those transitions.
+the approved slice/publication plan. Handoff consumes the approved publication
+groups, and the separately authorized PR outcome owns remote transitions.

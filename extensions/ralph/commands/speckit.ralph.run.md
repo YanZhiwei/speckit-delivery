@@ -49,8 +49,12 @@ operational evidence is exactly
 `.specify/delivery/<delivery_run>/runtime/result-checkpoint.json` may be used
 only to resolve that report reference. Keep `runtime/` local/ignored and do not
 stage the handoff. Apply the runtime contract exactly; do not invent a runtime
-CLI or duplicate its state schema. With neither runtime argument, do not perform
-runtime integration or create runtime state here.
+CLI or duplicate its state schema. Owner-stage transport is optional only for a
+standalone call without a Delivery run. An SD Feature invocation with
+`delivery_run` must use the task-close transport even when `runtime_stage` and
+`runtime_result` are absent on Ralph itself; those stage arguments are supplied
+to its nested Quality/Standards/Review owners. Consume the existing run rather
+than initializing a replacement.
 
 If `slices=<path>` is present, read the installed
 `.specify/extensions/ralph/templates/slice-execution.md` in full. That packaged
@@ -222,9 +226,19 @@ the remaining dependency graph, or the configured iteration limit is reached:
    supplied `delivery_run` and exact exploration/plan reference when present,
    and include its result in the packet. A brief is advisory context; it does
    not replace the closure checks.
+
+   For an SD run, before editing execute the central runtime's `task-start`
+   using the selected Task ID, the explicit approved execution branch, and
+   repeated `--input <allowed-path>` arguments. Follow the task-close transport
+   section in `.specify/extensions/delivery/templates/runtime.md`; it owns the
+   machine record schema. A wrong branch, dirty entry, duplicate occurrence, or
+   unfinished earlier task stops selection before any source edit.
 4. Implement only that task. A delegated worker reports changed paths,
    commands, results, residual risk, and blockers; it does not edit the task
-   checkbox and does not create the closure commit.
+   checkbox and does not create the closure commit. If a tracked progress file
+   is configured, include its exact path in the task packet/allowed paths and
+   append the iteration intent, Task ID and planned commit subject before the
+   checks and owner snapshots. Do not append to it after the task gate.
 5. Run the task's stated, meaningful project checks according to its risk and
     invoke both `speckit.quality.check` and `speckit.review.standards` for the
     same task scope. Then invoke `speckit.review.run scope=task task=<id>`
@@ -237,6 +251,11 @@ the remaining dependency graph, or the configured iteration limit is reached:
     untracked files. Tests/standards success does not replace the
     six-dimensional task review, and a TDD ordering claim does not replace a
     green task check.
+
+    In an SD run, transport each owner result through `begin`/`record` with
+    runtime scope `task-<TaskID>` as defined by the central runtime contract.
+    Preserve immutable native report/check paths per task and ticket. Final
+    `outgoing-diff` reports cannot stand in for a task's pre-commit passes.
 
     For confirmed blockers, invoke `speckit.delivery.review-fix` with
     `lane=feature scope=task task=<id>`, the supplied `delivery_run`, exact
@@ -273,8 +292,14 @@ the remaining dependency graph, or the configured iteration limit is reached:
      reason is present; and
    - no required check, policy source, or tool is missing or unavailable.
 
-   Emit `RALPH_TASK_GATE: PASS` only when every item passes. This gate is
-   separate from the advisory Quality Brief and is mandatory before `[X]`.
+   For an SD run, invoke runtime `task-gate --task <TaskID> --file
+   <run>/runtime/docs-refresh-<TaskID>.json` before emitting PASS. The central
+   contract defines this explicit docs-refresh applicability record and checks
+   current task-scoped Quality/Standards/Review against the unchanged branch,
+   HEAD, queue, allowed paths, and reviewed Git tree.
+
+   Emit `RALPH_TASK_GATE: PASS` only when every item and the machine gate pass.
+   This gate is separate from the advisory Quality Brief and is mandatory before `[X]`.
 7. If the task gate is not `PASS`, persist the blocker, leave `[ ]` unchanged,
    and stop or continue only with another independent ready task. Never commit
    a failed task as complete.
@@ -285,11 +310,11 @@ the remaining dependency graph, or the configured iteration limit is reached:
    `.specify/delivery/<delivery_run>/task-verdicts.yml` when a run is supplied,
    or the explicitly mapped legacy standalone Feature path only when no run is
    supplied. Never use a Feature-derived path when `delivery_run` is present.
-9. If a progress file is configured, append the concise iteration record now,
-   including the task id, commit subject, changed paths, checks, and next task
-   focus. Treat the checkbox, canonical task receipt, and progress writes as
-   the final pre-commit state transition. Do not stage coordinator/runtime
-   bookkeeping; it remains local under the run's runtime area.
+9. Keep the already-reviewed progress file unchanged. Only the selected
+   checkbox and declared run receipt bookkeeping may change after the gate;
+   resulting commit/check details belong in local runtime association state.
+   Do not stage coordinator/runtime bookkeeping; it remains local under the
+   run's runtime area.
 10. Immediately stop task work and stage only the verified task paths plus the
     declared task-state/progress files. Do not select the next task, dispatch
     another worker, or make unrelated edits before committing. Never use
@@ -321,6 +346,12 @@ the remaining dependency graph, or the configured iteration limit is reached:
     Feature run with `delivery_run` must not write this association under a
     Feature-derived path.
 
+    For an SD run, execute runtime `task-record --task <TaskID> --commit <SHA>`
+    before selecting another task. It associates the preserved pre-commit
+    owner receipts only after checking the actual commit parent, reviewed Git
+    blobs/modes, selected checkbox transition, and clean execution worktree.
+    A failed association leaves the task unclosed and requires recovery.
+
 After a successful commit, begin the next iteration with fresh task focus and
 re-read all durable artifacts. A task is not complete merely because source
 files changed or tests passed; it is complete only after its Git commit and
@@ -339,6 +370,12 @@ boundary stops the run and never advances to the next slice; a non-sliced
 invocation has no such handoff.
 
 ## Completion
+
+For an SD run, run the runtime helper's `require --kind task-closure` before
+claiming completion. Missing task records, stale/tampered native evidence,
+unreachable or mismatched task commits, and checkbox-only completion block
+`ALL_TASKS_DONE`. Workflow repeats this read-only audit after Ralph and before
+Evidence so a missing internal helper call cannot silently pass downstream.
 
 When no incomplete task remains, verify that every task has a passing
 snapshot-bound receipt associated with its verified commit in the canonical

@@ -73,6 +73,8 @@ route → doctor → 决策发现 → explore 代码/历史/参考
 
 `/sd action=status delivery_run=<id>` 可查看当前阶段、待恢复 owner、过期结果和剩余轮次；`action=resume` 只恢复同一 Run 的 pending ticket。随 Delivery 安装的标准库运行时会在 `.specify/delivery/<run>/runtime/` 保存本地协调状态，校验原生报告／机器回执、输入指纹和六维 Review 完整性。当前 Review 已通过时不会无谓调用 Repair；达到修复／收敛上限而仍有阻塞时，最终机器守门会失败。语义判断仍由 Quality、Standards、Reviewer、Core 和 Ralph 负责。
 
+从 `0.4.2` 起，新的 `/sd` 会话也必须实际使用 runtime 门禁。Feature 在完成任务、收敛和交接前逐项核验任务凭证及真实提交；已勾选队列或最终总评审不能替代缺失的逐任务证据。内部切片与 PR 分组在执行前分别确定，`pr_slicing: single` 可保留多个内部切片并交付为单个 PR。Close 保留历史审阅身份并原子记录已核验的合并结果。
+
 Feature 的 Plan 会列出架构约束来源、适用路径、设计响应、验证负责人和证据缺口，并把约束 ID 传给 Tasks、Brief 和 Review。可选开源 Skill 提供方案比较、接口与失败模式等方法，按项目治理采纳；方法取舍和固定版本见 [参考评审](REFERENCE-REVIEW.zh-CN.md#架构-skill-方法参考)。
 
 `delivery-config.yml` 的 `method_adapters` 可分别选择设计、诊断测试和评审方法。默认 `builtin`，不需要外部 Skill 或额外模型轮次；显式外部方法必须绑定本地入口、固定版本、资源清单和 SHA-256 摘要，只向现有阶段返回分析回执，不新增计划、队列、提交或评审关闭权。见 [方法契约](extensions/delivery/templates/method-adapter.md)。
@@ -123,15 +125,15 @@ specify init . --integration codex --integration-options="--skills" --script ps
 
 ```bash
 specify extension catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.1/catalogs/extensions.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.2/catalogs/extensions.json \
   --name speckit-delivery --install-allowed
 
 specify workflow catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.1/catalogs/workflows.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.2/catalogs/workflows.json \
   --name speckit-delivery
 
 specify bundle catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.1/catalogs/bundles.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.2/catalogs/bundles.json \
   --id speckit-delivery --policy install-allowed
 
 specify bundle install speckit-delivery
@@ -145,7 +147,7 @@ Bundle 会安装 Delivery、Decision、Ralph、Review、Simplify、Evidence、Qu
 下面示例假定三类旧 Catalog 均名为 `speckit-delivery`，其中 Workflow 来源索引为 `0`；按实际列表替换索引，保留其他来源。
 
 ```powershell
-$base = 'https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.1/catalogs'
+$base = 'https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.2/catalogs'
 specify extension catalog remove speckit-delivery
 specify extension catalog add "$base/extensions.json" --name speckit-delivery --install-allowed
 specify workflow catalog remove 0

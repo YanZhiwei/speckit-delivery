@@ -2,6 +2,31 @@
 
 All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and Semantic Versioning.
 
+## [0.4.2] - 2026-11-05
+
+### Added
+
+- Executable Ralph task-close transport: lock the task's branch and starting HEAD,
+  require task-scoped Quality/Standards/Review receipts, and verify the actual
+  committed Git blobs, modes, parent and checkbox transition. Feature completion,
+  Converge and Handoff audit every task association; a final review cannot replace
+  missing per-task evidence.
+- Installed-runtime behavioral probes and a legacy `/sd` forwarding-shim upgrade
+  fixture for OpenCode and Codex, preserving project configuration.
+- A Close-owned atomic outcome writer that preserves reviewed-head provenance,
+  records the verified squash merge revision, and separates current outcome from
+  historical validation snapshots.
+
+### Changed
+
+- New inline `/sd` runs use the same runtime admission and machine guards as the
+  Workflow path, with explicit same-run state and concrete legacy recovery.
+- Internal review slices and remote PR grouping are decided before execution;
+  a single PR may retain multiple internal slices. Slice plans identify early
+  behavioral verification for high-risk assembly, concurrency and recovery work.
+- Validation and release pipelines exercise task-close and outcome regressions,
+  in addition to clean-project installation and the real workflow engine.
+
 ## [0.4.1] - 2026-11-04
 
 ### Changed

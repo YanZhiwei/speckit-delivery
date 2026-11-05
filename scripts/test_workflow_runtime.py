@@ -734,6 +734,22 @@ class FullWorkflowConsumers(FakeConsumers):
         )
         self.simplify_verify_calls += 1
 
+    def _task_owners(self, runtime: Any, task: str) -> None:
+        for stage in ("quality", "standards", "review"):
+            pending = runtime.begin(stage, scope=f"task-{task}")
+            report = runtime.local / f"task-{task}-{stage}.md"
+            report.write_text(f"{stage.upper()}_VERDICT: pass\n", encoding="utf-8")
+            if stage == "quality":
+                log = runtime.local / f"check-{task}.txt"
+                log.write_text("native task check passed\n", encoding="utf-8")
+                data = {"checks": [{"command": "task-fixture-check", "exit_code": 0, "evidence": {"path": runtime.relative(log), "sha256": RUNTIME.digest(log.read_bytes())}}]}
+            elif stage == "standards":
+                data = {"coverage": "complete"}
+            else:
+                data = {"coverage": "complete", "dimensions": {key: "pass" for key in RUNTIME.DIMENSIONS}, "independence": "independent", "findings": [], "repairable": False}
+            self._save_result(runtime, pending, report, "pass", data, runtime.local / f"result-{stage}.json")
+            runtime.record(stage)
+
     def _ralph(self, args: str) -> None:
         self._expect(self.lane == "feature", "Ralph must run only for a Feature fixture")
         runtime = self._runtime()
@@ -746,15 +762,24 @@ class FullWorkflowConsumers(FakeConsumers):
         pending_tasks = re.findall(r"^\s*-\s*\[ \]\s+(T\d+)\b", text, re.MULTILINE)
         self._expect(bool(pending_tasks), "Ralph dispatched without an unchecked Core task")
         self.ralph_tasks.append(pending_tasks)
-        text = re.sub(r"- \[ \]", "- [x]", text)
-        tasks.write_text(text, encoding="utf-8")
         source = self.root / "src" / "app.py"
-        source.write_text(
-            source.read_text(encoding="utf-8") + f"# green Ralph task {self.ralph_calls + 1}\n",
-            encoding="utf-8",
-        )
-        self._git("add", "--", self._relative(source), runtime.relative(tasks))
-        self._git("commit", "--quiet", "-m", f"Ralph green task pass {self.ralph_calls + 1}")
+        for task_id in pending_tasks:
+            branch = self._git("branch", "--show-current").stdout.strip()
+            runtime.task_start(task_id, branch, [self._relative(source)])
+            source.write_text(
+                source.read_text(encoding="utf-8") + f"# green Ralph task {task_id}\n",
+                encoding="utf-8",
+            )
+            self._task_owners(runtime, task_id)
+            applicability = runtime.local / f"docs-refresh-{task_id}.json"
+            applicability.write_text(json.dumps({"required": False, "reason": "Fixture changes only internal behavior."}), encoding="utf-8")
+            runtime.task_gate(task_id, runtime.relative(applicability))
+            text = re.sub(rf"(- \[) (\]\s+{re.escape(task_id)}\b)", r"\g<1>x\g<2>", tasks.read_text(encoding="utf-8"))
+            tasks.write_text(text, encoding="utf-8")
+            self._git("add", "--", self._relative(source), runtime.relative(tasks))
+            self._git("commit", "--quiet", "-m", f"feat(ralph): {task_id} green task")
+            runtime.task_record(task_id, self._git("rev-parse", "HEAD").stdout.strip())
+        runtime.require("task-closure")
         self.ralph_calls += 1
         self._expect("- [ ]" not in tasks.read_text(encoding="utf-8"), "fake Ralph left an unchecked task")
 
@@ -1008,7 +1033,8 @@ class WorkflowRuntimeTest(unittest.TestCase):
                 encoding="utf-8",
             )
         (root / ".specify/extensions/delivery/scripts").mkdir(parents=True)
-        shutil.copy2(HELPER_SOURCE, root / ".specify/extensions/delivery/scripts/delivery_runtime.py")
+        for helper in HELPER_SOURCE.parent.glob("delivery_*.py"):
+            shutil.copy2(helper, root / ".specify/extensions/delivery/scripts" / helper.name)
         config = root / ".specify/extensions/delivery/delivery-config.yml"
         config.write_text(
             "schema_version: \"1.0\"\n"
@@ -1309,7 +1335,7 @@ class WorkflowRuntimeTest(unittest.TestCase):
                 self.assertEqual(fake.repair_calls, 1 if stale else 0)
                 self.assertNotIn("speckit.evidence.collect", fake.calls)
 
-    def test_converged_result_skips_analyze_and_ralph(self):
+    def test_converged_checkbox_only_result_cannot_skip_closure_audit(self):
         temporary, root = self.temporary_project()
         feature = root / ".specify/features/converged"
         feature.mkdir(parents=True)
@@ -1352,8 +1378,9 @@ class WorkflowRuntimeTest(unittest.TestCase):
             patch.object(CommandStep, "_try_dispatch", side_effect=fake.dispatch),
         ):
             state = engine.execute(definition, inputs={"delivery_run": "converged-run"}, run_id="host-converged")
-        self.assert_workflow_status(state, "completed")
+        self.assert_workflow_status(state, "failed")
         self.assertEqual(fake.calls, ["speckit.converge"])
+        self.assertNotIn("speckit.ralph.run", fake.calls)
         self.assertEqual((root / ".specify/features/converged/tasks.md").read_bytes(), tasks_before)
 
     def test_full_feature_initial_pass_has_one_converge_and_no_repair(self):

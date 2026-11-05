@@ -1,9 +1,10 @@
 # Spec Kit Delivery Core
 
 Creates project-local delivery configuration, checks installed components,
-investigates and scopes a request, plans reviewable slices and merge policy,
-routes delivery, and renders slice or rollup PR handoffs. Distributed defaults do
-not assume a language, framework, ADR path, stack provider, or check.
+investigates and scopes a request, plans internal review slices plus an
+execution/publication policy, routes delivery, and renders slice or rollup PR
+handoffs. Distributed defaults do not assume a language, framework, ADR path,
+stack provider, or check.
 
 ## Commands and installation
 
@@ -15,7 +16,7 @@ Invoke commands through the active host, not as shell executables:
 - `speckit.delivery.doctor`: detect missing/stale components, profiles, and rule owners.
 - `speckit.delivery.explore`: investigate code, history, and references; show candidate scope.
 - `speckit.delivery.method`: apply a configured design, diagnosis/testing, or review method inside the existing phase.
-- `speckit.delivery.slice`: plan reviewable slices, classify trunk safety, and select the merge mode.
+- `speckit.delivery.slice`: plan internal review slices, classify trunk safety, and resolve execution/publication modes.
 - `speckit.delivery.context`: optionally assemble an implementation-context brief.
 - `speckit.delivery.route`: orchestrate the selected lane and user approvals.
 - `speckit.delivery.lightweight`: perform a bounded mechanical change.
@@ -32,7 +33,8 @@ this extension directly or through the Bundle supplies the alias; refresh and
 removal manage both entries together. No facade skills need to be copied.
 
 The router owns lane transitions and approval; Explore owns investigation, not
-implementation or Bug assessment; Slice owns review/merge boundaries and policy,
+implementation or Bug assessment; Slice owns internal review boundaries,
+execution/publication planning, and policy,
 not execution. Core Spec Kit continues to own spec, plan, and tasks; Decision
 owns ADRs.
 
@@ -179,49 +181,64 @@ project-authorized planning commit may be associated only when it is content-
 equivalent and limited to approved paths. Changed inputs require fresh
 presentation/approval, never a restamped digest.
 
-## Delivery slices and merge policy
+## Delivery slices and publication policy
 
 After plan approval and task generation, `speckit.delivery.slice` binds the real
-task IDs to independently reviewable slices and writes
+task IDs to independently reviewable internal slices and writes
 `.specify/delivery/<run>/slices.md`. It does not create a second queue:
 `tasks.md` remains Ralph's only execution source, and `slices.md` may not add,
 remove, or reorder tasks.
 
-Each slice is classified as `standalone`, `flagged`, `integration-only`, or
-`unknown`, with executable evidence. The merge mode is derived, not chosen by
-preference:
+Internal review boundaries and remote PR grouping are separate. The configured
+`pr_slicing` request is `off|single|auto|stacked|integration`:
 
-- all slices standalone/flagged and linear → `stacked`;
-- any integration-only slice → `integration`;
-- insufficient evidence or a policy conflict → `needs_decision`.
+- `off` preserves one internal slice and one eventual PR;
+- `single` permits multiple risk-based internal slices on the ordinary Ralph
+  branch and maps all of them to one eventual PR;
+- `auto` derives the publication grouping from evidence and policy before Ralph;
+- `stacked` requires a target-safe linear stack with a verified provider/manual
+  fallback;
+- `integration` requires the declared integration branch, protected merge policy,
+  and the exact integration checkpoints.
+
+Each internal slice is classified as `standalone`, `flagged`,
+`integration-only`, or `unknown`, with executable evidence. The Slice command is
+the single policy owner: it resolves both the Ralph `Execution mode` and remote
+`Publication mode`, records the explicit slice-to-publication-group map, and
+blocks unresolved or incompatible plans. A `single` publication plan may have
+multiple internal boundaries but keeps the ordinary Ralph branch; it does not
+turn an `integration-only` slice into a target-safe prefix. No final handoff may
+amend this choice.
 
 Analyze runs against the planned slices before the one combined
 Analyze/execution/Slice gate so blocking task map/coverage findings are resolved
-first. That gate approves boundaries, order, classification, merge method, and
-accepted risks; a Delivery-owned approval writer then records the actual choice
-and unchanged fingerprint in `slices.md`. Ralph stops at each slice boundary and
-verifies the
-declaration:
+first. That gate approves boundaries, order, classification, execution/publication
+modes, publication groups, merge method, and accepted risks; a Delivery-owned
+approval writer then records the actual choice and unchanged fingerprint in
+`slices.md`. Ralph stops at each internal boundary and verifies the declaration:
 a standalone slice gets a target-branch prefix build/test, a flagged slice gets
 flag-off and flag-on evidence, and an integration-only slice gets its declared
-checkpoint. A failed check returns to slice planning for reclassification.
+checkpoint. Applicable assembly, concurrency, and recovery probes run with the
+behavior-changing task/slice; a final rollup is not their first execution. A
+failed check returns to slice planning for reclassification.
 
-`speckit.delivery.handoff` renders either one slice PR body or the final rollup,
-writes it to `.specify/delivery/<run>/pull-request.md` (or
-`pull-request-<slice>.md`), and prints `PR_BODY_PATH` plus a
-`gh pr create --body-file` hint. Use `handoff slice=<id>` at each verified
-boundary to render that layer's PR body; the workflow's final handoff uses
-`mode=auto` for the release slice or rollup. Installing the extension does not
-change GitHub's UI template: GitHub reads the target repository's `.github`
-template unless `--body-file` is supplied. `speckit.delivery.init` may install a
-static project template only with explicit approval; dynamic bodies still come
-from handoff. Publishing and merging remain separately authorized. Stacked
-deliveries merge each layer with the configured slice method; an integration delivery
-squash-merges slices into the integration branch and merges the final rollup with
-a merge commit. Never squash the final rollup, never rebase a shared integration
-branch, and never merge the target into a stack branch. See the
-[slice command](commands/speckit.delivery.slice.md) and
-[plan template](templates/slices.md).
+`speckit.delivery.handoff` consumes the approved publication groups and renders
+an internal slice artifact, one PR body, stacked layer bodies, or an integration
+rollup according to that plan. It writes to
+`.specify/delivery/<run>/pull-request.md` (or `pull-request-<slice>.md`) and
+prints `PR_BODY_PATH` plus a `gh pr create --body-file` hint. With
+`pr_slicing: single`, `handoff slice=<id>` can render boundary evidence but it
+does not imply a separate remote PR; final `mode=auto` renders the one approved
+PR body. Installing the extension does not change GitHub's UI template: GitHub
+reads the target repository's `.github` template unless `--body-file` is
+supplied. `speckit.delivery.init` may install a static project template only
+with explicit approval; dynamic bodies still come from handoff. Publishing and
+merging remain separately authorized. Stacked deliveries merge each layer with
+the configured slice method; an integration delivery squash-merges slices into
+the integration branch and merges the final rollup with a merge commit. Never
+squash the final rollup, never rebase a shared integration branch, and never
+merge the target into a stack branch. See the [slice command](commands/speckit.delivery.slice.md)
+and [plan template](templates/slices.md).
 
 ## Delivery record lifecycle
 

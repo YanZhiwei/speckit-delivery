@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "feature-delivery"
   name: "Spec Kit Feature Delivery"
-  version: "0.4.1"
+  version: "0.4.2"
   author: "Yan Zhiwei"
   description: "Evidence-first feature delivery with code/history/reference exploration, scope and design approval, slice planning, guarded execution, convergence, quality, review, and handoff."
 
@@ -405,6 +405,12 @@ steps:
         flag/checkpoint verification, write the slice receipt, and continue only
         after SLICE_READY. Do not create, push, or merge a PR.
 
+  - id: task-closure-after-ralph
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} require
+      --run {{ inputs.delivery_run }} --kind task-closure
+
   - id: quality-after-ralph-needed
     type: shell
     run: >-
@@ -641,6 +647,12 @@ steps:
                 Complete only dependency-ready tasks appended by the current
                 Converge result after the planning checkpoint; preserve the sole
                 tasks.md queue and approved slice mapping.
+
+          - id: convergence-task-closure
+            type: shell
+            run: >-
+              {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} require
+              --run {{ inputs.delivery_run }} --kind task-closure
 
           - id: convergence-quality-begin
             type: shell
@@ -1169,6 +1181,12 @@ steps:
     run: >-
       {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} require
       --run {{ inputs.delivery_run }} --kind review
+
+  - id: task-closure-before-evidence
+    type: shell
+    run: >-
+      {{ inputs.runtime_python }} .specify/extensions/delivery/scripts/delivery_runtime.py --workflow-run {{ context.run_id }} require
+      --run {{ inputs.delivery_run }} --kind task-closure
 
   - id: evidence
     command: speckit.evidence.collect
