@@ -71,6 +71,14 @@ Record the repository HEAD, relevant working-tree changes, investigation scope,
 and evidence limitations. Do not overwrite unrelated work. Keep facts,
 hypotheses, recommendations, and unresolved questions visibly separate.
 
+Read the installed `.specify/extensions/delivery/templates/exploration.md` before
+expanding the investigation. Use its concepts/boundaries/research-question section
+to bound the work and its phase-handoff section for each actual delegation. When
+read-only research delegation is authorized and available, assign independent
+questions with source expectations, return evidence, and explicit resource/stop
+limits; otherwise investigate sequentially and report the limitation. The
+coordinator reconciles evidence and gaps using the template's convergence rules.
+
 ## 2. Map current code and history
 
 When a usable CodeGraph index and tool are available, use them first to locate
@@ -143,6 +151,11 @@ return the packet inline until an explicit run is assigned; do not invent a
 feature path. Durable Issues/ADRs/PRs must stay self-contained when the record is
 ephemeral. Never create tracker resources without separate authorization.
 
+Prepare the template's focused phase handoff for the next owner, including
+required/conditional reading, input identity, unresolved conflicts, and expected
+evidence. For Feature the next specification consumes scope approval only after
+the gate; for Bugfix the assessor may investigate outstanding gaps read-only.
+
 The workflow passes the exact packet path and real preceding gate choice to the
 next command. That consumer records actual approval, approved scope/snapshot, and
 accepted limitations before advancing; ready or exit success is not approval.
@@ -156,7 +169,9 @@ run path stable and keep operational checkpoint/results separate under
 Return `EXPLORATION_VERDICT: ready | blocked`, the exact evidence location (or
 `inline`), `DELIVERY_RUN`/lane, the runtime checkpoint/result location when a run
 exists, recommended lane, research limitations, unresolved blockers, and
-`SCOPE_APPROVAL: pending`. Ready means the evidence supports a scope discussion,
+`SCOPE_APPROVAL: pending`. Identify the remaining research questions and show how
+the template's stopping conditions and next-owner handoff are met, or what is
+blocked. Ready means the evidence supports a scope discussion,
 not user approval, confirmed Bug root cause, permission to implement, or final
 Delivery evidence. Missing decision-critical evidence is blocked; a non-critical
 limitation stays explicit.

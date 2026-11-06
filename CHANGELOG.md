@@ -2,6 +2,28 @@
 
 All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and Semantic Versioning.
 
+## [0.4.4] - 2026-11-07
+
+### Changed
+
+- Delivery Explore bounds concepts, research questions and stopping conditions,
+  preserves rejected hypotheses and conflicting evidence, and prepares focused
+  phase handoffs from existing owner outputs.
+- The existing Feature Plan checkpoint includes cooperation/context planning,
+  research versus implementation concurrency, integration ownership/verification,
+  and role-specific reading. Ralph and Review strengthen their native input
+  contracts without adding runtime fields or an automatic scheduler.
+- Review's architecture dimension distinguishes justified implementation details,
+  material design changes, evidenced redundancy and unresolved gaps, preserving
+  necessary behavior and the existing design/Simplify/repair owners.
+
+### Evaluations
+
+- Added scenarios for missing/stale role context, correlated research sources,
+  bounded research termination, cooperation-plan drift, and design deviations
+  across Feature, Bugfix and Lightweight. These are behavioral evaluation inputs;
+  clean installation and structural checks do not establish model-level results.
+
 ## [0.4.3] - 2026-11-06
 
 ### Added

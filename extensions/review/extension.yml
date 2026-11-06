@@ -4,7 +4,7 @@ extension:
   id: review
   name: Delivery Code Review
   version: "0.4.3"
-  description: "Read-only task and final review of requirements, code quality, architecture, correctness, security/compatibility, and tests."
+  description: "Read-only six-dimensional task and final review with focused reviewer context, design-deviation analysis, and snapshot-bound findings."
   category: code
   effect: read-only
   author: Yan Zhiwei

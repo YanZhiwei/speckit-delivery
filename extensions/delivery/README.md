@@ -51,6 +51,12 @@ new mechanisms/architecture choices also need it. Small understood extensions
 may skip with a reason. Bugfixes prioritize local evidence and implicated upstream
 history. Unavailable research is a limitation, not a fabricated success.
 
+The packet also bounds core concepts, adjacent owners and research questions,
+preserves rejected hypotheses, reconciles conflicting sources, and states when
+research can stop. Authorized read-only research is sized by independent questions
+and resource limits; repeated citations from multiple agents are not independent
+evidence. Decision-critical gaps still block readiness.
+
 The user sees two repository-relative trees in the conversation: current code
 and candidate changes, including tests. Candidate paths are marked new, modify,
 reuse, no-change, or uncertain. Complex relationships may use Mermaid/SVG;
@@ -74,6 +80,19 @@ consume the applicable rows. Binding-rule exceptions follow project governance;
 accepting a check limitation does not waive a rule. Doctor reports unreachable
 applicable policy sources and rules with no owner/mechanism, rather than requiring
 a particular architecture filename or treating an empty source list as coverage.
+
+The same template owns [phase handoff](templates/exploration.md#phase-handoff):
+role/outcome, required and conditional reading with purpose/authority, approved
+input identity, permitted operations, known gaps, and expected return evidence.
+Ralph owns the implementation packet and Review owns reviewer inputs; current
+Decision/Code Context and Quality Brief outputs are reused where relevant.
+Hashes establish identity, not comprehension. The
+[cooperation/context plan](templates/exploration.md#cooperation-and-context-plan)
+is part of the existing design approval and snapshot, with dependencies carried
+into Tasks/Analyze. It separates research concurrency from implementation
+isolation, names integration verification and review independence, and scales
+down to a short sequential plan for simple work. These are prompt contracts,
+not an automatic multi-agent scheduler or a new runtime receipt schema.
 
 ## Optional method adapters
 

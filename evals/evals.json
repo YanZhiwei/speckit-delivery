@@ -409,6 +409,90 @@
         "Stops for renewed slice approval when the mapping changes",
         "Preserves lane/run context, task queue, and repair budget"
       ]
+    },
+    {
+      "id": 43,
+      "prompt": "Prepare the worker handoff for T018 in an SD Feature run. The approved plan requires cancellation propagation from the owning service to its adapter. The coordinator supplies tasks.md and a hash list, says the worker can recover the details from yesterday's chat, and provides an old code-context.md whose adapter caller was renamed. The binding lifecycle policy link is unreadable. Quality Brief is current. What input can the worker act on, and what should it return? Do not edit files.",
+      "expected_output": "Prepares Ralph's focused task packet with exact task/acceptance/allowed paths, relevant approved Spec/Plan/ADR references, required path/section/symbol plus purpose/authority, conditional sources, current identity and return evidence. Reuses the current Brief while identifying stale Code Context and the unreadable required policy as specific owner-recovery gaps. Does not claim hashes or yesterday's chat prove understanding, require all optional context reports, or begin editing on missing binding input. Authorized focused reading can resolve caller gaps. The eventual worker result connects design decisions to sources and reports checks and deviations; task closure remains coordinator-owned.",
+      "files": [],
+      "expectations": [
+        "Provides role-specific reading purposes and authorities rather than a file dump or prior-chat dependency",
+        "Rejects the stale caller map and missing required lifecycle policy before editing, with concrete recovery",
+        "Reuses the current Brief without making optional reports mandatory or hashes a comprehension proof",
+        "Requires source-backed design responses, validation and deviations in the worker return"
+      ]
+    },
+    {
+      "id": 44,
+      "prompt": "Explore durable job delivery for a project. The user suggested 100 agents to collect all facts. Three authorized researchers agree that retry is exactly-once, but all cite the same v1 blog. A fourth reads v2 source and a retry test showing duplicate execution after an acknowledgment loss. The current product requirement uses 'delivery' without specifying dispatch or effect. There is time for one focused follow-up. Prepare the scope discussion and remaining research plan, without running agents or changing code.",
+      "expected_output": "Defines provisional dispatch/effect/retry meanings and the in/out domain boundary, identifies the semantic ambiguity and version conflict, and assigns the follow-up to the decision-critical semantics/evidence question rather than a fixed agent quota. Counts the three blog citations as one origin, compares versions and actual behavior, preserves supported/rejected hypotheses with reasons, and does not resolve the conflict by vote. Reports a blocked scope decision until the critical requirement ambiguity is resolved; scope readiness is not approval and no automatic parallel writes are authorized.",
+      "files": [],
+      "expectations": [
+        "Separates provisional concepts and domain boundaries from approved project definitions",
+        "Deduplicates correlated evidence and reconciles the version/behavior conflict rather than majority voting",
+        "Bounds follow-up by the critical question and resource limit, not 100 agents or all facts",
+        "Keeps decision-critical ambiguity blocking and preserves rejection reasons and approval ownership"
+      ]
+    },
+    {
+      "id": 45,
+      "prompt": "Explore an extension to an existing parser with one new optional field. Local implementation, consumers and regression seams are understood, core terms are unambiguous, two viable options have been compared, and no decision-critical gaps remain. An unrelated alternative parser has no public benchmarks. A research worker recommends continuing until every parser repository has been read. The scope gate has not occurred. What is the next step? Also state what changes if the research budget expires while the new field's compatibility semantics remain unknown.",
+      "expected_output": "Ends proportionate research on the understood request, states the unrelated benchmark limitation and its impact, prepares current/candidate trees and the next-owner handoff, and presents the supported scope at the existing gate with approval pending. Does not require exhaustive coverage or more agents. Non-critical limitations remain explicit for acceptance. If compatibility semantics are decision-critical and unresolved, budget exhaustion stops research but produces blocked readiness with an exact follow-up instead of permission to specify or implement.",
+      "files": [],
+      "expectations": [
+        "Stops research once the decision-relevant convergence conditions are met",
+        "Retains non-critical limitations and actual scope approval rather than treating ready as consent",
+        "Does not turn budget exhaustion with unresolved critical compatibility into a pass",
+        "Prepares a focused next-owner handoff instead of a new research artifact or gate"
+      ]
+    },
+    {
+      "id": 46,
+      "prompt": "The approved Feature plan allows two read-only research questions, sequential implementation in the shared worktree, and an independent reviewer. Before Tasks, the coordinator proposes splitting two [P] tasks across workers that both edit the same registry and letting one worker approve the other's work while sharing its implementation context. The plan already has a recorded fingerprint. How should the existing Plan/Tasks/Analyze path handle this and ordinary reassignment of a read-only question?",
+      "expected_output": "Keeps the approved cooperation/context plan in plan.md and its existing design snapshot. Distinguishes allowed research delegation from unauthorized concurrent writes; shared registry and contracts are dependency edges, and [P] does not grant isolation or an integration contract. Material changes to shared ownership/integration/reviewer independence return to the affected plan/approval owner with refreshed presentation, not a rewritten fingerprint or a new scheduler/queue. Carries approved dependencies, role reading and integration verification into Tasks/Analyze. Ordinary reassignment within approved read-only boundaries needs no new approval round.",
+      "files": [],
+      "expectations": [
+        "Separates research permission from implementation concurrency and respects shared-path blocking edges",
+        "Returns material cooperation/review changes for the affected existing approval without relabeling its snapshot",
+        "Carries dependencies, reading references and integration checks into the sole Tasks queue",
+        "Allows ordinary in-boundary research reassignment without a new gate or rewriting the approved packet just to log dispatch"
+      ]
+    },
+    {
+      "id": 47,
+      "prompt": "Review an implementation against an approved Feature plan that keeps retry state in the service and leaves the public API unchanged. The diff adds a second durable retry registry in the transport and a public strategy selector absent from the plan. The implementer says both are standard architecture and points to passing unit tests. An internal helper also replaced repeated parsing without changing ownership or behavior. Explain what evidence and dispositions belong in the architecture dimension; do not fix anything.",
+      "expected_output": "Compares each significant new owner/state/interface to approved requirements/constraints, actual consumers and verification. Standard-pattern names and green tests do not establish necessity. Material ownership/API deviations return to Plan/Decision/scope approval even if potentially necessary. The parsing helper may be a justified local detail given evidence. Suspected unused registry/selector remains an investigation question until redundancy is evidenced; only supported redundancy becomes a Simplify candidate under its existing route. Records dispositions in architecture evidence and ordinary findings, preserving six dimensions and read-only review.",
+      "files": [],
+      "expectations": [
+        "Traces significant state/ownership/interface changes to approved design and actual consumers",
+        "Returns material deviations to their design owners instead of self-approving or immediately deleting them",
+        "Distinguishes justified local detail, evidenced redundancy and insufficient evidence",
+        "Uses existing architecture evidence/findings without adding a verdict schema or modifying code"
+      ]
+    },
+    {
+      "id": 48,
+      "prompt": "Review a Bugfix against its approved assessment: cancellation leaked a handle; the repair must release it exactly once and preserve the public API. The implementation adds a finally cleanup block not named explicitly in the assessment, and focused success/cancel/failure tests show the required behavior. A coordinator proposes deleting the unplanned block and requiring a full Feature plan before review can pass. No other evidence gaps or design changes are given. What should architecture review conclude?",
+      "expected_output": "Uses the approved assessment and project rules as the design baseline. Treats the cleanup as a justified local implementation detail when source and tests substantiate the required lifecycle invariant; explains the evidence rather than manufacturing an unplanned-structure blocker. Preserves error/cancellation guarantees, does not demand Feature artifacts or delete code, and still evaluates the other native dimensions and current snapshot/coverage before any overall pass.",
+      "files": [],
+      "expectations": [
+        "Uses the Bugfix assessment without forcing a Feature Plan",
+        "Does not classify necessary unplanned cleanup as automatically redundant or blocking",
+        "Connects the detail to the lifecycle requirement and verification evidence",
+        "Keeps overall six-dimensional review and snapshot requirements authoritative"
+      ]
+    },
+    {
+      "id": 49,
+      "prompt": "A Lightweight request updates a package README example without changing behavior. The review packet contains a proposed excerpt and the implementer's 'all checks passed' message, but omits the actual outgoing diff and current CLI consumer. The implementation also changed a public CLI default to make the example work. The coordinator says a full plan does not apply, so architecture is automatically pass. Review this packet without edits.",
+      "expected_output": "Uses the bounded request and binding project rules instead of requiring a Feature Plan, but rejects missing diff/consumer context as a coverage/evidence gap. Requests exact current sources and verification, treating implementer claims as unverified. The public default is outside the approved behavior-preserving scope and returns to the lane/scope owner; architecture is not automatically pass for Lightweight. Does not invent a snapshot or use summaries/hashes as proof of understanding, and records findings/limitations through the existing Reviewer contract.",
+      "files": [],
+      "expectations": [
+        "Requires actual diff and relevant consumers, with an explicit context-recovery action",
+        "Does not infer a pass from implementer claims or the Lightweight lane",
+        "Returns changed public behavior to the existing scope/lane owner",
+        "Uses the bounded request baseline and native report without forcing Feature artifacts or fabricating evidence"
+      ]
     }
   ]
 }

@@ -47,7 +47,13 @@ only after `SLICE_READY: <slice-id>`. A failed or unknown check blocks the next
 slice. A no-slice invocation keeps the ordinary task contract above.
 
 Workers report their results; the orchestrator owns task closure and commits.
-It never stashes, resets, cleans, or stages unrelated pre-existing changes. It
+The [task packet](commands/speckit.ralph.run.md#one-task-iteration) includes a
+focused reading map (path/section, purpose, authority, conditional triggers),
+current planning/input identity, and known conflicts or rejected approaches.
+Implementers return source-backed design responses and deviations with their
+verification evidence; missing required context stops edits for owner recovery.
+Material design changes return to planning rather than expanding the task packet.
+The orchestrator never stashes, resets, cleans, or stages unrelated pre-existing changes. It
 also never creates, pushes, or merges a PR; Handoff and the separately authorized
 PR outcome own those transitions.
 

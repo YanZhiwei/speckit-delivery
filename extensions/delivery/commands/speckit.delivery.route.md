@@ -175,17 +175,21 @@ specification or repair.
 
 Pass the latest exploration packet to assessment; pass the scope-approved packet
 (or explicitly preserved evidence when no feature path exists yet) to specify,
-clarify, plan, and task generation.
+clarify, plan, and task generation. For these transitions, follow the Phase
+handoff section of `.specify/extensions/delivery/templates/exploration.md`;
+Ralph and Review retain ownership of their role-specific input contracts.
 Persist the packet once the real feature/run location is known, honoring
 `artifact_policy`; do not invent a feature path before specify creates one.
 Before choosing the Feature design, follow the plan-checkpoint section of the
 installed `delivery/templates/exploration.md`. It owns architecture constraint
-sources, optional skill methods, comparison, and verification coverage. Keep the
-`Architecture constraints` table in the actual feature's `plan.md`; present it
+sources, optional skill methods, comparison, cooperation/context planning, and
+verification coverage. Keep the `Architecture constraints` table in the actual
+feature's `plan.md`; present it
 with the finalized tree, file responsibilities, interfaces, test paths/commands,
 risks, and scope differences at the existing plan gate. Pass its applicable IDs
-and verification work into Tasks, check coverage in Analyze, and carry those rows
-into the pre-edit brief and task/final review. After Decision Propose, record the
+and the cooperation plan's dependencies and verification work into Tasks, check
+coverage in Analyze, and carry those rows into the pre-edit brief and task/final
+review. After Decision Propose, record the
 presented snapshot before the plan gate; verify it before consuming that gate's
 choice, using the shared checkpoint contract. Pass explicit lane/run context and
 the canonical Feature packet or exact plan excerpts to Brief/Standards consumers;
