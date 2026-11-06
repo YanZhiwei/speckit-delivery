@@ -4,7 +4,7 @@ workflow:
   name: "Spec Kit Feature Delivery"
   version: "0.4.3"
   author: "Yan Zhiwei"
-  description: "Evidence-first feature delivery with code/history/reference exploration, scope and design approval, slice planning, guarded execution, convergence, quality, review, and handoff."
+  description: "Evidence-first Feature delivery with bounded research, role-aware context and cooperation planning, approved slices, guarded execution, review, and handoff."
 
 requires:
   speckit_version: ">=1.2.3"
@@ -197,7 +197,9 @@ steps:
         Consume this exact approved exploration packet, clarified spec, and
         resolved decision context. Follow the Plan checkpoint format in the
         installed delivery/templates/exploration.md, including Architecture
-        constraints and optional skill methods, before choosing the design. Keep
+        constraints, cooperation/context planning, and optional skill methods,
+        before choosing the design. Use its Phase handoff contract for focused
+        required/conditional reading and expected evidence. Keep
         the constraint table and exact design in the actual feature plan.md;
         record its exact path in the canonical exploration packet. Prepare
         constraint sources, design responses, verification owners/mechanisms and
@@ -217,7 +219,8 @@ steps:
         ADR baseline. Then, as Delivery coordinator, follow the installed Plan
         checkpoint to record the final presented fingerprint/method/input manifest
         in this packet and present the design, ADR baseline, and Architecture
-        constraints for the existing plan gate. Never infer approval; changes after
+        constraints plus the cooperation/context plan for the existing plan gate.
+        Never infer approval; changes after
         this presentation require a new checkpoint.
 
   - id: design-present
@@ -229,7 +232,7 @@ steps:
 
   - id: plan-gate
     type: gate
-    message: "Approve the shown finalized directory tree, file responsibilities, interfaces, tests/commands, risks, Proposed ADR baseline, and Architecture constraints table before task generation. Each binding constraint needs a design response, verification owner and credible mechanism; planned checks and semantic-only or unsupported coverage remain explicit. Decision-critical gaps block approval. Record design approval against this plan; material scope changes require renewed scope approval."
+    message: "Approve the shown finalized directory tree, file responsibilities, interfaces, tests/commands, risks, Proposed ADR baseline, Architecture constraints table, and cooperation/context plan before task generation. Review role inputs, research versus implementation concurrency, shared-path dependencies, integration verification, and reviewer independence under the installed Plan checkpoint. Each binding constraint needs a design response, verification owner and credible mechanism; planned checks and semantic-only or unsupported coverage remain explicit. Decision-critical gaps block approval. Record design approval against this plan; material scope changes require renewed scope approval."
     options: [approve, reject]
     on_reject: abort
 
@@ -254,7 +257,8 @@ steps:
         identity using the stored method and input manifest; only after a match
         record the supplied plan-gate choice. Derive independently verifiable
         vertical green tasks with exact change/test paths, applicable constraint IDs,
-        and planned verification work. Keep semantic checks assigned to their named
+        cooperation-plan dependencies, role reading references, and planned
+        verification work. Keep semantic checks assigned to their named
         reviewer; do not invent executable coverage. Material expansion returns to
         scope/design approval.
 

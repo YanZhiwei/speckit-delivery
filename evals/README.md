@@ -12,7 +12,10 @@ without filename assumptions, honest planned/unsupported constraint coverage,
 and plan mutation across a paused design gate. Cases 38–40 probe verified method
 providers, explicit fallback behavior, and documentation refresh inside a reserved
 repair attempt. Cases 41–42 probe stale slice approval after analysis and missing
-slices context in an outgoing Feature repair. These new cases have not been
+slices context in an outgoing Feature repair. Cases 43–49 probe role-specific
+context recovery, correlated research evidence, proportionate stopping conditions,
+cooperation-plan drift, and design-deviation dispositions across all three lanes.
+These new cases have not been
 executed as live baseline/updated model comparisons.
 
 ## Review fixtures

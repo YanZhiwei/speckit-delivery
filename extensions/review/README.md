@@ -12,6 +12,13 @@
   `REVIEW_VERDICT: pass | blocked | incomplete` aggregation.
 - Stable finding IDs and `open/fixed-pending-review/resolved/dismissed` states.
   Omitted findings do not become resolved; fixers cannot approve their own fixes.
+- Reviewer-specific reading inputs with purpose/authority and required/conditional
+  sources; missing or stale required context is an evidence gap.
+- [Design-deviation analysis](templates/reviewer.md#design-deviation-check) within
+  architecture evidence: justified local details, material changes returned to the
+  design owner, evidenced Simplify candidates, or unresolved investigation questions.
+  Unplanned structure alone is not a defect, and necessary lifecycle/error handling
+  cannot be deleted merely because the plan omitted a local detail.
 
 Review is read-only. The coordinator prepares a focused packet and persists the
 report under the actual delivery run's `reviews/<scope>/review.yml`, honoring

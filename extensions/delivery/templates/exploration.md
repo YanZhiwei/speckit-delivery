@@ -14,6 +14,36 @@ evidence; remove example paths rather than presenting them as repository facts.
 - Governing instructions / ADRs: <sources and constraints>
 - Tools / fallback / freshness limitations: <what was actually used>
 
+## Concepts, boundaries, and research questions
+
+Keep this proportional to the request; a small understood change can use a few
+lines. Establish provisional meanings and boundaries before broad research,
+then revise them from evidence. Do not present a proposed glossary as project policy.
+
+| Term | Meaning in this request / authoritative source | Ambiguity or excluded meaning |
+| --- | --- | --- |
+| <core concept> | <project definition, or explicitly provisional meaning> | <conflict and scope impact, or none> |
+
+- Domain boundary: <included responsibility, adjacent owners, and non-goals>
+
+| Question / decision affected | Evidence and source identity | Conclusion / conflicting evidence | Remaining gap, impact, and next owner |
+| --- | --- | --- | --- |
+| <bounded question> | <read paths, version/commit, tests or observations> | <supported, rejected with reason, or unresolved> | <decision-critical or non-critical; next action> |
+
+Preserve rejected hypotheses and their verification/rejection reasons so a later
+context does not repeat them as new proposals. Multiple agents citing the same
+upstream source are one evidence origin, not independent corroboration. Reconcile
+conflicts against source versions, applicability, and observed behavior; do not
+settle them by vote. For defects these remain assessment inputs, not a confirmed
+root cause.
+
+Research stops when decision-relevant concepts and boundaries are clear, viable
+options have enough evidence for scope discussion, and material conflicts are
+resolved or explicitly blocking. Report residual gaps and their impact. A time or
+resource limit may stop research but cannot turn a critical gap into readiness;
+non-critical limitations require the existing gate's explicit acceptance. Neither
+a fixed agent count nor a claim to have collected all facts is a stopping rule.
+
 ## Findings
 
 - Facts: <current behavior, satisfied needs, gaps; cite source/tests>
@@ -93,6 +123,45 @@ command records that choice, approved snapshot/scope, and accepted limitations;
 the gate does not edit this file. No missing receipt is replaced with inferred
 approval. Preserve the same run path across later Feature/bug identification.
 
+## Phase handoff
+
+Delivery's coordinator prepares a reusable reading map in this canonical packet
+before the relevant approval snapshot is frozen, referencing Decision Context,
+Code Context, and Quality Brief
+outputs when relevant and current. Do not rerun those owners or copy their full
+reports merely to fill a handoff. Use the receiving role's contract: Ralph owns
+the implementation task packet; Review owns its reviewer input and report.
+
+For each actual phase handoff, identify:
+
+- Receiving owner, question/outcome, acceptance evidence, allowed operations and
+  paths, and conditions that require returning to the coordinator.
+- Exact approved scope/design references and actual decisions, or pending status;
+  known conflicts, rejected approaches, and remaining evidence gaps.
+- Required reading: path plus section/symbol, why it matters to this decision,
+  and its authority (binding rule, approved design, observation, or recommendation).
+  Separate conditional reading with an explicit trigger from the required minimum.
+- Input identity: run, baseline and relevant working-tree state, and existing
+  approval/snapshot references. Bind relied-on sources through the owner's existing
+  requirements/design identity contract; never invent another receipt format or
+  add unrelated paths to the planning-commit manifest.
+- Expected return: conclusion with source citations, verification performed and
+  results, unresolved questions, and any proposed scope/design deviation.
+
+Pass exact resolvable paths to another process; a prior chat or a filename alone
+is not the handoff. The receiver checks required sources and identity before
+acting. Missing, stale, or conflicting decision-critical inputs return a named
+gap and recovery action to their owner; authorized read-only investigation can
+continue to resolve that gap. Optional missing sources remain explicit limitations.
+File existence and hashes establish identity, not understanding: the receiver's
+design response or result must connect the relevant sources to its decisions.
+Keep the handoff in the existing packet/owner output, honoring artifact policy;
+do not create a second knowledge store, execution queue, or approval round.
+After approval, reference the unchanged map and snapshot in the receiving owner's
+existing input/output. Do not rewrite the approved packet to log routine dispatch
+or repeat an earlier decision. A change to relied-on evidence, scope, or design
+requires the affected owner's normal freshness and approval handling.
+
 ## Plan checkpoint (later, not an exploration deliverable)
 
 Keep exact design in `plan.md`; reference this packet instead of duplicating it.
@@ -140,6 +209,11 @@ approaches on these constraints, including extending/reusing the current design.
 For a small understood extension, a short comparison is enough; record why no
 additional architecture decision or research is needed.
 
+For each proposed new responsibility, state owner, interface, dependency, or
+lifecycle mechanism, explain the requirement/invariant it serves and why the
+existing owner or mechanism cannot satisfy it. Keep local implementation details
+proportional; naming a familiar architecture pattern is not evidence of need.
+
 Every applicable binding rule needs a design response, a verification owner, and
 a credible mechanism. Distinguish a planned test/check from one that already ran,
 and semantic review from automated enforcement. Record unsupported checks and
@@ -147,6 +221,29 @@ open decisions with their impact and resolution owner. Decision-critical gaps
 block design approval. Accepting a limitation does not waive a binding rule or
 its mandated enforcement; an exception follows that rule's governance process.
 Keep durable choices in Proposed ADRs through the existing Decision lifecycle.
+
+### Cooperation and context plan
+
+In the same `plan.md`, describe who coordinates and integrates, who researches,
+implements, and reviews, and how each role gets the phase handoff above. Name
+roles rather than inventing agents the host cannot provide. For simple work a
+short statement of sequential implementation and available review is enough.
+
+For delegated work, identify independent questions/outcomes, required reading and
+return evidence per role, dependency order, shared paths/contracts, integration
+owner, and verification at integration. Distinguish read-only research concurrency
+from implementation concurrency. Bound research by separable questions, project
+permissions, host capability, and available resource/time limits; record those
+limits or the sequential fallback. An agent count is not a coverage guarantee.
+Implementation concurrency must satisfy Ralph's existing isolation/provider
+contract and project configuration; a `[P]` marker or parallel research does not
+authorize concurrent writes. Disclose reviewer independence or its actual gap.
+
+Present this cooperation plan with the existing design gate and include it in
+that plan's snapshot. Tasks/Analyze carry its dependencies and verification work
+through the existing queue. Routine assignments within the approved boundaries
+need no new gate; changing allowed writes, shared ownership, integration method,
+or review independence requires the affected owner/approval to be revisited.
 
 ### Optional skill methods
 

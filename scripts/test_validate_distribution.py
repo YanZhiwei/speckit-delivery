@@ -992,6 +992,47 @@ class DistributionContractTest(unittest.TestCase):
         self.assertEqual(set(report["coverage"]), {"reviewed", "partial", "unreviewed", "excluded"})
         self.assertIn("prior_findings_accounted_for", report)
 
+    def test_phase_handoff_and_role_contracts_keep_their_native_owners(self) -> None:
+        packet = (ROOT / "extensions/delivery/templates/exploration.md").read_text(encoding="utf-8")
+        explore = (ROOT / "extensions/delivery/commands/speckit.delivery.explore.md").read_text(encoding="utf-8")
+        route = (ROOT / "extensions/delivery/commands/speckit.delivery.route.md").read_text(encoding="utf-8")
+        ralph = (ROOT / "extensions/ralph/commands/speckit.ralph.run.md").read_text(encoding="utf-8")
+        review = (ROOT / "extensions/review/templates/reviewer.md").read_text(encoding="utf-8")
+        self.assertIn("## Phase handoff", packet)
+        self.assertIn("Do not rewrite the approved packet", packet)
+        self.assertIn("planning-commit manifest", packet)
+        self.assertIn("phase-handoff section", explore)
+        self.assertIn("Phase\nhandoff section", route)
+        reading = ralph.index("Give the implementer a focused reading map")
+        self.assertLess(reading, ralph.index("4. Implement only that task"))
+        self.assertIn("reviewer-specific reading map", review)
+        self.assertIn("coverage/evidence gap, not a pass", review)
+
+    def test_cooperation_plan_uses_existing_design_gate_and_tasks_path(self) -> None:
+        workflow = yaml.safe_load(
+            (ROOT / "workflows/feature-delivery/workflow.yml").read_text(encoding="utf-8")
+        )
+        steps = {step["id"]: step for step in workflow["steps"]}
+        for step_id in ("plan", "decision-propose"):
+            with self.subTest(step=step_id):
+                self.assertIn("cooperation/context plan", steps[step_id]["input"]["args"])
+        self.assertIn("cooperation/context plan", steps["plan-gate"]["message"])
+        self.assertIn("cooperation-plan dependencies", steps["tasks"]["input"]["args"])
+        self.assertEqual(steps["plan-gate"]["options"], ["approve", "reject"])
+        self.assertEqual(steps["plan-gate"]["on_reject"], "abort")
+
+    def test_design_deviation_stays_within_architecture_analysis(self) -> None:
+        text = (ROOT / "extensions/review/templates/reviewer.md").read_text(encoding="utf-8")
+        dimension = text.split("3. **architecture**:", 1)[1].split("4. **correctness**:", 1)[0]
+        self.assertIn("design-deviation", dimension)
+        check = text.split("### Design-deviation check", 1)[1].split("## Review method", 1)[0]
+        for disposition in ("Local implementation detail", "Material design change", "Redundant structure", "Insufficient evidence"):
+            with self.subTest(disposition=disposition):
+                self.assertIn(f"**{disposition}:**", check)
+        self.assertIn("For Bugfix use the approved assessment", check)
+        self.assertIn("Lightweight use the bounded request", check)
+        self.assertIn("not a new verdict or report schema", check)
+
     def test_ralph_requires_task_review_before_checkbox_transition(self) -> None:
         text = (ROOT / "extensions/ralph/commands/speckit.ralph.run.md").read_text(encoding="utf-8")
         review = text.index("speckit.review.run scope=task")

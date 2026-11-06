@@ -227,6 +227,18 @@ the remaining dependency graph, or the configured iteration limit is reached:
    and include its result in the packet. A brief is advisory context; it does
    not replace the closure checks.
 
+   Give the implementer a focused reading map: required path/section or symbol,
+   reading purpose and authority, and conditional sources with their triggers.
+   Include relevant owners/callers/tests, known rejected approaches and reasons,
+   conflicts/gaps, and the task's existing branch/HEAD and approved planning/input
+   identity. Reuse current Decision/Code Context and Brief outputs where supplied;
+   do not require optional reports or pass the entire implementation conversation.
+   The implementer checks required sources against that identity before editing.
+   A missing/stale required input or conflicting governing instruction returns
+   its exact gap and recovery owner instead of a guessed implementation. Source
+   hashes do not prove understanding; the result must explain how applicable
+   constraints informed the change and cite the supporting evidence.
+
    For an SD run, before editing execute the central runtime's `task-start`
    using the selected Task ID, the explicit approved execution branch, and
    repeated `--input <allowed-path>` arguments. Follow the task-close transport
@@ -234,8 +246,11 @@ the remaining dependency graph, or the configured iteration limit is reached:
    machine record schema. A wrong branch, dirty entry, duplicate occurrence, or
    unfinished earlier task stops selection before any source edit.
 4. Implement only that task. A delegated worker reports changed paths,
-   commands, results, residual risk, and blockers; it does not edit the task
-   checkbox and does not create the closure commit. If a tracked progress file
+   commands, results, source-backed design responses, newly discovered deviations,
+   residual risk, and blockers. A material change to approved responsibilities,
+   contracts, or dependencies returns to the planning owner before implementation;
+   the worker cannot expand the task packet to approve it. The worker does not
+   edit the task checkbox and does not create the closure commit. If a tracked progress file
    is configured, include its exact path in the task packet/allowed paths and
    append the iteration intent, Task ID and planned commit subject before the
    checks and owner snapshots. Do not append to it after the task gate.

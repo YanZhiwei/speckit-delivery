@@ -16,6 +16,19 @@ packaging, persistence, repair dispatch, and closure; the reviewer owns analysis
   report as unverified claims, not authority.
 - Previous report, unresolved finding IDs, fixes and their validation evidence.
 
+The coordinator supplies a reviewer-specific reading map: required paths and
+sections/symbols, their authority and relevance to the review question, plus
+conditional follow-ups with triggers. Include known design deviations, disputed
+assumptions, and rejected approaches with reasons as claims to verify. Do not
+substitute an implementation transcript or a curated summary for the actual
+diff, approved sources, and relevant consumers. The reviewer may follow additional
+callers/sources needed for a named risk within the review scope.
+
+Before judgment, verify required inputs against the snapshot below. Missing or
+stale required context is a coverage/evidence gap, not a pass; report the exact
+source and recovery needed. Hashes establish input identity, not understanding.
+Each dimension's evidence must connect the read sources to its conclusion.
+
 Bind reports to `snapshot`: base/head/merge-base, scope, a deterministic
 `content_fingerprint` of reviewed paths/modes/contents (including deletions and
 untracked files), and `requirements_fingerprint` of the actual requirement,
@@ -43,7 +56,8 @@ Report each dimension separately, with evidence or a reason no surface applies:
    pass. External skill preferences alone do not establish a violation. Check
    both compliance and whether the design itself has a concrete defect.
    Label plan-mandated defects; return them for scope/Plan/ADR decisions
-   instead of silently redesigning the system.
+   instead of silently redesigning the system. Apply the design-deviation
+   check below within this dimension.
 4. **correctness**: input boundaries, state transitions, concurrency, ordering,
    retries, idempotency, partial failure, timeouts, and degradation paths.
 5. **security_compatibility**: permissions, tenant/data boundaries, sensitive data,
@@ -56,6 +70,34 @@ Read valid receipts rather than rerunning identical suites, but do not infer
 design/code quality from green tests or omit these dimensions. Run/request a
 focused probe only for a named unresolved doubt; read-only constraints still
 apply (use an authorized isolated scratch environment if execution writes files).
+
+### Design-deviation check
+
+Compare the actual added or materially changed responsibilities, state, public
+interfaces, dependencies, and lifecycle mechanisms to the approved design and
+applicable requirements/constraints. For Bugfix use the approved assessment; for
+Lightweight use the bounded request and project rules, without demanding a Plan.
+In architecture evidence, cite each significant difference, its claimed need,
+actual consumers/invariant and verification, and one supported disposition:
+
+- **Local implementation detail:** within approved boundaries, with a concrete
+  need and adequate verification; explain why no design approval changes.
+- **Material design change:** necessary or otherwise, changing ownership,
+  contracts, dependency direction, or approved scope requires the original
+  Plan/Decision/scope owner and refreshed affected approval before continuation.
+- **Redundant structure:** evidence shows no needed behavior/consumer/constraint;
+  recommend a Simplify candidate through its existing approval/application route,
+  preserving the behavior and compatibility contract. Review does not delete it.
+- **Insufficient evidence:** name the unresolved question and impact; apply the
+  normal incomplete/blocking rules rather than inventing necessity or redundancy.
+
+Unplanned does not by itself mean wrong or removable. Required error handling,
+cleanup, cancellation, and compatibility behavior must retain their guarantees.
+Conversely, Plan compliance cannot excuse a demonstrated design defect. Use the
+existing finding severity/lifecycle and lane-owned repair rules below; a mere
+preference for fewer abstractions is not a blocker. Record no significant deviation
+with its inspected evidence when appropriate, rather than manufacturing a finding.
+Keep this in architecture evidence/findings, not a new verdict or report schema.
 
 ## Review method and calibration
 
