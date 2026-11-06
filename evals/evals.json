@@ -493,6 +493,28 @@
         "Returns changed public behavior to the existing scope/lane owner",
         "Uses the bounded request baseline and native report without forcing Feature artifacts or fabricating evidence"
       ]
+    },
+    {
+      "id": 50,
+      "prompt": "请用 speckit.evidence.collect 为本次 Lightweight 变更收集证据。项目没有规定输出语言；命令提示词是英文。已提供有效的 lane、delivery_run 和 evidence 路径，已有匹配身份的英文历史快照、原始测试日志和 Close 当前结果区块。请追加本次验证摘要，并说明失败原因、限制和后续责任人。",
+      "expected_output": "Uses Chinese for new human-readable scope/results/failures/limitations/follow-up prose in evidence.md and the completion summary because the run request is Chinese and no project convention overrides it. Keeps machine-readable keys, enum values, block markers, IDs, paths, commands, hashes and original logs/receipts literal. Preserves existing English historical snapshots, original reports and the Close-owned outcome block without translating or rewriting them; records only verified new validation evidence at the canonical same-run path.",
+      "files": [],
+      "expectations": [
+        "Uses Chinese for new evidence prose and completion output rather than inheriting the English prompt language",
+        "Preserves literal machine contracts and raw evidence while explaining results in Chinese",
+        "Does not translate historical snapshots or modify original reports or the Close-owned current outcome"
+      ]
+    },
+    {
+      "id": 51,
+      "prompt": "请为这次变更执行 speckit.evidence.collect。有效的同次运行参数和证据均已提供。项目 AGENTS.md 明确要求交付记录及完成摘要使用英文，但本次需求用中文，测试原始日志也包含中文。应该怎样写 evidence.md 和完成摘要？",
+      "expected_output": "Follows the project's explicit English output-language convention for new human-readable evidence prose and the completion summary, ahead of the Chinese request language. Does not impose Chinese globally or translate Chinese raw test logs; keeps field names, enum values, block markers, identifiers, paths, commands, hashes, receipts and historical records unchanged. Applies the normal same-run validation and ownership rules without introducing a new language configuration or rewriting prior evidence.",
+      "files": [],
+      "expectations": [
+        "Gives the explicit project output-language convention priority over the request language",
+        "Uses English for new prose but preserves Chinese original logs and all literal contract values",
+        "Keeps history and existing ownership intact without adding a language subsystem"
+      ]
     }
   ]
 }

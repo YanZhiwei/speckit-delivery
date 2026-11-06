@@ -99,6 +99,8 @@ def check_delivery_install(
         ("speckit.quality.brief", "QUALITY_BRIEF"),
         ("speckit.quality.check", "CHECK_RECEIPTS:"),
         ("speckit.review.standards", "POLICY_FINGERPRINT:"),
+        ("speckit.evidence.collect", "project's explicit output-language convention first"),
+        ("speckit.evidence.collect", "paths, commands, hashes, and original logs/receipts unchanged"),
     ):
         if integration == "codex":
             rendered = list(project.glob(f".agents/skills/{name.replace('.', '-')}/SKILL.md"))

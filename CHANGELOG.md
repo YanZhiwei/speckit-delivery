@@ -2,6 +2,28 @@
 
 All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and Semantic Versioning.
 
+## [0.4.5] - 2026-11-07
+
+### Changed
+
+- Delivery Handoff now renders a concise PR core and includes Slice, Rollup,
+  Bugfix, architecture, UI, migration, and release details only when applicable.
+- The repository and packaged fallback PR templates now record review identity,
+  verification gaps, reviewer focus, and a factual local AI Code Review and repair
+  history without requiring empty boilerplate sections.
+- Handoff may summarize verified same-run local AI review rounds, repairs, and
+  re-reviews by user-facing tool or method name while keeping native Review,
+  Quality, Standards, and human approval authoritative.
+- Evidence prose follows the project's output-language convention or the request
+  language while machine fields, raw logs, receipts, and historical records stay
+  literal and immutable.
+
+### Tests
+
+- Added distribution contract coverage for the synchronized PR templates,
+  conditional Handoff sections, verified AI review-history rules, and Evidence
+  language behavior.
+
 ## [0.4.4] - 2026-11-07
 
 ### Changed
