@@ -469,6 +469,64 @@ class DistributionContractTest(unittest.TestCase):
         self.assertIn("Closes #", text)
         self.assertNotIn("## Summary", text)
 
+    def test_pr_templates_are_concise_and_record_verified_ai_review_history(self) -> None:
+        for path in (
+            ROOT / ".github/pull_request_template.md",
+            ROOT / "extensions/delivery/templates/pull-request.md",
+        ):
+            with self.subTest(path=path):
+                text = path.read_text(encoding="utf-8")
+                for marker in (
+                    "## 摘要",
+                    "## 变更内容",
+                    "## 验证",
+                    "## 影响（仅填写适用项）",
+                    "## 审查身份",
+                    "native Review report / receipt",
+                    "## 本地 AI Code Review 与修复历程",
+                    "## 评审重点",
+                    "## 条件章节",
+                    "### Bugfix（仅 Bugfix）",
+                    "### Slice / Stack（仅切片交付）",
+                    "### Rollup（仅最终汇总 PR）",
+                    "## 提交前确认",
+                ):
+                    self.assertIn(marker, text)
+                self.assertIn("只填写真实发生且能由本次 run 记录核验的轮次", text)
+                self.assertIn("未执行或未覆盖的验证及原因", text)
+                bugfix = text.split("### Bugfix", 1)[1].split("### ", 1)[0]
+                ui = text.split("### UI、", 1)[1].split("### ", 1)[0]
+                for marker in (
+                    "问题标识与触发场景", "回归结果", "复审结论 / 状态",
+                    "同一问题保留原 ID", "前次修复未解决或复发的证据与原因",
+                ):
+                    self.assertIn(marker, bugfix)
+                self.assertIn("变更前截图或录屏（标注版本）", ui)
+                self.assertIn("变更后截图或录屏（标注版本）", ui)
+                self.assertIn("缺失对比证据及原因", ui)
+                self.assertNotIn("每一行变更都已审阅和验证", text)
+
+        handoff = (
+            ROOT / "extensions/delivery/commands/speckit.delivery.handoff.md"
+        ).read_text(encoding="utf-8")
+        normalized = " ".join(handoff.split())
+        for marker in (
+            "Render a self-contained body with a concise core and conditional detail",
+            "Local AI Code Review and repair history",
+            "canonical run-local review reports",
+            "verified local AI review rounds",
+            "internal agent IDs",
+            "Do not expose private prompts, credentials, raw transcripts",
+            "before/after screenshots",
+            "### Bugfix repair history",
+            ".specify/extensions/delivery/templates/bugfix-review-repair.md",
+            ".specify/bugs/<slug>/review-repairs/<delivery-run>/round-<n>/",
+            "Keep review rounds distinct from repair attempts",
+            "`fixed-pending-review` is not `resolved`",
+        ):
+            self.assertIn(marker, normalized)
+        self.assertNotIn("review rounds, agent identities", normalized)
+
     def test_handoff_must_emit_usable_body_path(self) -> None:
         root = self.fixture()
         path = root / "extensions/delivery/commands/speckit.delivery.handoff.md"
@@ -1084,6 +1142,21 @@ class DistributionContractTest(unittest.TestCase):
         self.assertIn("HEAD/path-only receipt", quality)
         self.assertIn("CONTENT_FINGERPRINT:", standards)
         self.assertIn("POLICY_FINGERPRINT:", standards)
+
+    def test_evidence_localizes_prose_without_changing_contract_or_history(self) -> None:
+        text = (ROOT / "extensions/evidence/commands/speckit.evidence.collect.md").read_text(encoding="utf-8")
+        for rule in (
+            "human-readable prose in `evidence.md` and the completion summary",
+            "project's explicit output-language convention first",
+            "of this run's request text, not the language of this command prompt",
+            "a Chinese request without a project override gets Chinese",
+            "Keep machine-readable field names, status/enum values, block markers, identifiers",
+            "paths, commands, hashes, and original logs/receipts unchanged",
+            "rather than translating the source evidence",
+            "never translate or rewrite historical snapshots, original reports, or",
+            "the Close-owned current outcome block",
+        ):
+            self.assertIn(rule, text)
 
     def test_bug_identity_is_explicit_in_official_commands_and_coordinator(self) -> None:
         for step_id in ("assess", "fix", "regression-test", "decision-context"):

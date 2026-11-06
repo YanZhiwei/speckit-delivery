@@ -262,6 +262,14 @@ squash the final rollup, never rebase a shared integration branch, and never
 merge the target into a stack branch. See the [slice command](commands/speckit.delivery.slice.md)
 and [plan template](templates/slices.md).
 
+The [handoff contract](commands/speckit.delivery.handoff.md#required-sections)
+renders a concise core with conditional details. UI evidence shows comparable
+before/after captures or explains missing evidence. Repeated Bugfix corrections
+are summarized from the original and retained continuation reports, with actual
+regression/re-review outcomes and finding identity. History is only as complete
+as the retained records; repair attempts are scope-level passes, not a lifetime
+per-Bug count or automatic correlation across delivery runs.
+
 ## Delivery record lifecycle
 
 `evidence.md` is the durable, self-contained record. `exploration.md`,

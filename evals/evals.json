@@ -493,6 +493,51 @@
         "Returns changed public behavior to the existing scope/lane owner",
         "Uses the bounded request baseline and native report without forcing Feature artifacts or fabricating evidence"
       ]
+    },
+    {
+      "id": 50,
+      "prompt": "请用 speckit.evidence.collect 为本次 Lightweight 变更收集证据。项目没有规定输出语言；命令提示词是英文。已提供有效的 lane、delivery_run 和 evidence 路径，已有匹配身份的英文历史快照、原始测试日志和 Close 当前结果区块。请追加本次验证摘要，并说明失败原因、限制和后续责任人。",
+      "expected_output": "Uses Chinese for new human-readable scope/results/failures/limitations/follow-up prose in evidence.md and the completion summary because the run request is Chinese and no project convention overrides it. Keeps machine-readable keys, enum values, block markers, IDs, paths, commands, hashes and original logs/receipts literal. Preserves existing English historical snapshots, original reports and the Close-owned outcome block without translating or rewriting them; records only verified new validation evidence at the canonical same-run path.",
+      "files": [],
+      "expectations": [
+        "Uses Chinese for new evidence prose and completion output rather than inheriting the English prompt language",
+        "Preserves literal machine contracts and raw evidence while explaining results in Chinese",
+        "Does not translate historical snapshots or modify original reports or the Close-owned current outcome"
+      ]
+    },
+    {
+      "id": 51,
+      "prompt": "请为这次变更执行 speckit.evidence.collect。有效的同次运行参数和证据均已提供。项目 AGENTS.md 明确要求交付记录及完成摘要使用英文，但本次需求用中文，测试原始日志也包含中文。应该怎样写 evidence.md 和完成摘要？",
+      "expected_output": "Follows the project's explicit English output-language convention for new human-readable evidence prose and the completion summary, ahead of the Chinese request language. Does not impose Chinese globally or translate Chinese raw test logs; keeps field names, enum values, block markers, identifiers, paths, commands, hashes, receipts and historical records unchanged. Applies the normal same-run validation and ownership rules without introducing a new language configuration or rewriting prior evidence.",
+      "files": [],
+      "expectations": [
+        "Gives the explicit project output-language convention priority over the request language",
+        "Uses English for new prose but preserves Chinese original logs and all literal contract values",
+        "Keeps history and existing ownership intact without adding a language subsystem"
+      ]
+    },
+    {
+      "id": 52,
+      "prompt": "Prepare a Bugfix PR handoff from verified records for delivery_run=bug-rounds. Its approved assessment identifies cancellation leaking a handle. The original fix/test reports cover normal cancellation only. Continuation round 1 tried a cleanup guard, but the recorded concurrent-cancel regression still failed and finding R-7 stayed open. Round 2 corrected ownership, passed the same regression and received independent resolution of R-7 at the current content identity; all native final gates now pass. Round 3 was not reserved or executed. The same Bug slug has an older delivery directory with no explicit association. Summarize the repair history for the PR without creating new records or running a repair.",
+      "expected_output": "Renders a self-contained Bugfix history showing the initial correction and both recorded follow-ups, including the failed attempt. Keeps R-7 as one unresolved issue through round 1 and resolved only after round 2's independent review, without claiming recurrence after a prior resolution or merging a separate repair-induced defect. Distinguishes review rounds, reserved repair passes, replay and successful fixes; creates no round 3 or lifetime bug-repair count. Uses only the explicit same-run original/continuation/review evidence, does not infer earlier-run continuity from the slug, and preserves original owner records and budgets. References inaccessible local evidence honestly while including material facts inline.",
+      "files": [],
+      "expectations": [
+        "Includes initial remediation, failed first continuation and verified second continuation with their actual regression and review outcomes",
+        "Keeps the stable finding identity and distinguishes an unresolved defect from a reopened or newly introduced defect",
+        "Does not infer successful-fix totals, unrecorded attempts or cross-run continuity from a budget, filename or matching slug",
+        "Keeps the PR understandable without private local links and does not rewrite reports, allocate attempts or create another ledger"
+      ]
+    },
+    {
+      "id": 53,
+      "prompt": "Render the UI section of a PR handoff. Before and after screenshots of the changed settings page are available with their actual base/reviewed revisions, the same viewport, locale, data and navigation steps. A newly added empty-state page only has an after recording because it did not exist in the base revision. No other visual captures were taken. Describe how the evidence should be presented without generating images, inventing captures or claiming additional testing.",
+      "expected_output": "Presents revision-labeled before/after screenshots for the comparable settings-page scenario with the reproducible environment and steps. Includes the new empty-state after recording and explicitly explains that it has no prior state. Does not manufacture a before image, turn missing captures into a verification pass, or conflate different inputs/environments. Keeps this material in the conditional UI section and records any remaining visual-verification limits honestly.",
+      "files": [],
+      "expectations": [
+        "Labels comparable before/after evidence with the actual revisions, scenario, inputs and environment",
+        "Explains the new screen's absent prior state rather than fabricating a before capture",
+        "Does not generate validation images or claim unperformed testing"
+      ]
     }
   ]
 }

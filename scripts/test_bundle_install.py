@@ -90,6 +90,8 @@ def check_delivery_install(
         ("speckit.delivery.method", "METHOD_STATUS"),
         ("speckit.delivery.slice", "SLICE_PLAN_VERDICT"),
         ("speckit.delivery.handoff", "PR_BODY_PATH"),
+        ("speckit.delivery.handoff", "before/after screenshots"),
+        ("speckit.delivery.handoff", "### Bugfix repair history"),
         ("speckit.delivery.close", "DELIVERY_STATUS"),
         ("speckit.docs-sync.package-readme", "PACKAGE_README_VERDICT"),
         ("speckit.review.run", "REVIEW_VERDICT"),
@@ -99,6 +101,8 @@ def check_delivery_install(
         ("speckit.quality.brief", "QUALITY_BRIEF"),
         ("speckit.quality.check", "CHECK_RECEIPTS:"),
         ("speckit.review.standards", "POLICY_FINGERPRINT:"),
+        ("speckit.evidence.collect", "project's explicit output-language convention first"),
+        ("speckit.evidence.collect", "paths, commands, hashes, and original logs/receipts unchanged"),
     ):
         if integration == "codex":
             rendered = list(project.glob(f".agents/skills/{name.replace('.', '-')}/SKILL.md"))

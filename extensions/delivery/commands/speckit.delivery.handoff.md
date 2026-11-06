@@ -39,6 +39,15 @@ verified, record it separately as `original_pr_head`/`published_head`; otherwise
 say that publication has not yet established it. Handoff must never invent or
 substitute a future `merged_revision`.
 
+When local AI Code Review was part of this run, inspect the canonical run-local
+review reports, runtime owner results/receipts, and retained repair or re-review
+records that actually exist under this run. Reconcile them by scope, reviewed
+content identity, finding ID, and repair attempt. Summarize only verified rounds
+that bear on the final outgoing diff; preserve unresolved findings and disclose
+missing or partial history. A current native Review pass is not evidence that an
+unrecorded AI round happened, and an AI round is not a substitute for native
+Review, Quality, Standards, or human approval.
+
 ## Template resolution
 
 Use the first applicable source, and never mix sections from two:
@@ -105,40 +114,95 @@ requirement source.
 
 ## Required sections
 
-Write a self-contained body that covers:
+Render a self-contained body with a concise core and conditional detail. The
+selected template is a presentation contract, not a request to fill every
+placeholder with boilerplate.
 
-- **Summary** and **Motivation**, including the linked Issue.
-- **Slice / stack** for one layer, or **Rollup** for the final integration PR,
-  when the delivery is sliced.
-- **Change type**: feature, bugfix, refactor, documentation, or release.
-- **Current design (before)**: the entry point or component, its owner and
-  dependency direction, and the invariant that constrained the change. Link the
-  owning document; do not restate it.
-- **What changed**: a table of location, change, and reason. One row per module
-  or contract, never the raw diff.
-- **Impact**: public API, commands, and config; persistence or migration;
-  compatibility and upgrade path; security and permissions; performance and
-  resources; dependencies and supply chain. Each row states "none" with a
-  reason or names its evidence.
-- **Design**: optional. Include a Mermaid block from
-  `speckit.diagram.render`, or link a committed SVG. Write `N/A` with the reason
-  when no durable structure changed. Never paste generated HTML into the body.
-- **Architecture decisions**: links to the ADRs that constrain this work, or an
-  explicit statement that no decision changed.
-- **Behavior and acceptance**: requirement, result, evidence.
-- **Review provenance and PR head**: `base_revision`, `reviewed_head`, content
-  and requirements fingerprints, native report references, and the verified
+Always include:
+
+- **Summary and motivation**, including the linked Issue or an explicit reason
+  there is none; state the final behavior/contract and the excluded scope.
+- **Change type** and a compact **what changed** table, one row per module or
+  contract rather than the raw diff.
+- **Verification**: actual commands/scenarios and results, with evidence; list
+  every unexecuted or uncovered check and its reason.
+- **Impact**: include only applicable public API/config, persistence/migration,
+  compatibility, security, performance, dependency, or release impact. For a
+  reviewed non-applicable category, write "none" with the reason.
+- **Review identity**: `base_revision`, `reviewed_head`, content and
+  requirements fingerprints, native report references, and verified
   `original_pr_head`/`published_head` when available. State plainly that these
-  are historical review/publication identities; `merged_revision` is absent
-  until Close verifies the tracker outcome.
-- **Verification**: build, tests, standards and spec review, ADR consistency,
-  diff-scoped simplification, and any repository-specific install check.
-- **Documentation**, **Rollback**, **AI assistance**, **Review notes**, and a
-  **Checklist**.
+  are historical identities; `merged_revision` is absent until Close verifies
+  the tracker outcome.
+- **Local AI Code Review and repair history**: if local AI review was actually
+  run, summarize each verified same-run round that is relevant to the final
+  scope: tool/method, reviewed version or scope, material findings and their
+  state, repair performed, and independent re-review conclusion. If it was not
+  run or the run records do not identify it, say so explicitly; never infer a
+  tool, round, result, or fix from the host, a conversation, or an implementer's
+  claim. This history is supplementary and never replaces the native Review
+  verdict or its snapshot/coverage contract.
+- **Review focus**, **rollback**, and a short **submission checklist**.
 
-For bugfixes add root cause, reproduction, and regression coverage. For
-lightweight changes omit irrelevant sections without removing Summary, Scope,
-Impact, Verification, and Checklist.
+Include these sections only when applicable:
+
+- **Bugfix**: reproduction, root cause, regression coverage, and the repair
+  history described below when the same defect required repeated attempts.
+- **Architecture/design/ADR**: current design, ownership/dependency direction,
+  invariant, design change, ADR links, and a Mermaid/committed SVG when useful.
+- **Slice / Stack**: approved layer goal, base/dependencies, merge order,
+  deferrals, and rollback.
+- **Rollup**: mapped slices, aggregate evidence, final merge method, and
+  whole-feature rollback.
+- **UI/manual flow**: reproducible manual steps and before/after screenshots or
+  recordings of comparable scenarios, inputs, and environments. Label the code
+  revision for each capture, plus accessibility/platform notes. For a new screen
+  with no prior state or an unavailable capture, disclose the missing comparison
+  and reason; never generate or fabricate validation images.
+- **Documentation/release/migration**: source/generated docs, release notes,
+  migration, recovery, and rollback details.
+
+Omit empty conditional tables and headings from the rendered body. Do not
+weaken required provenance or evidence merely to make the body shorter.
+
+### Bugfix repair history
+
+For Bugfix, read the exact run-bound Bug identity and approved `assessment.md`,
+original `fix.md`/`test.md`, and the continuation records explicitly referenced
+by that run's checkpoint. Their owner contract is
+`.specify/extensions/delivery/templates/bugfix-review-repair.md`; its per-attempt
+records live at `.specify/bugs/<slug>/review-repairs/<delivery-run>/round-<n>/`.
+Verify Bug/run identity before using those records. Review reports and runtime
+receipts provide finding dispositions and reserved/completed attempt facts.
+The existing owners retain all writes, finding lifecycle, and attempt budgets;
+Handoff reads these sources without rewriting them or creating another ledger.
+
+When a defect needed multiple fixes, summarize the initial correction and each
+recorded follow-up in a compact table: attempt, Bug/Issue/finding identity and
+trigger, changed code revision/content identity and correction, actual regression
+result, and reviewer disposition. Preserve unsuccessful and interrupted attempts
+and unknown outcomes; a reserved attempt is not proof of a completed fix. Keep
+review rounds distinct from repair attempts and do not count a no-op or replay as
+another fix. Reference the AI review table rather than repeating the same facts.
+Feature/Lightweight review repairs use their existing lane-owned records and AI
+review table; do not require Bugfix artifacts for those lanes.
+
+Use the native Reviewer's stable finding IDs and dispositions: a still-open
+finding after a repair is the same unresolved issue; only evidenced recurrence
+after verified resolution is a reopened issue. A distinct defect introduced by a
+repair needs its own finding identity and relationship. Explain why a previous
+repair failed or the diagnosis changed only when supported; otherwise state that
+the cause remains unknown. `fixed-pending-review` is not `resolved`, and green
+regression tests alone do not prove reviewer closure. A missing report or a new
+HEAD does not close earlier findings; the final handoff guard still applies.
+
+Keep this summary understandable without private local paths. Inline the material
+facts and use publicly accessible code/CI/report references where available;
+identify retained local-only evidence as such without presenting it as a working
+remote link. Disclose missing history and do not invent rows or total counts from
+commit messages, filenames, or chat. Include an earlier delivery run only through
+an explicit verified reference to that Bug/Issue, labeling its separate run and
+scope; never infer continuity from a matching slug or the newest directory.
 
 ## Merge plan
 
@@ -241,9 +305,13 @@ explicitly declared report bookkeeping may be excluded. Stale, blocked, or
 incomplete results stop handoff even if a human clicked the earlier gate. Do not
 reset the repair budget to obtain a pass.
 
-Do not cite ignored Spec/Plan files, task identifiers, review rounds, agent
-identities, conversation history, or obsolete command output. Link durable
-Issues and ADRs instead.
+Do not cite ignored Spec/Plan files, task identifiers, internal agent IDs,
+conversation history, or obsolete command output. It is permitted and useful to
+summarize verified local AI review rounds and repair/re-review outcomes by the
+user-facing tool or method name, provided each row is bound to an actual
+same-run report/receipt and the final reviewed scope. Do not expose private
+prompts, credentials, raw transcripts, or unsupported claims. Link durable Issues,
+ADRs, native reports, and safe evidence references instead.
 
 With a run, write the body locally and report its exact `PR_BODY_PATH`; without
 one, report the inline body and `PR_BODY_PATH: inline`. Publishing or creating

@@ -134,6 +134,19 @@ receipts.
 ### 4. Write one durable same-run record
 
 Before publication, create or update only the exact canonical `evidence` path.
+For human-readable prose in `evidence.md` and the completion summary, follow the
+project's explicit output-language convention first; otherwise use the language
+of this run's request text, not the language of this command prompt. For example,
+a Chinese request without a project override gets Chinese scope descriptions,
+result summaries, failure explanations, limitations, and follow-up actions/owners.
+
+Keep machine-readable field names, status/enum values, block markers, identifiers,
+paths, commands, hashes, and original logs/receipts unchanged. Explain raw output
+in the selected language rather than translating the source evidence. A language
+change applies only to new prose or an Evidence-owned editable pre-publication
+summary; never translate or rewrite historical snapshots, original reports, or
+the Close-owned current outcome block.
+
 The first record must include unambiguous metadata in this form (omitting only
 lane-specific fields that do not apply):
 
