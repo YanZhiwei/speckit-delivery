@@ -125,15 +125,15 @@ Initialization creates `.specify/` and the host command surface; it does not rep
 
 ```bash
 specify extension catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.4/catalogs/extensions.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.5/catalogs/extensions.json \
   --name speckit-delivery --install-allowed
 
 specify workflow catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.4/catalogs/workflows.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.5/catalogs/workflows.json \
   --name speckit-delivery
 
 specify bundle catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.4/catalogs/bundles.json \
+  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.5/catalogs/bundles.json \
   --id speckit-delivery --policy install-allowed
 
 specify bundle install speckit-delivery
@@ -147,7 +147,7 @@ Back up project configuration and core template customizations first, then run `
 This example assumes all three existing catalogs are named `speckit-delivery` and the Workflow source has index `0`; substitute its actual index and retain unrelated sources.
 
 ```powershell
-$base = 'https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.4/catalogs'
+$base = 'https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.5/catalogs'
 specify extension catalog remove speckit-delivery
 specify extension catalog add "$base/extensions.json" --name speckit-delivery --install-allowed
 specify workflow catalog remove 0
