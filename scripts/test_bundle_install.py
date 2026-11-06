@@ -90,6 +90,8 @@ def check_delivery_install(
         ("speckit.delivery.method", "METHOD_STATUS"),
         ("speckit.delivery.slice", "SLICE_PLAN_VERDICT"),
         ("speckit.delivery.handoff", "PR_BODY_PATH"),
+        ("speckit.delivery.handoff", "before/after screenshots"),
+        ("speckit.delivery.handoff", "### Bugfix repair history"),
         ("speckit.delivery.close", "DELIVERY_STATUS"),
         ("speckit.docs-sync.package-readme", "PACKAGE_README_VERDICT"),
         ("speckit.review.run", "REVIEW_VERDICT"),

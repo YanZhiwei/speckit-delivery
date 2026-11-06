@@ -494,21 +494,38 @@ class DistributionContractTest(unittest.TestCase):
                     self.assertIn(marker, text)
                 self.assertIn("只填写真实发生且能由本次 run 记录核验的轮次", text)
                 self.assertIn("未执行或未覆盖的验证及原因", text)
+                bugfix = text.split("### Bugfix", 1)[1].split("### ", 1)[0]
+                ui = text.split("### UI、", 1)[1].split("### ", 1)[0]
+                for marker in (
+                    "问题标识与触发场景", "回归结果", "复审结论 / 状态",
+                    "同一问题保留原 ID", "前次修复未解决或复发的证据与原因",
+                ):
+                    self.assertIn(marker, bugfix)
+                self.assertIn("变更前截图或录屏（标注版本）", ui)
+                self.assertIn("变更后截图或录屏（标注版本）", ui)
+                self.assertIn("缺失对比证据及原因", ui)
                 self.assertNotIn("每一行变更都已审阅和验证", text)
 
         handoff = (
             ROOT / "extensions/delivery/commands/speckit.delivery.handoff.md"
         ).read_text(encoding="utf-8")
+        normalized = " ".join(handoff.split())
         for marker in (
             "Render a self-contained body with a concise core and conditional detail",
             "Local AI Code Review and repair history",
-            "canonical run-local\nreview reports",
+            "canonical run-local review reports",
             "verified local AI review rounds",
             "internal agent IDs",
-            "Do not expose private\nprompts, credentials, raw transcripts",
+            "Do not expose private prompts, credentials, raw transcripts",
+            "before/after screenshots",
+            "### Bugfix repair history",
+            ".specify/extensions/delivery/templates/bugfix-review-repair.md",
+            ".specify/bugs/<slug>/review-repairs/<delivery-run>/round-<n>/",
+            "Keep review rounds distinct from repair attempts",
+            "`fixed-pending-review` is not `resolved`",
         ):
-            self.assertIn(marker, handoff)
-        self.assertNotIn("review rounds, agent\nidentities", handoff)
+            self.assertIn(marker, normalized)
+        self.assertNotIn("review rounds, agent identities", normalized)
 
     def test_handoff_must_emit_usable_body_path(self) -> None:
         root = self.fixture()

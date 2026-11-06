@@ -146,20 +146,63 @@ Always include:
 
 Include these sections only when applicable:
 
-- **Bugfix**: reproduction, root cause, and regression coverage.
+- **Bugfix**: reproduction, root cause, regression coverage, and the repair
+  history described below when the same defect required repeated attempts.
 - **Architecture/design/ADR**: current design, ownership/dependency direction,
   invariant, design change, ADR links, and a Mermaid/committed SVG when useful.
 - **Slice / Stack**: approved layer goal, base/dependencies, merge order,
   deferrals, and rollback.
 - **Rollup**: mapped slices, aggregate evidence, final merge method, and
   whole-feature rollback.
-- **UI/manual flow**: reproducible manual steps, screenshots/recordings, and
-  accessibility/platform notes.
+- **UI/manual flow**: reproducible manual steps and before/after screenshots or
+  recordings of comparable scenarios, inputs, and environments. Label the code
+  revision for each capture, plus accessibility/platform notes. For a new screen
+  with no prior state or an unavailable capture, disclose the missing comparison
+  and reason; never generate or fabricate validation images.
 - **Documentation/release/migration**: source/generated docs, release notes,
   migration, recovery, and rollback details.
 
 Omit empty conditional tables and headings from the rendered body. Do not
 weaken required provenance or evidence merely to make the body shorter.
+
+### Bugfix repair history
+
+For Bugfix, read the exact run-bound Bug identity and approved `assessment.md`,
+original `fix.md`/`test.md`, and the continuation records explicitly referenced
+by that run's checkpoint. Their owner contract is
+`.specify/extensions/delivery/templates/bugfix-review-repair.md`; its per-attempt
+records live at `.specify/bugs/<slug>/review-repairs/<delivery-run>/round-<n>/`.
+Verify Bug/run identity before using those records. Review reports and runtime
+receipts provide finding dispositions and reserved/completed attempt facts.
+The existing owners retain all writes, finding lifecycle, and attempt budgets;
+Handoff reads these sources without rewriting them or creating another ledger.
+
+When a defect needed multiple fixes, summarize the initial correction and each
+recorded follow-up in a compact table: attempt, Bug/Issue/finding identity and
+trigger, changed code revision/content identity and correction, actual regression
+result, and reviewer disposition. Preserve unsuccessful and interrupted attempts
+and unknown outcomes; a reserved attempt is not proof of a completed fix. Keep
+review rounds distinct from repair attempts and do not count a no-op or replay as
+another fix. Reference the AI review table rather than repeating the same facts.
+Feature/Lightweight review repairs use their existing lane-owned records and AI
+review table; do not require Bugfix artifacts for those lanes.
+
+Use the native Reviewer's stable finding IDs and dispositions: a still-open
+finding after a repair is the same unresolved issue; only evidenced recurrence
+after verified resolution is a reopened issue. A distinct defect introduced by a
+repair needs its own finding identity and relationship. Explain why a previous
+repair failed or the diagnosis changed only when supported; otherwise state that
+the cause remains unknown. `fixed-pending-review` is not `resolved`, and green
+regression tests alone do not prove reviewer closure. A missing report or a new
+HEAD does not close earlier findings; the final handoff guard still applies.
+
+Keep this summary understandable without private local paths. Inline the material
+facts and use publicly accessible code/CI/report references where available;
+identify retained local-only evidence as such without presenting it as a working
+remote link. Disclose missing history and do not invent rows or total counts from
+commit messages, filenames, or chat. Include an earlier delivery run only through
+an explicit verified reference to that Bug/Issue, labeling its separate run and
+scope; never infer continuity from a matching slug or the newest directory.
 
 ## Merge plan
 

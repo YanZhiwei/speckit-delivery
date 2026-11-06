@@ -14,6 +14,10 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 - Handoff may summarize verified same-run local AI review rounds, repairs, and
   re-reviews by user-facing tool or method name while keeping native Review,
   Quality, Standards, and human approval authoritative.
+- UI handoffs require comparable before/after captures labeled with their code
+  revisions, or an explicit reason for missing evidence. Bugfix handoffs summarize
+  initial and repeated repairs from existing owner records, retaining failed
+  attempts, stable finding identities, regression results, and reviewer closure.
 - Evidence prose follows the project's output-language convention or the request
   language while machine fields, raw logs, receipts, and historical records stay
   literal and immutable.
@@ -22,7 +26,9 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 - Added distribution contract coverage for the synchronized PR templates,
   conditional Handoff sections, verified AI review-history rules, and Evidence
-  language behavior.
+  language behavior. Added behavioral evaluation inputs for repeated Bugfix
+  repairs and before/after UI evidence; these have not been run as live model
+  comparisons.
 
 ## [0.4.4] - 2026-11-07
 
