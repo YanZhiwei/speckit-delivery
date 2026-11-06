@@ -502,10 +502,10 @@ class DistributionContractTest(unittest.TestCase):
         for marker in (
             "Render a self-contained body with a concise core and conditional detail",
             "Local AI Code Review and repair history",
-            "canonical run-local review reports",
+            "canonical run-local\nreview reports",
             "verified local AI review rounds",
             "internal agent IDs",
-            "Do not expose private prompts, credentials, raw transcripts",
+            "Do not expose private\nprompts, credentials, raw transcripts",
         ):
             self.assertIn(marker, handoff)
         self.assertNotIn("review rounds, agent\nidentities", handoff)
