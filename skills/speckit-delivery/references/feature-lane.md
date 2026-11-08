@@ -9,7 +9,7 @@
 7. Run Ralph against dependency-ready tasks, stopping at approved internal slice boundaries for Quality, Standards, task Review, declared prefix/flag/checkpoint verification, and applicable risk probes. Render each boundary or approved publication layer with `speckit.delivery.handoff slice=<id>`; `Publication mode: single` still produces one final PR body, and PR creation remains separately authorized.
 8. Run `speckit.converge`; when it appends tasks, assign them to the current approved slice fingerprint or reopen slice approval, then rerun analyze and Ralph. Bound the loop using project configuration.
 9. Run diff-scoped simplification. Route accepted local candidates through tasks; return behavior or architecture changes to clarify/plan/ADR.
-10. Synchronize documentation when configured and judge package README drift before final Quality/Standards. Then review Standards, Spec, architecture, correctness, security, tests, and simplicity. Final Review owns cross-slice integration.
+10. Synchronize documentation when configured, then judge package README drift and project README structure (rewrite or split; never append a section) before final Quality/Standards. Then review Standards, Spec, architecture, correctness, security, tests, and simplicity. Final Review owns cross-slice integration.
 11. Convert blocking findings into tasks and repeat analyze → Ralph → converge → review.
 12. Finalize ADRs against repository HEAD, collect evidence, and render the slice or rollup PR handoff.
 13. After the authorized PR outcome, run `speckit.delivery.close` so the durable record says `delivered`, `abandoned`, or `superseded`.

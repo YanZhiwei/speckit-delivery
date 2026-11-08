@@ -55,6 +55,7 @@ uv run --with pyyaml python scripts/stamp_release.py --version <version> --check
 uv run --with pyyaml python scripts/validate_distribution.py
 uv run --with pyyaml python scripts/test_validate_distribution.py
 uv run --with pyyaml python scripts/test_stamp_release.py
+python scripts/test_docs_readme_structure.py
 python scripts/test_delivery_runtime.py
 python scripts/test_workflow_runtime.py
 python scripts/test_bundle_install.py
@@ -98,3 +99,16 @@ OpenCode，Codex 变体验证 Skills 模式。结构检查不能证明调研质�
 根目录 README 负责产品价值、快速开始、支持宿主和状态；根目录双语参考文档负责
 长期说明；Extension README 负责命令安装、输出、配置和安全；Catalog 与 Manifest
 负责精确的机器可读版本。
+
+根目录 README 是入口页，不是变更记录：
+
+- **一条事实一个 owner。** Runtime、产物、安装和发布细节留在各自文档里，README
+  只保留一句结论加链接。
+- **只描述当前行为。** “从 X 起……”属于 `CHANGELOG.md`；README 写现在成立什么。
+- **替换，不追加。** 新结论替换它作废的段落；`_check_readme_structure` 中的节清单
+  与行数预算就是契约，新增节或增加长度必须先搬走细节。
+- **不允许静默漂移。** 用户可见行为变化时，发布 PR 要么更新 README，要么写明
+  `unchanged-with-reason`；只改 CHANGELOG 是文档缺口，不是豁免。
+
+`快速配置.md` / `QUICK-CONFIGURATION.md` 负责安装与升级步骤，包括
+`scripts/stamp_release.py` 与根目录 README 一起改写版本固定的 Catalog URL。

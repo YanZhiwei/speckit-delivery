@@ -63,6 +63,7 @@ uv run --with pyyaml python scripts/stamp_release.py --version <version> --check
 uv run --with pyyaml python scripts/validate_distribution.py
 uv run --with pyyaml python scripts/test_validate_distribution.py
 uv run --with pyyaml python scripts/test_stamp_release.py
+python scripts/test_docs_readme_structure.py
 python scripts/test_delivery_runtime.py
 python scripts/test_task_closure.py
 python scripts/test_delivery_outcome.py
@@ -123,3 +124,20 @@ Root README files own product value, quick start, supported hosts, and status.
 Root bilingual reference files own durable user-facing explanations.
 Extension READMEs own command installation, outputs, configuration, and safety.
 Catalogs and manifests own exact machine-readable versions.
+
+The root README is a landing page, not a log:
+
+- **One owner per fact.** Runtime, artifact, installation, and release detail stays
+  in the document that owns it; the README keeps a one-line claim plus a link.
+- **Describe current behavior only.** "Since X, ..." statements belong in
+  `CHANGELOG.md`; the README states what is true now.
+- **Replace, do not append.** A new claim replaces the paragraph it supersedes.
+  The section list and line budget in `_check_readme_structure` are the contract,
+  so a new section or a longer README must first move detail to its owner.
+- **No silent drift.** A release that changes user-visible behavior updates the
+  README or records `unchanged-with-reason` in the release PR; a CHANGELOG-only
+  release is a documentation gap, not an exemption.
+
+`QUICK-CONFIGURATION.md` / `快速配置.md` own installation and upgrade steps,
+including the version-pinned catalog URLs that `scripts/stamp_release.py` stamps
+together with the root READMEs.

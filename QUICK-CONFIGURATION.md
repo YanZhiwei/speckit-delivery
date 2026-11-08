@@ -92,6 +92,28 @@ commands), `delivery` (11), and `review` (2). Delivery also installs
 `extensions/delivery/scripts/delivery_runtime.py` and the `runtime.md` /
 `core-adapter.md` contracts; these are required by the guarded workflows.
 
+### Upgrade the Bundle from catalogs
+
+Released versions pin every catalog to a tag; never mix components from different tags:
+
+```powershell
+$base = 'https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.6/catalogs'
+specify extension catalog remove speckit-delivery
+specify extension catalog add "$base/extensions.json" --name speckit-delivery --install-allowed
+specify workflow catalog remove 0
+specify workflow catalog add "$base/workflows.json" --name speckit-delivery
+specify bundle catalog remove speckit-delivery
+specify bundle catalog add "$base/bundles.json" --id speckit-delivery --policy install-allowed
+specify bundle update speckit-delivery
+specify bundle list --json
+```
+
+Back up project configuration and core template customizations first. `specify
+workflow catalog list` shows the old source index; the example assumes all three
+catalogs are named `speckit-delivery` and the Workflow source is index `0`, so
+substitute the actual index and keep unrelated sources. Afterwards verify the
+Bundle version, project configuration, core customizations, and the `/sd` entry.
+
 ## 1.1 Runtime and recovery contract
 
 The guarded workflows run the portable helper from the project root with Python

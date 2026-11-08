@@ -2,6 +2,44 @@
 
 All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and Semantic Versioning.
 
+## [0.4.6] - 2026-11-09
+
+### Added
+
+- Docs Sync ships `scripts/readme_structure.py`, a deterministic README guard
+  that fails on duplicate headings, a stale or broken table of contents,
+  release-anchored prose, broken local links, an exceeded line budget, a new
+  `docs/` page the README never links, and a section appended at the end of the
+  file.
+- `templates/project-readme.md` documents the index shape: a `docs/` layout where
+  each page owns one topic and the README keeps a single index row.
+- New Docs Sync settings `project_readme`, `readme_paths`, `readme_max_lines`,
+  `readme_sections`, and `readme_docs_root`; reports add `README_STRUCTURE` and
+  `README_MOVES`.
+
+### Changed
+
+- Docs Sync owns the project README structure contract. A delivery may rewrite the
+  section that owns the fact, split detail into `docs/`, or add a section that is
+  registered in the table of contents; appending is drift. The `package-readme`
+  step in all three lanes requests the structure verdict before review, and
+  Review Fix re-checks it after a repair. `project_readme` defaults to `auto`, so
+  existing projects report instead of blocking.
+- The root README is a landing page: one owner per fact, installation and upgrade
+  steps moved to the quick-configuration docs, and release-anchored prose moved to
+  this changelog.
+- `validate_distribution.py` checks the README section list and order, line budget,
+  table-of-contents entries, release-anchored wording, duplicated requirement
+  facts, and the version-pinned URLs in the quick-configuration docs.
+- `stamp_release.py` stamps the quick-configuration catalog URLs together with the
+  root READMEs, and the release PR commits both files.
+
+### Tests
+
+- Added `scripts/test_docs_readme_structure.py`; distribution tests cover the new
+  README checks, the structure-contract markers, and the additionally stamped
+  docs.
+
 ## [0.4.5] - 2026-11-07
 
 ### Changed

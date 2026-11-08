@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: review
   name: Delivery Code Review
-  version: "0.4.5"
+  version: "0.4.6"
   description: "Read-only six-dimensional task and final review with focused reviewer context, design-deviation analysis, and snapshot-bound findings."
   category: code
   effect: read-only
