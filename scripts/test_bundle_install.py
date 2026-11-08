@@ -72,6 +72,8 @@ def check_delivery_install(
             "commands/speckit.docs-sync.run.md",
             "commands/speckit.docs-sync.package-readme.md",
             "templates/package-readme.md",
+            "templates/project-readme.md",
+            "scripts/readme_structure.py",
             "config-template.yml",
         ),
     }
@@ -94,6 +96,7 @@ def check_delivery_install(
         ("speckit.delivery.handoff", "### Bugfix repair history"),
         ("speckit.delivery.close", "DELIVERY_STATUS"),
         ("speckit.docs-sync.package-readme", "PACKAGE_README_VERDICT"),
+        ("speckit.docs-sync.package-readme", "README_STRUCTURE"),
         ("speckit.review.run", "REVIEW_VERDICT"),
         ("speckit.delivery.review-fix", "REVIEW_FIX_STATUS"),
         ("speckit.ralph.run", "REVIEW_VERDICT=pass"),

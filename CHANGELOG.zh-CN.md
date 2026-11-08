@@ -3,6 +3,37 @@
 所有重要变更遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)
 和语义化版本规范。
 
+## [0.4.6] - 2026-11-09
+
+### 新增
+
+- Docs Sync 附带 `scripts/readme_structure.py` 确定性 README 守卫：重复标题、目录过期
+  或悬空、版本锚定措辞、本地链接失效、超出行数预算、新增但 README 未链接的 `docs/`
+  页面，以及在文件末尾追加小节，都会失败。
+- `templates/project-readme.md` 给出索引式 README 的形态：每个话题一个 `docs/` 页面，
+  README 只保留一行索引。
+- Docs Sync 新增 `project_readme`、`readme_paths`、`readme_max_lines`、
+  `readme_sections`、`readme_docs_root` 配置；报告新增 `README_STRUCTURE` 与
+  `README_MOVES`。
+
+### 变更
+
+- Docs Sync 负责项目 README 结构契约：交付可以重写所属小节、把细节拆分到 `docs/`，
+  或新增一个同时登记进目录的小节；追加即漂移。三条 Lane 的 `package-readme` 节点在
+  评审前要求结构结论，Review Fix 在修复后重新校验。`project_readme` 默认 `auto`，
+  已有项目只报告不阻断。
+- 根目录 README 收敛为入口页：同一事实只保留一个 owner，安装与升级步骤移入快速配置
+  文档，版本锚定叙述移入本日志。
+- `validate_distribution.py` 校验 README 的节清单与顺序、行数预算、目录条目、版本锚定
+  措辞、重复的要求事实，以及快速配置文档中的版本固定 URL。
+- `stamp_release.py` 与根目录 README 一起改写快速配置文档的 Catalog URL，发布 PR 也
+  一并提交这两个文件。
+
+### 测试
+
+- 新增 `scripts/test_docs_readme_structure.py`；分发测试覆盖新增的 README 检查、
+  结构契约标记，以及新增的 stamp 目标文档。
+
 ## [0.4.5] - 2026-11-07
 
 ### 变更

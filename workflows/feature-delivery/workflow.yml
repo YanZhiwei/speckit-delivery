@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "feature-delivery"
   name: "Spec Kit Feature Delivery"
-  version: "0.4.5"
+  version: "0.4.6"
   author: "Yan Zhiwei"
   description: "Evidence-first Feature delivery with bounded research, role-aware context and cooperation planning, approved slices, guarded execution, review, and handoff."
 
@@ -847,7 +847,7 @@ steps:
   - id: package-readme
     command: speckit.docs-sync.package-readme
     integration: "{{ inputs.integration }}"
-    input: { args: "delivery_run={{ inputs.delivery_run }} lane=feature repair=0 scope=outgoing-diff {{ inputs.spec }} Derive from actual package contents and changed surfaces; emit PACKAGE_README_VERDICT and INPUT_IDENTITY." }
+    input: { args: "delivery_run={{ inputs.delivery_run }} lane=feature repair=0 scope=outgoing-diff {{ inputs.spec }} Derive from actual package contents and changed surfaces; judge the project README index and structure; emit PACKAGE_README_VERDICT, README_STRUCTURE and INPUT_IDENTITY." }
 
   - id: quality-before-review-needed
     type: shell

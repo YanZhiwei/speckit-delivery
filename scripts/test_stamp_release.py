@@ -130,6 +130,22 @@ class ReleaseStampTest(unittest.TestCase):
             self.assertIn(f"/v{self.target}/", text)
             self.assertNotIn(f"/v{current}/", text)
 
+    def test_stamp_updates_quick_config_catalog_urls(self) -> None:
+        root = self.fixture()
+        extra_docs = stamp.PINNED_URL_DOCS[2:]
+        for name in extra_docs:
+            shutil.copy2(ROOT / name, root / name)
+        before = (root / extra_docs[0]).read_text(encoding="utf-8")
+        match = re.search(r"/v(\d+\.\d+\.\d+)/", before)
+        self.assertIsNotNone(match)
+        current = match.group(1)
+        result = self.run_stamp(root, "--version", self.target)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        for name in extra_docs:
+            text = (root / name).read_text(encoding="utf-8")
+            self.assertIn(f"/v{self.target}/", text)
+            self.assertNotIn(f"/v{current}/", text)
+
     def test_check_detects_unstamped_then_accepts_stamped(self) -> None:
         root = self.fixture()
         before = self.run_stamp(root, "--version", self.target, "--check")

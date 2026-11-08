@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "bugfix-delivery"
   name: "Spec Kit Bugfix Delivery"
-  version: "0.4.5"
+  version: "0.4.6"
   author: "Yan Zhiwei"
   description: "Evidence-first structure/history exploration, bug assessment and scope approval, guarded repair, regression validation, quality, review, and handoff."
 
@@ -257,7 +257,7 @@ steps:
   - id: package-readme
     command: speckit.docs-sync.package-readme
     integration: "{{ inputs.integration }}"
-    input: { args: "delivery_run={{ inputs.delivery_run }} lane=bugfix repair=0 scope=outgoing-diff {{ inputs.report }} Judge package README drift after the final fix and accepted simplifications; emit PACKAGE_README_VERDICT and INPUT_IDENTITY." }
+    input: { args: "delivery_run={{ inputs.delivery_run }} lane=bugfix repair=0 scope=outgoing-diff {{ inputs.report }} Judge package and project README drift and structure after the final fix and accepted simplifications; emit PACKAGE_README_VERDICT, README_STRUCTURE and INPUT_IDENTITY." }
 
   - id: quality-begin
     type: shell

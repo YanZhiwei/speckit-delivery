@@ -461,6 +461,81 @@ class DistributionContractTest(unittest.TestCase):
                     any("bilingual README" in error for error in errors), errors
                 )
 
+    def test_readme_rejects_an_appended_section(self) -> None:
+        root = self.fixture()
+        path = root / "README.md"
+        path.write_text(
+            path.read_text(encoding="utf-8") + "\n## 0.4.x 新增能力\n\n新的段落。\n",
+            encoding="utf-8",
+        )
+        errors = validator.validate(root)
+        self.assertTrue(
+            any("instead of adding one" in error for error in errors), errors
+        )
+
+    def test_readme_line_budget_is_enforced(self) -> None:
+        root = self.fixture()
+        path = root / "README.md"
+        path.write_text(
+            path.read_text(encoding="utf-8") + "\n追加说明。\n" * 40,
+            encoding="utf-8",
+        )
+        errors = validator.validate(root)
+        self.assertTrue(any("line budget" in error for error in errors), errors)
+
+    def test_readme_rejects_release_anchored_prose(self) -> None:
+        root = self.fixture()
+        path = root / "README.md"
+        text = path.read_text(encoding="utf-8").replace(
+            "## 快速开始",
+            "从 `0.4.2` 起，新的 `/sd` 会话也必须使用 runtime 门禁。\n\n## 快速开始",
+        )
+        path.write_text(text, encoding="utf-8")
+        errors = validator.validate(root)
+        self.assertTrue(
+            any("belongs in CHANGELOG.md" in error for error in errors), errors
+        )
+
+    def test_readme_facts_must_have_one_owner(self) -> None:
+        root = self.fixture()
+        path = root / "README.md"
+        text = path.read_text(encoding="utf-8").replace(
+            "## 快速开始",
+            "| 重复要求 | Spec Kit CLI `>=1.2.3` |\n| --- | --- |\n\n## 快速开始",
+        )
+        path.write_text(text, encoding="utf-8")
+        errors = validator.validate(root)
+        self.assertTrue(
+            any("keep one owner" in error for error in errors), errors
+        )
+
+    def test_readme_table_of_contents_must_match_sections(self) -> None:
+        root = self.fixture()
+        path = root / "README.md"
+        text = path.read_text(encoding="utf-8").replace(
+            "- [状态与路线图](#状态与路线图)\n", ""
+        )
+        path.write_text(text, encoding="utf-8")
+        errors = validator.validate(root)
+        self.assertTrue(
+            any("table of contents" in error for error in errors), errors
+        )
+
+    def test_quick_config_catalog_pin_must_match_version(self) -> None:
+        for name in validator.README_PINNED_EXTRA_DOCS:
+            with self.subTest(name=name):
+                root = self.fixture()
+                shutil.copy2(ROOT / name, root / name)
+                path = root / name
+                path.write_text(
+                    path.read_text(encoding="utf-8").replace(
+                        "speckit-delivery/v", "speckit-delivery/v9"
+                    ),
+                    encoding="utf-8",
+                )
+                errors = validator.validate(root)
+                self.assertTrue(any("release URL" in error for error in errors), errors)
+
     def test_delivery_fallback_template_is_chinese(self) -> None:
         text = (
             ROOT / "extensions/delivery/templates/pull-request.md"

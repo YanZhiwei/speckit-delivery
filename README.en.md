@@ -25,12 +25,11 @@ It builds on Spec Kit's Extension, Workflow, and Bundle mechanisms. It **does no
 - [Capability map](#capability-map)
 - [How a delivery closes](#how-a-delivery-closes)
 - [Quick start](#quick-start)
-- [Command reference](#command-reference)
-- [Durable and ephemeral artifacts](#durable-and-ephemeral-artifacts)
 - [Compatibility and hosts](#compatibility-and-hosts)
 - [Local development and release](#local-development-and-release)
 - [Documentation map](#documentation-map)
 - [Status and roadmap](#status-and-roadmap)
+- [Contributing and license](#contributing-and-license)
 
 ## Who it is for
 
@@ -42,18 +41,20 @@ It builds on Spec Kit's Extension, Workflow, and Bundle mechanisms. It **does no
 
 ## Capability map
 
-| What you need | What the delivery layer provides | Entry point |
+| Capability | Commands | Read more |
 | --- | --- | --- |
-| Decide which process a request needs | Three-lane routing and a Doctor preflight | `speckit.delivery.route`, `/sd` |
-| See the current code, impact, and prior art first | Explore, current/candidate trees, external reference research | `speckit.delivery.explore` |
-| Make architectural decisions traceable | ADR discovery, proposal, finalization, consistency check | `speckit.decision.context`, `.propose`, `.finalize`, `.check` |
-| Split a large change into reviewable PRs | Slice boundaries, trunk-safety classification, merge policy | `speckit.delivery.slice` |
-| Execute tasks safely | Per-task gates, independent review, verified commits | `speckit.ralph.run` |
-| Make "done" evidence-backed | Project quality gates, standards review, six-dimensional code review, evidence collection | `speckit.quality.*`, `speckit.review.*`, `speckit.evidence.collect` |
-| Produce a submittable PR body | Snapshot-bound handoff | `speckit.delivery.handoff` |
-| Close out after the PR merges or closes | Outcome record, workspace retirement, one-page evidence | `speckit.delivery.close` |
-| Keep docs and package READMEs from drifting | Projection sync and package README judgment | `speckit.docs-sync.run`, `.package-readme` |
-| Explain a change visually | Mermaid by default, optional rendering | `speckit.diagram.render` |
+| Routing and preflight: three lanes, Doctor | `speckit.delivery.route`, `.doctor` | [Host entry points](skills/README.md) |
+| Evidence-first context: current/candidate trees, prior art | `speckit.delivery.explore`, `.context` | [Delivery contract](extensions/delivery/README.md) |
+| Decision memory: ADR discovery, proposal, finalization, check | `speckit.decision.context`, `.propose`, `.finalize`, `.check` | [Decision contract](extensions/decision/README.md) |
+| Slicing and merge policy: boundaries, trunk safety, PR grouping | `speckit.delivery.slice` | [Delivery contract](extensions/delivery/README.md) |
+| Task execution: per-task gates, independent review, verified commits | `speckit.ralph.run` | [Ralph](extensions/ralph/README.md) |
+| Quality gates: project profiles, standards, six-dimensional review | `speckit.quality.brief`, `.check`, `speckit.review.standards` | [Quality Gate](QUALITY-GATE.md) |
+| Code review and repair: guarded review, convergence, repair | `speckit.review.run`, `speckit.delivery.review-fix` | [Reviewer contract](extensions/review/templates/reviewer.md) |
+| Simplification: only accepted candidates are applied | `speckit.simplify.scan`, `.verify` | [Simplify](extensions/simplify/README.md) |
+| Evidence and close-out: snapshot-bound evidence, handoff, close | `speckit.evidence.collect`, `speckit.delivery.handoff`, `.close` | [Artifact lifecycle](LIFECYCLE.md) |
+| Documentation sync: projection sync, package README judgment | `speckit.docs-sync.run`, `.package-readme` | [Docs Sync](extensions/docs-sync/README.md) |
+| Diagrams: Mermaid by default, optional rendering | `speckit.diagram.render` | [Diagram](extensions/diagram/README.md) |
+| Defect handling: assessment, fix, regression | `speckit.bug.assess`, `.fix`, `.test` | [Spec Kit](https://github.com/github/spec-kit) |
 
 ## How a delivery closes
 
@@ -61,23 +62,21 @@ It builds on Spec Kit's Extension, Workflow, and Bundle mechanisms. It **does no
 route → doctor → decision discovery → explore code/history/references
       → current + candidate trees → scope approval
       → specify → clarify → ADR resolution → plan (architecture constraints + verification) → design approval
-      → tasks → slice → analyze → combined execution/slice gate → approval writer → runtime checkpoint → Ralph
-      → quality → standards → Converge
-      → (only when tasks are appended) Slice → Analyze → renewed slice approval → checkpoint → Ralph → checks → reassessment
+      → tasks → slice → analyze → combined execution/slice gate → Ralph → quality → standards → Converge
+      → (only when tasks are appended) Slice → Analyze → renewed slice approval → Ralph → reassessment
       → simplify (only accepted candidates are applied/verified) → docs / package README
-      → current Quality/Standards → guarded Review/Repair → ADR/freshness checks → evidence → handoff
-      → (after authorization) PR merges or closes → close
+      → guarded Review/Repair → ADR/freshness checks → evidence → handoff → (after authorization) PR merges or closes → close
 ```
 
 Three gates separate "think it through" from "write code": **scope approval** before the Spec, **design approval** after the Plan, and the **combined execution/slice approval** after Analyze. `tasks.md` is always the only execution queue; `slices.md` supplies review and merge boundaries only.
 
-Use `/sd action=status delivery_run=<id>` to inspect phase, pending owners, stale results, and remaining attempts; `action=resume` recovers only the same run's pending ticket. Delivery installs a standard-library runtime helper that keeps local coordinator state under `.specify/delivery/<run>/runtime/` and validates native report/machine-receipt references, input fingerprints, and six-dimensional Review completeness. A current Review pass skips unnecessary Repair dispatch; unresolved work at a repair/convergence cap fails the final machine guard. Quality, Standards, Reviewer, Core, and Ralph remain the semantic owners.
+Runtime invariants (state transitions and recovery live in the [delivery contract](extensions/delivery/README.md#runtime-state-resume-and-conditional-dispatch); local coordinator state and artifact retention in the [artifact lifecycle](LIFECYCLE.md#runtime-coordination-and-checkpoints)):
 
-Starting with `0.4.2`, new inline `/sd` runs execute the runtime guards as well. Feature completion, convergence and handoff audit each task's original owner receipts and actual commit; checked boxes or a final integrated review cannot replace missing task evidence. Internal slices and remote PR grouping are resolved before execution, and `pr_slicing: single` may retain multiple internal slices inside one PR. Close preserves historical review identity while atomically recording the verified merge outcome.
+- Every task's owner receipt and actual commit must hold individually; checked boxes or a final integrated review cannot replace missing task evidence.
+- `action=status` reports only the same run's local coordinator state and `action=resume` recovers only that run's pending ticket; a current Review pass skips unnecessary Repair, and unresolved work at a repair/convergence cap fails the final machine guard.
+- Quality, Standards, Reviewer, Core, and Ralph remain the semantic owners; the runtime guards only structure, fingerprints, and freshness.
 
-The Feature Plan records architecture constraint sources, affected paths, design responses, verification owners, and evidence gaps, carrying IDs into Tasks, Brief, and Review. Optional open-source skill methods inform alternatives, interfaces, and failure modes under project governance; see the pinned [method review](REFERENCE-REVIEW.md#architecture-skill-methods).
-
-`method_adapters` in `delivery-config.yml` can select design, diagnosis/testing, and review methods separately. The default `builtin` needs no external skill or extra model round. An explicit external method must bind a local entrypoint, fixed revision, resource manifest, and SHA-256 digests, and returns analysis only to the existing phase: no second plan, queue, commit, or review-closure authority. See the [method contract](extensions/delivery/templates/method-adapter.md).
+The Plan records architecture constraint sources, affected paths, design responses, verification owners, and evidence gaps, carrying IDs into Tasks, Brief, and Review. `method_adapters` in `delivery-config.yml` can select design, diagnosis/testing, and review methods separately; the default is `builtin`. An explicit external method must bind a local entrypoint, fixed revision, resource manifest, and SHA-256 digests, and returns analysis only: no second plan, queue, commit, or review-closure authority. See the pinned [method review](REFERENCE-REVIEW.md#architecture-skill-methods) and [method contract](extensions/delivery/templates/method-adapter.md).
 
 Three lanes keep the process proportional:
 
@@ -87,7 +86,7 @@ Three lanes keep the process proportional:
 | Bugfix | A reported defect expected to have bounded scope | Explore → assessment/red evidence → repair-scope approval → fix → verify |
 | Lightweight | Mechanical, documentation, or behavior-preserving small changes | Scope → change → targeted evidence |
 
-Starting with `0.4.0`, Delivery ships the `sd` alias: use `/sd` in OpenCode or `$speckit-sd` in Codex Skills mode immediately after installation. The installer renders both names from the same `speckit.delivery.route` source and manages their lifecycle together. See [host entry points](skills/README.md).
+After installation use `/sd` in OpenCode, `$speckit-sd` in Codex Skills mode, or `/speckit-sd` in Claude Code; the shortcut and the full entry render from the same router source and share one lifecycle. See [host entry points](skills/README.md).
 
 ## Quick start
 
@@ -101,41 +100,29 @@ uv tool install "specify-cli>=1.2.3"
 specify self check
 ```
 
-- The Bundle install path requires Spec Kit CLI `>=1.2.3`.
-- Individual extensions require `>=0.16.4`; the guarded `0.4.x` workflows require `>=1.2.3`.
-- Git and the target project's own build, test, and quality tools are also required.
+| Install path | Requirement |
+| --- | --- |
+| Bundle | Spec Kit CLI `>=1.2.3` |
+| Individual extension | Spec Kit CLI `>=0.16.4` |
+
+Python `>=3.11` (workflow runtime), Git, and the target project's own build, test, and quality tools are also required.
 
 ### 2. Initialize the target project
 
 ```bash
 cd /path/to/my-project
-specify init . --integration codex --integration-options="--skills" --script sh
+specify init . --integration opencode --script sh
 ```
 
-| Host | Initialization example | Native command surface |
-| --- | --- | --- |
-| Claude Code | `specify init . --integration claude --script sh` | `.claude/skills/` |
-| Codex | `specify init . --integration codex --integration-options="--skills" --script ps` | `.agents/skills/` |
-| OpenCode | `specify init . --integration opencode --script sh` | OpenCode command directory |
-| Other hosts | `specify init . --integration generic ...` | Chosen command directory |
-
-Initialization creates `.specify/` and the host command surface; it does not replace existing project governance. Use `--force` only when replacing an existing setup is intentional.
+Initialization creates `.specify/` and the host command surface; it does not replace existing project governance. Other hosts are listed under [compatibility and hosts](#compatibility-and-hosts). Use `--force` only when replacing an existing setup is intentional.
 
 ### 3. Install the Bundle
 
 ```bash
-specify extension catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.5/catalogs/extensions.json \
-  --name speckit-delivery --install-allowed
-
-specify workflow catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.5/catalogs/workflows.json \
-  --name speckit-delivery
-
-specify bundle catalog add \
-  https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.5/catalogs/bundles.json \
-  --id speckit-delivery --policy install-allowed
-
+base=https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.6/catalogs
+specify extension catalog add "$base/extensions.json" --name speckit-delivery --install-allowed
+specify workflow catalog add "$base/workflows.json" --name speckit-delivery
+specify bundle catalog add "$base/bundles.json" --id speckit-delivery --policy install-allowed
 specify bundle install speckit-delivery
 ```
 
@@ -143,22 +130,7 @@ The Bundle installs Delivery, Decision, Ralph, Review, Simplify, Evidence, Quali
 
 #### Upgrade an existing Bundle
 
-Back up project configuration and core template customizations first, then run `specify workflow catalog list` to find the old source index.
-This example assumes all three existing catalogs are named `speckit-delivery` and the Workflow source has index `0`; substitute its actual index and retain unrelated sources.
-
-```powershell
-$base = 'https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.5/catalogs'
-specify extension catalog remove speckit-delivery
-specify extension catalog add "$base/extensions.json" --name speckit-delivery --install-allowed
-specify workflow catalog remove 0
-specify workflow catalog add "$base/workflows.json" --name speckit-delivery
-specify bundle catalog remove speckit-delivery
-specify bundle catalog add "$base/bundles.json" --id speckit-delivery --policy install-allowed
-specify bundle update speckit-delivery
-specify bundle list --json
-```
-
-After upgrading, verify the Bundle version, project configuration, core customizations, and OpenCode's `/sd` command entry.
+Back up project configuration and core template customizations, then follow [upgrading the Bundle from catalogs](QUICK-CONFIGURATION.md#upgrade-the-bundle-from-catalogs) to replace the version-pinned catalogs and run `specify bundle update speckit-delivery`. Afterwards verify the Bundle version, project configuration, core customizations, and the `/sd` entry.
 
 ### 4. Initialize project governance
 
@@ -169,17 +141,13 @@ Invoke `speckit.delivery.init` through the active host. It discovers existing ag
 .specify/extensions/quality/quality-config.yml
 ```
 
-Review both before starting a Feature. Each source family needs its own quality profile, and every configured command must be executable from the project root. The distribution does not guess Python, Node.js, a package manager, or a test framework. See the [Quality Gate guide](QUALITY-GATE.md) and [examples](examples/quality-gate/).
+Review both before starting a Feature. Each source family needs its own quality profile, and every configured command must be executable from the project root; the distribution does not guess Python, Node.js, a package manager, or a test framework. See the [Quality Gate guide](QUALITY-GATE.md) and [examples](examples/quality-gate/).
 
 ### 5. Start the first delivery
-
-In OpenCode, invoke the installed shortcut directly:
 
 ```text
 /sd Add an audit trail for privileged configuration changes.
 ```
-
-Codex Skills mode uses `$speckit-sd <request>`; Claude Code uses `/speckit-sd <request>`. The full router entry remains available; no facade skills need to be copied.
 
 The router inspects the project and selects Feature, Bugfix, or Lightweight; it does not assume every request needs the full workflow. You can also run a workflow directly:
 
@@ -189,119 +157,32 @@ specify workflow run feature-delivery \
   --input spec="Add an audit trail for privileged configuration changes"
 ```
 
-Workflows need an available Python `>=3.11`. Verify `python --version` first.
-A Windows project using the Python Launcher can pass
-`--input runtime_python="py -3"`; Linux/macOS projects can select `python3`.
-Use a verified local interpreter invocation. Fix shell startup errors before
-execution; the runtime does not alter global shell configuration.
-
-## Command reference
-
-| Capability | Commands |
-| --- | --- |
-| Routing and delivery | `speckit.delivery.route`, `.doctor`, `.explore`, `.method`, `.slice`, `.context`, `.lightweight`, `.review-fix`, `.handoff`, `.close` |
-| Decision memory | `speckit.decision.context`, `.propose`, `.finalize`, `.check` |
-| Task execution | `speckit.ralph.run` |
-| Defect handling | `speckit.bug.assess`, `.fix`, `.test` (Spec Kit's official Bug extension) |
-| Quality gates | `speckit.quality.brief`, `speckit.quality.check`, `speckit.review.standards` |
-| Code review | `speckit.review.run` |
-| Simplification | `speckit.simplify.scan`, `.verify` |
-| Delivery evidence | `speckit.evidence.collect` |
-| Documentation | `speckit.docs-sync.run`, `speckit.docs-sync.package-readme` |
-| Diagrams | `speckit.diagram.render` |
-
-Boundaries worth knowing:
-
-- `speckit.delivery.handoff` writes the reviewed PR body to `.specify/delivery/<run>/pull-request.md`, prints `PR_BODY_PATH` and a `gh pr create --body-file` hint, and **does not create, push, or merge a PR**.
-- `speckit.delivery.close` records what actually happened: `delivered` for a merge, `abandoned` with one self-contained `evidence.md` retirement note for a closed-unmerged PR, or `superseded` with a resolvable reference. It does not mutate the remote.
-- `speckit.docs-sync.package-readme` derives a package README from the real manifest, exports, CLI, configuration, and test commands. A new package records two or three comparable projects; a changed package reports `updated`, `unchanged-with-reason`, or `gap` per changed surface.
-- `speckit.delivery.context` optionally reads a local `.codegraph/` index. Without one it returns a partial brief with named gaps; it never initializes an index or treats the graph as correctness evidence.
-
-## Durable and ephemeral artifacts
-
-The project chooses whether `spec.md`, `plan.md`, and `tasks.md` are committed. Either way, these must remain understandable at repository HEAD:
-
-- **Constitution**: cross-feature project rules.
-- **Issue**: problem, scope, and acceptance contract.
-- **ADR**: long-lived architectural decision and rationale.
-- **Source, tests, docs**: implemented behavior.
-- **PR**: final change summary, risk, and verification evidence.
-- **Delivery evidence**: `.specify/delivery/<run>/evidence.md` and its recorded `delivered` / `abandoned` / `superseded` outcome.
-
-`exploration.md`, `slices.md`, `receipts/`, `task-verdicts.yml`, review workspaces, and the rendered PR body are run workspace and follow `artifact_policy`; under `ephemeral` they stay local. `.specify/delivery/<run>/runtime/` and Spec Kit's `.specify/workflows/runs/` are local coordinator state, added to `.git/info/exclude` without untracking existing files. Evidence binds to actual contents and the requirements snapshot. Stale evidence is rerun, never relabeled with the current hash.
-
-See [Artifact lifecycle](LIFECYCLE.md) and [Architecture](ARCHITECTURE.md).
+A Windows project using the Python Launcher can pass `--input runtime_python="py -3"`; Linux/macOS projects can select `python3`. Use a verified local interpreter invocation and fix shell startup errors first; the runtime does not alter global shell configuration.
 
 ## Compatibility and hosts
 
-| Item | Requirement |
-| --- | --- |
-| Bundle install | Spec Kit CLI `>=1.2.3` |
-| Individual extension | Spec Kit CLI `>=0.16.4` |
-| Guarded `0.4.x` workflow | Spec Kit CLI `>=1.2.3` |
-| Hosts | Codex, Claude Code, OpenCode, generic adapters |
-| Runtime | Python `>=3.11`, Git, and the target project's build and test tools |
+| Host | Initialization | Installed entry | Native command surface |
+| --- | --- | --- | --- |
+| Claude Code | `specify init . --integration claude --script sh` | `/speckit-sd`, full `/speckit-delivery-route` | `.claude/skills/` |
+| Codex | `specify init . --integration codex --integration-options="--skills" --script ps` | `$speckit-sd`, full `$speckit-delivery-route` | `.agents/skills/` |
+| OpenCode | `specify init . --integration opencode --script sh` | `/sd`, full `/speckit.delivery.route` | OpenCode command directory |
+| Generic adapter | `specify init . --integration generic ...` | Run the rendered `speckit.delivery.route` command file | Chosen command directory |
 
-Extension commands are the stable cross-host surface. Host entry points:
-
-| Host | Invocation |
-| --- | --- |
-| Claude Code | `/speckit-sd <request>`, full entry `/speckit-delivery-route <request>` |
-| Codex | `$speckit-sd <request>`, full entry `$speckit-delivery-route <request>`; exact `$sd` is an optional facade |
-| OpenCode | `/sd <request>`, full entry `/speckit.delivery.route <request>` |
-| Generic adapter | Run the rendered `speckit.delivery.route` command file |
-
-Do not use `Get-Command speckit*` or `which speckit*` to decide whether an extension is installed. In Codex Skills mode, check for the `speckit-delivery-route` skill under the active skills root; other hosts should check the rendered command file.
+Extension commands are the stable cross-host surface. Do not use `Get-Command speckit*` or `which speckit*` to decide whether an extension is installed: Codex Skills mode should check for the `speckit-delivery-route` skill under the active skills root, and other hosts should check the rendered command file.
 
 ## Local development and release
 
-The repository publishes individually versioned extension archives, pinned Extension/Workflow/Bundle catalogs, and the `speckit-delivery` Bundle. Validate the Bundle in a clean target project: the CLI searches upward from the Bundle directory for the project root, so a checkout-local `.specify` cache must not become the validation context.
+The repository publishes individually versioned extension archives, pinned catalogs, and the `speckit-delivery` Bundle; local installation, clean validation, and release checks live in [Distribution](DISTRIBUTION.md). Validate the Bundle in a clean target project: the CLI searches upward from the Bundle directory for the project root, so a checkout-local `.specify` cache must not become the validation context.
 
 ```bash
-# In a clean target project after installing the local components:
-cp -R /path/to/speckit-delivery/bundle ./bundle
+cp -R /path/to/speckit-delivery/bundle ./bundle   # clean target project
 specify bundle validate --path ./bundle
-
-# From the distribution checkout:
-specify bundle build --path ./bundle --output ./dist
+specify bundle build --path ./bundle --output ./dist   # distribution checkout
 ```
 
-<details>
-<summary>Install every component from a local checkout (maintainers)</summary>
+Before submitting, run every check in the distribution guide: `scripts/validate_distribution.py`, the replay suites, the link check, and a clean-project installation check for each changed host and workflow.
 
-```bash
-delivery=/path/to/speckit-delivery
-
-specify extension add --dev "$delivery/extensions/decision"
-specify extension add --dev "$delivery/extensions/ralph"
-specify extension add --dev "$delivery/extensions/review"
-specify extension add --dev "$delivery/extensions/simplify"
-specify extension add --dev "$delivery/extensions/evidence"
-specify extension add --dev "$delivery/extensions/quality"
-specify extension add --dev "$delivery/extensions/docs-sync"
-specify extension add --dev "$delivery/extensions/diagram"
-specify extension add --dev "$delivery/extensions/delivery"
-
-specify workflow add --dev "$delivery/workflows/feature-delivery/workflow.yml"
-specify workflow add --dev "$delivery/workflows/bugfix-delivery/workflow.yml"
-specify workflow add --dev "$delivery/workflows/lightweight-delivery/workflow.yml"
-```
-
-</details>
-
-Run the distribution checks before submitting:
-
-```bash
-uv run --with pyyaml python scripts/validate_distribution.py
-uv run --with pyyaml python scripts/test_validate_distribution.py
-uv run --with pyyaml python scripts/test_workflow_handoff.py
-uv run --with pyyaml python scripts/check_links.py
-uv run --with pyyaml python scripts/test_bundle_install.py --integration opencode
-```
-
-`test_workflow_handoff.py` requires Spec Kit CLI 1.2.3 to be installed.
-
-Releasing is two steps: run **Prepare release PR** to stamp versions and catalog URLs (including the pinned install URLs in this README) and merge `release/v<version>`, then run **Release distribution** to create the tag and assets. The release pipeline does not write back to `main` or move an existing tag. See [Distribution](DISTRIBUTION.md).
+Releasing is two steps: run **Prepare release PR** to stamp versions and catalog URLs (including the pinned install URLs in this README) and merge `release/v<version>`, then run **Release distribution** to create the tag and assets. The release pipeline does not write back to `main` or move an existing tag.
 
 ## Documentation map
 
@@ -310,27 +191,26 @@ Releasing is two steps: run **Prepare release PR** to stamp versions and catalog
 | [Architecture](ARCHITECTURE.md) | Component boundaries, control planes, ownership |
 | [Artifact lifecycle](LIFECYCLE.md) | Durable records, ephemeral artifacts, evidence, retirement |
 | [Quality Gate](QUALITY-GATE.md) | Project profiles, commands, and blocking semantics |
-| [Delivery contract](extensions/delivery/README.md) | Full Explore, Slice, Handoff, and Close contract |
+| [Delivery contract](extensions/delivery/README.md) | Full Explore, Slice, Runtime, Handoff, and Close contract |
 | [Reviewer contract](extensions/review/templates/reviewer.md) | Six dimensions, snapshots, independence, finding states |
 | [Quick SD configuration](QUICK-CONFIGURATION.md) | Fast onboarding checklist for an existing project |
-| [Distribution](DISTRIBUTION.md) | Catalogs, packaging, release, clean-install verification |
+| [Distribution](DISTRIBUTION.md) | Catalogs, packaging, release, README contract, clean-install verification |
 | [Changelog](CHANGELOG.md) | Released changes and upgrade notes |
 | [Contributing](CONTRIBUTING.md) | Submission and review conventions |
 | [Security](SECURITY.md) | Credentials, execution, and publishing boundaries |
 
 ## Status and roadmap
 
-- `0.1.x`: command contracts, guided workflows, catalogs, quality profiles, release structure.
-- `0.2.x`: delivery slicing and merge policy, handoff body path, Chinese fallback template.
-- `0.3.x`: delivery outcome and retirement, package README node, and README drift judgment in all three lanes.
-- `0.4.x`: persistent runtime checkpoints, conditional dispatch and recovery, the Core/Ralph compatibility contract, and guarded Review/Converge workflows.
+- Current line: `0.4.x` provides persistent runtime checkpoints, conditional dispatch and recovery, the Core/Ralph compatibility contract, and guarded Review/Converge.
 - Next: provider-level parallel Ralph and cross-host semantic gates.
 - `1.0.0`: clean-project installation evidence across supported integrations.
+
+See the [changelog](CHANGELOG.md) for per-release changes.
 
 ## Contributing and license
 
 - New commands stay narrow, define explicit completion criteria, and ship at least one behavioral eval.
-- Run the distribution checks above before submitting; never mix component versions across tags.
+- Run the checks in [Distribution](DISTRIBUTION.md) before submitting; never mix component versions across tags.
 - Read [SECURITY.md](SECURITY.md) before changing execution or publishing boundaries.
 
 [MIT](LICENSE)

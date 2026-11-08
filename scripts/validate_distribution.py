@@ -61,6 +61,88 @@ def _list(value: object, label: str, errors: list[str]) -> list[Any]:
     return value
 
 
+README_MAX_LINES = 220
+# Section sequence is a contract: new content must replace or extend an existing
+# section, not append a new one. Detail belongs in the owning document.
+README_SECTIONS = {
+    "README.md": (
+        "目录",
+        "适合谁",
+        "能力地图",
+        "交付如何闭环",
+        "快速开始",
+        "兼容性与宿主",
+        "本地开发与发布",
+        "文档地图",
+        "状态与路线图",
+        "贡献与许可",
+    ),
+    "README.en.md": (
+        "Contents",
+        "Who it is for",
+        "Capability map",
+        "How a delivery closes",
+        "Quick start",
+        "Compatibility and hosts",
+        "Local development and release",
+        "Documentation map",
+        "Status and roadmap",
+        "Contributing and license",
+    ),
+}
+# "Since 0.4.2, ..." describes a release, not current behavior; that fact is
+# owned by the changelog.
+README_RELEASE_PROSE = re.compile(r"(?:从|since)\s+`?v?\d+\.\d+", re.IGNORECASE)
+# Requirements stated twice drift apart; each of these has exactly one owner.
+README_SINGLE_FACTS = ("`>=1.2.3`", "`>=0.16.4`", "`>=3.11`")
+README_PINNED_EXTRA_DOCS = ("快速配置.md", "QUICK-CONFIGURATION.md")
+TOC_ENTRY = re.compile(r"^- \[[^\]]+\]\(#[^)]+\)\r?$", re.MULTILINE)
+
+
+def _readme_sections(text: str) -> list[str]:
+    return [
+        match.group(1).strip()
+        for match in re.finditer(r"^##\s+(.+)$", text, re.MULTILINE)
+    ]
+
+
+def _check_readme_structure(
+    name: str, text: str, expected: tuple[str, ...], errors: list[str]
+) -> None:
+    """Keep the root README a landing page instead of an append-only log."""
+    line_count = len(text.splitlines())
+    if line_count > README_MAX_LINES:
+        errors.append(
+            f"{name}: {line_count} lines exceeds the {README_MAX_LINES}-line budget; "
+            "move detail to its owning document"
+        )
+    sections = _readme_sections(text)
+    if tuple(sections) != expected:
+        errors.append(
+            f"{name}: sections {sections} != {list(expected)}; "
+            "replace content in an existing section instead of adding one"
+        )
+        return
+    toc_entries = len(TOC_ENTRY.findall(text))
+    if toc_entries != len(expected) - 1:
+        errors.append(
+            f"{name}: table of contents lists {toc_entries} entries "
+            f"for {len(expected) - 1} sections"
+        )
+    release_prose = README_RELEASE_PROSE.search(text)
+    if release_prose:
+        errors.append(
+            f"{name}: release-anchored prose {release_prose.group(0)!r} "
+            "belongs in CHANGELOG.md"
+        )
+    for fact in README_SINGLE_FACTS:
+        count = text.count(fact)
+        if count > 1:
+            errors.append(
+                f"{name}: {fact} appears {count} times; keep one owner for the fact"
+            )
+
+
 def _check_readme_docs(root: Path, version: str, errors: list[str]) -> None:
     """Require the bilingual README pair with release-pinned catalog URLs."""
     expected = f"v{version}"
@@ -75,6 +157,20 @@ def _check_readme_docs(root: Path, version: str, errors: list[str]) -> None:
             errors.append(f"{name}: no versioned release URL")
             continue
         for tag in tags:
+            if tag != expected:
+                errors.append(f"{name}: release URL {tag} != {expected}")
+    for name, sections in README_SECTIONS.items():
+        path = root / name
+        if path.is_file():
+            _check_readme_structure(
+                name, path.read_text(encoding="utf-8"), sections, errors
+            )
+    for name in README_PINNED_EXTRA_DOCS:
+        path = root / name
+        if not path.is_file():
+            continue
+        text = path.read_text(encoding="utf-8")
+        for tag in sorted(set(re.findall(r"speckit-delivery/(v\d+\.\d+\.\d+)/", text))):
             if tag != expected:
                 errors.append(f"{name}: release URL {tag} != {expected}")
 
@@ -570,6 +666,7 @@ def _check_package_readme_workflow(
         "delivery_run={{ inputs.delivery_run }}",
         f"lane={lane}",
         "scope=outgoing-diff",
+        "README_STRUCTURE",
     ):
         if needle not in args:
             errors.append(f"{label}: package-readme must pass {needle}")
@@ -814,6 +911,13 @@ def validate(root: Path, expected_version: str | None = None) -> list[str]:
                         errors.append(
                             f"{review_fix}: repair must handle documentation refresh ({needle!r})"
                         )
+            repair_docs = manifest_path.parent / "templates" / "repair-docs.md"
+            if repair_docs.is_file() and "README_STRUCTURE" not in repair_docs.read_text(
+                encoding="utf-8"
+            ):
+                errors.append(
+                    f"{repair_docs}: repair must re-check README structure ('README_STRUCTURE')"
+                )
             close = manifest_path.parent / "commands" / "speckit.delivery.close.md"
             if close.is_file():
                 close_text = close.read_text(encoding="utf-8")
@@ -839,22 +943,46 @@ def validate(root: Path, expected_version: str | None = None) -> list[str]:
             )
             if package_readme.is_file():
                 text = package_readme.read_text(encoding="utf-8")
-                for needle in ("repair=1", "INPUT_IDENTITY"):
+                for needle in (
+                    "repair=1",
+                    "INPUT_IDENTITY",
+                    "README_STRUCTURE",
+                    "readme_structure.py",
+                    "readme_docs_root",
+                ):
                     if needle not in text:
                         errors.append(
                             f"{package_readme}: package README repair contract missing {needle!r}"
                         )
+            structure_guard = manifest_path.parent / "scripts" / "readme_structure.py"
+            if not structure_guard.is_file():
+                errors.append(
+                    f"{manifest_path}: missing scripts/readme_structure.py structure guard"
+                )
             template = manifest_path.parent / "templates" / "package-readme.md"
             if not template.is_file():
                 errors.append(f"{manifest_path}: missing templates/package-readme.md")
-            config_template = manifest_path.parent / "config-template.yml"
-            if (
-                config_template.is_file()
-                and "package_readme:" not in config_template.read_text(encoding="utf-8")
-            ):
+            project_template = (
+                manifest_path.parent / "templates" / "project-readme.md"
+            )
+            if not project_template.is_file():
                 errors.append(
-                    f"{config_template}: missing package_readme setting"
+                    f"{manifest_path}: missing templates/project-readme.md"
                 )
+            config_template = manifest_path.parent / "config-template.yml"
+            if config_template.is_file():
+                config_text = config_template.read_text(encoding="utf-8")
+                for needle in (
+                    "package_readme:",
+                    "project_readme:",
+                    "readme_paths:",
+                    "readme_max_lines:",
+                    "readme_docs_root:",
+                ):
+                    if needle not in config_text:
+                        errors.append(
+                            f"{config_template}: missing {needle} setting"
+                        )
         if extension_id == "ralph":
             template = manifest_path.parent / "templates" / "slice-execution.md"
             if not template.is_file():

@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "updated_at": "2026-11-04T00:00:00Z",
-  "catalog_url": "https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.5/catalogs/extensions.json",
+  "catalog_url": "https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.6/catalogs/extensions.json",
   "extensions": {
     "delivery": {
       "name": "Spec Kit Delivery Core",
       "id": "delivery",
-      "version": "0.4.5",
+      "version": "0.4.6",
       "description": "Bound delivery research, prepare role-aware context and cooperation plans, select methods, slice changes, and orchestrate evidence-backed handoff.",
       "author": "Yan Zhiwei",
-      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.4.5/delivery-0.4.5.zip",
+      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.4.6/delivery-0.4.6.zip",
       "repository": "https://github.com/YanZhiwei/speckit-delivery",
-      "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/v0.4.5/extensions/delivery",
+      "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/v0.4.6/extensions/delivery",
       "license": "MIT",
       "requires": {
         "speckit_version": ">=0.16.4"
@@ -31,12 +31,12 @@
     "decision": {
       "name": "Decision Memory",
       "id": "decision",
-      "version": "0.4.5",
+      "version": "0.4.6",
       "description": "Retrieve, propose, finalize, and validate durable architecture decisions around Spec Kit delivery.",
       "author": "Yan Zhiwei",
-      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.4.5/decision-0.4.5.zip",
+      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.4.6/decision-0.4.6.zip",
       "repository": "https://github.com/YanZhiwei/speckit-delivery",
-      "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/v0.4.5/extensions/decision",
+      "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/v0.4.6/extensions/decision",
       "license": "MIT",
       "requires": {
         "speckit_version": ">=0.16.4"
@@ -55,12 +55,12 @@
     "ralph": {
       "name": "Ralph Task Orchestrator",
       "id": "ralph",
-      "version": "0.4.5",
+      "version": "0.4.6",
       "description": "Execute Spec Kit tasks with focused implementer context, bounded sequential iterations, verification, and per-task Git commits.",
       "author": "Yan Zhiwei",
-      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.4.5/ralph-0.4.5.zip",
+      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.4.6/ralph-0.4.6.zip",
       "repository": "https://github.com/YanZhiwei/speckit-delivery",
-      "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/v0.4.5/extensions/ralph",
+      "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/v0.4.6/extensions/ralph",
       "license": "MIT",
       "requires": {
         "speckit_version": ">=0.16.4"
@@ -79,12 +79,12 @@
     "review": {
       "name": "Delivery Code Review",
       "id": "review",
-      "version": "0.4.5",
+      "version": "0.4.6",
       "description": "Read-only six-dimensional task and final review with focused reviewer context, design-deviation analysis, and snapshot-bound findings.",
       "author": "Yan Zhiwei",
-      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.4.5/review-0.4.5.zip",
+      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.4.6/review-0.4.6.zip",
       "repository": "https://github.com/YanZhiwei/speckit-delivery",
-      "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/v0.4.5/extensions/review",
+      "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/v0.4.6/extensions/review",
       "license": "MIT",
       "requires": {
         "speckit_version": ">=0.16.4"
@@ -102,12 +102,12 @@
     "simplify": {
       "name": "Evidence-Driven Simplification",
       "id": "simplify",
-      "version": "0.4.5",
+      "version": "0.4.6",
       "description": "Find and verify simplifications using consumer evidence, ownership analysis, and net deletion.",
       "author": "Yan Zhiwei",
-      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.4.5/simplify-0.4.5.zip",
+      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.4.6/simplify-0.4.6.zip",
       "repository": "https://github.com/YanZhiwei/speckit-delivery",
-      "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/v0.4.5/extensions/simplify",
+      "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/v0.4.6/extensions/simplify",
       "license": "MIT",
       "requires": {
         "speckit_version": ">=0.16.4"
@@ -125,12 +125,12 @@
     "evidence": {
       "name": "Diff-Driven Evidence",
       "id": "evidence",
-      "version": "0.4.5",
+      "version": "0.4.6",
       "description": "Select and run the narrowest credible verification for the actual outgoing diff.",
       "author": "Yan Zhiwei",
-      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.4.5/evidence-0.4.5.zip",
+      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.4.6/evidence-0.4.6.zip",
       "repository": "https://github.com/YanZhiwei/speckit-delivery",
-      "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/v0.4.5/extensions/evidence",
+      "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/v0.4.6/extensions/evidence",
       "license": "MIT",
       "requires": {
         "speckit_version": ">=0.16.4"
@@ -148,12 +148,12 @@
     "quality": {
       "name": "Project Quality Gate",
       "id": "quality",
-      "version": "0.4.5",
+      "version": "0.4.6",
       "description": "Apply project-local executable quality profiles before work can be closed.",
       "author": "Yan Zhiwei",
-      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.4.5/quality-0.4.5.zip",
+      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.4.6/quality-0.4.6.zip",
       "repository": "https://github.com/YanZhiwei/speckit-delivery",
-      "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/v0.4.5/extensions/quality",
+      "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/v0.4.6/extensions/quality",
       "license": "MIT",
       "requires": {
         "speckit_version": ">=0.16.4"
@@ -173,12 +173,12 @@
     "docs-sync": {
       "name": "Documentation Projection Sync",
       "id": "docs-sync",
-      "version": "0.4.5",
+      "version": "0.4.6",
       "description": "Synchronize source documentation with generated projections, repair links, and keep package READMEs true to their contents.",
       "author": "Yan Zhiwei",
-      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.4.5/docs-sync-0.4.5.zip",
+      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.4.6/docs-sync-0.4.6.zip",
       "repository": "https://github.com/YanZhiwei/speckit-delivery",
-      "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/v0.4.5/extensions/docs-sync",
+      "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/v0.4.6/extensions/docs-sync",
       "license": "MIT",
       "requires": {
         "speckit_version": ">=0.16.4"
@@ -196,12 +196,12 @@
     "diagram": {
       "name": "Delivery Diagrams",
       "id": "diagram",
-      "version": "0.4.5",
+      "version": "0.4.6",
       "description": "Turn a reviewed change into an evidence-backed diagram, Mermaid by default and a rendered asset only through an installed renderer.",
       "author": "Yan Zhiwei",
-      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.4.5/diagram-0.4.5.zip",
+      "download_url": "https://github.com/YanZhiwei/speckit-delivery/releases/download/v0.4.6/diagram-0.4.6.zip",
       "repository": "https://github.com/YanZhiwei/speckit-delivery",
-      "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/v0.4.5/extensions/diagram",
+      "documentation": "https://github.com/YanZhiwei/speckit-delivery/tree/v0.4.6/extensions/diagram",
       "license": "MIT",
       "requires": {
         "speckit_version": ">=0.16.4"

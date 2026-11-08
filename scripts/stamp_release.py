@@ -46,6 +46,13 @@ def _stamp_yaml(path: Path, version: str) -> str:
 
 
 README_TAG = re.compile(r"(speckit-delivery/)v\d+\.\d+\.\d+/")
+# Docs that carry a copy-pasteable, version-pinned install URL.
+PINNED_URL_DOCS = (
+    "README.md",
+    "README.en.md",
+    "快速配置.md",
+    "QUICK-CONFIGURATION.md",
+)
 
 
 def _stamp_readme(path: Path, tag: str) -> str:
@@ -155,7 +162,7 @@ def plan(root: Path, version: str, tag: str) -> dict[Path, str]:
     for name in ("extensions.json", "workflows.json", "bundles.json"):
         path = root / "catalogs" / name
         updates[path] = _stamp_catalog(path, version, tag)
-    for name in ("README.md", "README.en.md"):
+    for name in PINNED_URL_DOCS:
         path = root / name
         if path.is_file():
             updates[path] = _stamp_readme(path, tag)

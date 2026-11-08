@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: delivery
   name: Spec Kit Delivery Core
-  version: "0.4.5"
+  version: "0.4.6"
   description: "Bound delivery research, prepare role-aware context and cooperation plans, select methods, slice changes, and orchestrate evidence-backed handoff."
   category: process
   effect: read-write

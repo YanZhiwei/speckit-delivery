@@ -31,6 +31,7 @@ jobs:
           uv run --with pyyaml python scripts/validate_distribution.py
           uv run --with pyyaml python scripts/test_validate_distribution.py
           uv run --with pyyaml python scripts/test_stamp_release.py
+          python scripts/test_docs_readme_structure.py
 
       - name: Validate Delivery runtime and real workflow engine
         run: |

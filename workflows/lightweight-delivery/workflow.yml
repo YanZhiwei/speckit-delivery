@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "lightweight-delivery"
   name: "Spec Kit Lightweight Delivery"
-  version: "0.4.5"
+  version: "0.4.6"
   author: "Yan Zhiwei"
   description: "Proportional delivery for mechanical, documentation-only, or behavior-preserving changes with guarded quality and review dispatch."
 
@@ -151,7 +151,7 @@ steps:
   - id: package-readme
     command: speckit.docs-sync.package-readme
     integration: "{{ inputs.integration }}"
-    input: { args: "delivery_run={{ inputs.delivery_run }} lane=lightweight repair=0 scope=outgoing-diff {{ inputs.change }} Judge package README drift after accepted simplifications; emit PACKAGE_README_VERDICT and INPUT_IDENTITY; no-op when no package surface changed." }
+    input: { args: "delivery_run={{ inputs.delivery_run }} lane=lightweight repair=0 scope=outgoing-diff {{ inputs.change }} Judge package and project README drift and structure after accepted simplifications; emit PACKAGE_README_VERDICT, README_STRUCTURE and INPUT_IDENTITY; no-op when no package surface and no project README surface changed." }
 
   - id: quality-begin
     type: shell

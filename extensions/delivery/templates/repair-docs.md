@@ -29,7 +29,10 @@ the documentation filename stayed the same.
    `repair=1`, and package paths. Respect its `auto|required|off` policy and report
    actual outcomes/limits. A required blocked
    result blocks repair completion. Re-check source-to-README facts on repaired
-   contents rather than relabeling a previous verdict.
+   contents rather than relabeling a previous verdict. For any project README the
+   repair touches, re-run the structure guard and report `README_STRUCTURE` plus
+   `README_MOVES` against the repository base; under `required`, a blocked
+   structure blocks the repair instead of being recorded as an accepted append.
 4. Keep writes within the authorized lane/task paths. For Feature, include needed
    documentation work in the same repair task/packet and perform it before that
    task's Quality/Standards/Review/commit gate. At outgoing scope, reconcile those

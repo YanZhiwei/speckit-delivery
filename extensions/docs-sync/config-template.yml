@@ -13,3 +13,16 @@ source_is_authoritative: true
 package_readme: auto
 # Optional package roots; empty means detect package manifests from the diff.
 package_roots: []
+# Project README contract: auto | required | off.
+# auto: report structure blockers without blocking.
+# required: block a delivery when the structure guard reports README_STRUCTURE: blocked.
+# off: do not check project entry READMEs.
+project_readme: auto
+# Project entry READMEs that stay an index of links.
+readme_paths: [README.md]
+# Optional line budget; when exceeded, detail moves to readme_docs_root first.
+readme_max_lines: null
+# Optional ordered level-2 section list; empty means no fixed section contract.
+readme_sections: []
+# Directory that owns extracted detail; new pages are registered in the README.
+readme_docs_root: docs
