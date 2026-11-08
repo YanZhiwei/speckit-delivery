@@ -52,7 +52,7 @@ It builds on Spec Kit's Extension, Workflow, and Bundle mechanisms. It **does no
 | Code review and repair: guarded review, convergence, repair | `speckit.review.run`, `speckit.delivery.review-fix` | [Reviewer contract](extensions/review/templates/reviewer.md) |
 | Simplification: only accepted candidates are applied | `speckit.simplify.scan`, `.verify` | [Simplify](extensions/simplify/README.md) |
 | Evidence and close-out: snapshot-bound evidence, handoff, close | `speckit.evidence.collect`, `speckit.delivery.handoff`, `.close` | [Artifact lifecycle](LIFECYCLE.md) |
-| Documentation sync: projection sync, package README judgment | `speckit.docs-sync.run`, `.package-readme` | [Docs Sync](extensions/docs-sync/README.md) |
+| Documentation sync: projection sync, project README structure guard, package README judgment | `speckit.docs-sync.run`, `.package-readme` | [Docs Sync](extensions/docs-sync/README.md) |
 | Diagrams: Mermaid by default, optional rendering | `speckit.diagram.render` | [Diagram](extensions/diagram/README.md) |
 | Defect handling: assessment, fix, regression | `speckit.bug.assess`, `.fix`, `.test` | [Spec Kit](https://github.com/github/spec-kit) |
 
@@ -193,6 +193,7 @@ Releasing is two steps: run **Prepare release PR** to stamp versions and catalog
 | [Quality Gate](QUALITY-GATE.md) | Project profiles, commands, and blocking semantics |
 | [Delivery contract](extensions/delivery/README.md) | Full Explore, Slice, Runtime, Handoff, and Close contract |
 | [Reviewer contract](extensions/review/templates/reviewer.md) | Six dimensions, snapshots, independence, finding states |
+| [Reference review](REFERENCE-REVIEW.md) | Sources behind evidence-first planning, independent review, and architecture skill methods |
 | [Quick SD configuration](QUICK-CONFIGURATION.md) | Fast onboarding checklist for an existing project |
 | [Distribution](DISTRIBUTION.md) | Catalogs, packaging, release, README contract, clean-install verification |
 | [Changelog](CHANGELOG.md) | Released changes and upgrade notes |

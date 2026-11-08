@@ -52,7 +52,7 @@ Spec Kit 负责把需求变成 `Spec → Plan → Tasks`。Spec Kit Delivery 负
 | 代码评审与修复：guarded Review、收敛、Repair | `speckit.review.run`、`speckit.delivery.review-fix` | [评审契约](extensions/review/templates/reviewer.md) |
 | 简化审查：只处理已接受的候选 | `speckit.simplify.scan`、`.verify` | [Simplify](extensions/simplify/README.md) |
 | 证据与收口：绑定快照的证据、Handoff、Close | `speckit.evidence.collect`、`speckit.delivery.handoff`、`.close` | [产物生命周期](LIFECYCLE.zh-CN.md) |
-| 文档同步：投影同步、包 README 漂移判断 | `speckit.docs-sync.run`、`.package-readme` | [Docs Sync](extensions/docs-sync/README.md) |
+| 文档同步：投影同步、项目 README 结构门禁、包 README 漂移判断 | `speckit.docs-sync.run`、`.package-readme` | [Docs Sync](extensions/docs-sync/README.md) |
 | 图表：Mermaid 默认、可选渲染 | `speckit.diagram.render` | [Diagram](extensions/diagram/README.md) |
 | 缺陷处理：评估、修复、回归 | `speckit.bug.assess`、`.fix`、`.test` | [Spec Kit](https://github.com/github/spec-kit) |
 
@@ -193,6 +193,7 @@ specify bundle build --path ./bundle --output ./dist   # 分发仓库 checkout
 | [质量闸门](QUALITY-GATE.zh-CN.md) | 项目 Profile、命令与阻断语义 |
 | [交付契约](extensions/delivery/README.md) | Explore、Slice、Runtime、Handoff、Close 的完整契约 |
 | [评审契约](extensions/review/templates/reviewer.md) | 六维评审、快照、独立性与问题状态 |
+| [参考评审](REFERENCE-REVIEW.zh-CN.md) | 取证规划、独立评审与架构 Skill 方法的来源取舍 |
 | [SD 快速配置](快速配置.md) | 已有项目的快速接入清单 |
 | [分发说明](DISTRIBUTION.zh-CN.md) | Catalog、打包、发布、README 契约与干净安装验证 |
 | [变更日志](CHANGELOG.zh-CN.md) | 版本变化与升级说明 |
