@@ -145,7 +145,7 @@ jobs:
           - \`stamp_release.py\`
           - \`validate_distribution.py --version $VERSION\`
           - Distribution contract tests
-          - Local-catalog Bundle installation using the pinned `specify-cli==1.2.3` validation environment (supported minimum: Spec Kit >=1.2.3)
+          - Local-catalog Bundle installation using the pinned \`specify-cli==1.2.3\` validation environment (supported minimum: Spec Kit >=1.2.3)
           - Component packaging
 
           **Do not publish from this branch.** After review and merge, run

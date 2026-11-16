@@ -29,6 +29,12 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
   Simplify command resources. Reference documentation maps the ten investigation
   prompts to their existing owners and approval boundaries.
 
+### Fixed
+
+- Release notes now install the supported minimum Spec Kit CLI (`>=1.2.3`),
+  while CI keeps its exact validation pin. The release-preparation PR template
+  escapes Markdown backticks so Bash cannot interpret them as commands.
+
 ### Tests
 
 - Distribution validation, 73 contract tests, release-stamp tests, README

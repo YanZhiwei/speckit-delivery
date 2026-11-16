@@ -49,8 +49,8 @@ pointing to a different commit is rejected.
 
 The published Release body is rendered from the matching sections in
 `CHANGELOG.md` and `CHANGELOG.zh-CN.md`. It includes bilingual Install and
-What's Changed sections, the pinned CLI, Catalog, Bundle installation, and
-version check commands. A missing or empty versioned section in either language
+What's Changed sections, the minimum supported CLI requirement, version-pinned
+Catalog and Bundle installation, and version check commands. A missing or empty versioned section in either language
 blocks release before the Tag is created.
 
 ## Local verification

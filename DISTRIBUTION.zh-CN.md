@@ -41,8 +41,8 @@ Changelog。只有当已有 Tag 指向同一个来源 Commit 时才允许复用�
 其他 Commit，Workflow 会拒绝发布。
 
 发布的 Release 正文会从 `CHANGELOG.md` 和 `CHANGELOG.zh-CN.md` 中对应版本的
-段落生成，包含双语的 Install / 安装和 What's Changed / 更新内容，以及固定版本
-的 CLI、Catalog、Bundle 安装命令和版本检查命令。如果任一语言缺少对应版本的
+段落生成，包含双语的 Install / 安装和 What's Changed / 更新内容，以及 CLI 最低版本要求、
+固定版本的 Catalog／Bundle 安装命令和版本检查命令。如果任一语言缺少对应版本的
 Changelog 段落，或该段落为空，Workflow 会在创建 Tag 前阻止发布。
 
 ## 本地验证
