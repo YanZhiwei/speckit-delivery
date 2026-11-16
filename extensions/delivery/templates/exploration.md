@@ -14,6 +14,22 @@ evidence; remove example paths rather than presenting them as repository facts.
 - Governing instructions / ADRs: <sources and constraints>
 - Tools / fallback / freshness limitations: <what was actually used>
 
+### Outcome and problem framing
+
+Separate the observed symptom, the user's desired outcome, and any requested
+mechanism. State a checkable success condition and the constraints/preferences
+already established. Test the problem framing against current behavior and
+consumers: a requested implementation may be a means to an already satisfied need,
+or a symptom may have several causes. If evidence supports a better problem to
+solve, explain it and its scope implications as a recommendation; the user's
+actual goal and existing approval remain authoritative.
+
+Ask only unresolved questions whose answers would change scope, acceptance,
+constraints, or a material trade-off. Reuse known preferences and investigate
+answerable repository facts first. Record reasonable non-critical assumptions and
+continue independent research; unresolved decision-critical ambiguity blocks the
+affected decision. Do not add a mandatory interview before every change.
+
 ## Concepts, boundaries, and research questions
 
 Keep this proportional to the request; a small understood change can use a few
@@ -78,10 +94,31 @@ For a defect, mark the suspected break as a hypothesis until assessment verifies
 - External research: performed | skipped with reason | unavailable | no suitable result
 - Evidence gaps: <impact, next action, and explicit acceptance needed if applicable>
 
+For an explicitly requested broad history, newcomer, PR-performance, or recurring-
+defect audit, use [focused audit guidance](focused-audits.md). Record its bounded
+scope, coverage, evidence gaps, and applicable findings in this packet's existing
+sections. Ordinary delivery exploration does not trigger that additional audit.
+
 ## Options and candidate change tree
 
-Compare viable alternatives and recommend the smallest justified option. State
-why reuse is insufficient before proposing a new module or directory.
+Compare viable alternatives, including reuse or no change when they satisfy the
+goal, and recommend the smallest justified option. Use as many substantively
+different options as the decision needs; do not invent three variants by default.
+Honor an explicit request for three where viable, or explain the constraint that
+prevents a third. State why reuse is insufficient before adding a module/directory.
+
+For a consequential choice, record the deciding constraints, trade-offs, evidence,
+and what would change the recommendation. Challenge the preferred option with its
+strongest plausible counterexample or boundary condition; check relevant existing
+evidence or name the narrowest discriminating probe. Revise the recommendation if
+it fails. An untested objection remains a hypothesis, and this check does not start
+another review loop. A small understood change needs only a brief justification.
+
+When an unfamiliar mechanism or a stalled comparison benefits from another domain,
+consider a proven analogous approach. State the shared invariant, differences in
+assumptions/failure modes, and evidence of applicability. Reuse the reference
+provenance table; an analogy or familiar pattern alone does not prove project fit
+or a globally optimal solution.
 
 ```text
 <repository>/
@@ -105,6 +142,16 @@ paths must be marked new. Trees cover only relevant areas, not every repository 
 - Defect handoff: <user symptom, logs/configuration, existing repro evidence;
   what bug.assess must still establish, not a duplicate diagnosis>
 - Decision blockers / questions: <only matters that affect scope or safety>
+
+For changes to contracts, shared state, incentives, or operations, trace material
+indirect effects as a causal chain: direct change → affected consumer/module or
+user response → downstream load, state, complexity, or maintenance consequence.
+Consider adoption/workarounds, failure amplification, ownership, and reversibility
+where relevant. Cite evidence or label each link as a hypothesis with its trigger
+and verification owner. Do not force three levels when no credible next link exists
+or present hypothetical effects as confirmed defects. Keep a small local change's
+risk explanation brief; reuse and refine these conclusions in the existing Plan
+checkpoint rather than starting another artifact or approval.
 
 ## Checkpoint record
 
@@ -206,8 +253,11 @@ compatibility, failure/degradation behavior, and non-functional requirements.
 Explain why a concern does not apply; do not invent performance targets or force
 layers, interfaces, or infrastructure with no evidenced need. Compare viable
 approaches on these constraints, including extending/reusing the current design.
-For a small understood extension, a short comparison is enough; record why no
-additional architecture decision or research is needed.
+Reuse the scope packet's outcome, alternatives, counterevidence, and indirect-effect
+analysis; refine only what the actual design changes or leaves unresolved. Record
+which assumptions could invalidate the choice and their verification owner. For a
+small understood extension, a short comparison is enough; record why no additional
+architecture decision or research is needed.
 
 For each proposed new responsibility, state owner, interface, dependency, or
 lifecycle mechanism, explain the requirement/invariant it serves and why the

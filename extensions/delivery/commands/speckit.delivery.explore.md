@@ -72,8 +72,9 @@ and evidence limitations. Do not overwrite unrelated work. Keep facts,
 hypotheses, recommendations, and unresolved questions visibly separate.
 
 Read the installed `.specify/extensions/delivery/templates/exploration.md` before
-expanding the investigation. Use its concepts/boundaries/research-question section
-to bound the work and its phase-handoff section for each actual delegation. When
+expanding the investigation. Use its outcome/problem-framing and concepts/boundaries/research-question sections
+to distinguish the goal from a proposed mechanism, bound the work, and ask only
+material unanswered questions. Use its phase-handoff section for each actual delegation. When
 read-only research delegation is authorized and available, assign independent
 questions with source expectations, return evidence, and explicit resource/stop
 limits; otherwise investigate sequentially and report the limitation. The
@@ -100,6 +101,15 @@ on the work, including reversals or follow-up fixes. Cite commit SHAs and exact
 paths; explain each record's relevance. Temporal proximity is a regression clue,
 not proof of causation. Mark absent history, unavailable trackers, or unsuccessful
 searches explicitly; do not scan all history or fabricate associations.
+
+For an explicitly requested broad history/architecture, newcomer-comprehension,
+PR-performance, or recurring-defect audit, read the installed
+`.specify/extensions/delivery/templates/focused-audits.md` and apply its relevant
+sections. It owns the audit's coverage/cohort, causal evidence, and prevention
+proposal method within this same read-only investigation. Other requests keep the
+bounded history search above; quoting an audit prompt for evaluation does not
+activate that audit. Return the audit findings through the existing packet, not a
+new workflow, analytics verdict, or automatic project-rule/skill edit.
 
 ## 3. Research references proportionally
 

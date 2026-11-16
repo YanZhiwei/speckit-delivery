@@ -44,7 +44,7 @@ It builds on Spec Kit's Extension, Workflow, and Bundle mechanisms. It **does no
 | Capability | Commands | Read more |
 | --- | --- | --- |
 | Routing and preflight: three lanes, Doctor | `speckit.delivery.route`, `.doctor` | [Host entry points](skills/README.md) |
-| Evidence-first context: current/candidate trees, prior art | `speckit.delivery.explore`, `.context` | [Delivery contract](extensions/delivery/README.md) |
+| Evidence-first context: problem framing, current/candidate trees, history, prior art, focused audits | `speckit.delivery.explore`, `.context` | [Delivery contract](extensions/delivery/README.md) |
 | Decision memory: ADR discovery, proposal, finalization, check | `speckit.decision.context`, `.propose`, `.finalize`, `.check` | [Decision contract](extensions/decision/README.md) |
 | Slicing and merge policy: boundaries, trunk safety, PR grouping | `speckit.delivery.slice` | [Delivery contract](extensions/delivery/README.md) |
 | Task execution: per-task gates, independent review, verified commits | `speckit.ralph.run` | [Ralph](extensions/ralph/README.md) |
@@ -119,7 +119,7 @@ Initialization creates `.specify/` and the host command surface; it does not rep
 ### 3. Install the Bundle
 
 ```bash
-base=https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.6/catalogs
+base=https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.7/catalogs
 specify extension catalog add "$base/extensions.json" --name speckit-delivery --install-allowed
 specify workflow catalog add "$base/workflows.json" --name speckit-delivery
 specify bundle catalog add "$base/bundles.json" --id speckit-delivery --policy install-allowed

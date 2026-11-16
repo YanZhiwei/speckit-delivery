@@ -49,8 +49,8 @@ pointing to a different commit is rejected.
 
 The published Release body is rendered from the matching sections in
 `CHANGELOG.md` and `CHANGELOG.zh-CN.md`. It includes bilingual Install and
-What's Changed sections, the pinned CLI, Catalog, Bundle installation, and
-version check commands. A missing or empty versioned section in either language
+What's Changed sections, the minimum supported CLI requirement, version-pinned
+Catalog and Bundle installation, and version check commands. A missing or empty versioned section in either language
 blocks release before the Tag is created.
 
 ## Local verification
@@ -98,8 +98,9 @@ research quality or user approval; behavioral prompts live in `evals/evals.json`
 `scripts/test_workflow_handoff.py` additionally probes the real Spec Kit
 Command/Gate boundary with fake host consumers and a temporary shared disk
 packet: fresh contexts, actual gate choices, and missing-packet failures.
-Run it in a Python environment containing `specify_cli` and PyYAML (verified
-against Spec Kit 1.2.3). It is not live model execution, semantic evaluation,
+Run it in a Python environment containing `specify_cli` and PyYAML. Release CI
+pins `specify-cli==1.2.3` for this deterministic validation fixture; the supported
+Bundle minimum remains Spec Kit `>=1.2.3`. It is not live model execution, semantic evaluation,
 performance validation, or end-to-end delivery.
 
 The packaged Delivery runtime helper requires Python 3.11 or later and Git when

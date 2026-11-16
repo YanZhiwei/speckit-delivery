@@ -2,6 +2,46 @@
 
 All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and Semantic Versioning.
 
+## [0.4.7] - 2026-11-17
+
+### Added
+
+- Optional focused-audit guidance for explicit history/design-intent,
+  newcomer-comprehension, PR-performance, and recurring-defect audits. The
+  guidance defines evidence coverage, cohorts, causal analysis, and prevention
+  proposals without adding tracker analytics, a second ledger, or a new
+  orchestrator.
+- Behavioral evaluation scenarios 54–59 for outcome-versus-mechanism framing,
+  disconfirmation, cross-domain analogies, historical rationale, newcomer
+  context, PR timing versus runtime performance, and recurring-failure prevention.
+
+### Changed
+
+- Delivery Explore now separates the desired outcome, observed symptom, and
+  proposed mechanism; asks only material unresolved questions; compares viable
+  options proportionately; and records credible indirect effects and
+  counterevidence.
+- Diagnosis, Review, and Simplify now challenge preferred explanations or designs,
+  connect conclusions to invariants and affected consumers, and account for
+  concrete maintenance-context burden without turning style preferences into
+  blockers.
+- Bundle installation checks include the shared focused-audit resource and the
+  Simplify command resources. Reference documentation maps the ten investigation
+  prompts to their existing owners and approval boundaries.
+
+### Fixed
+
+- Release notes now install the supported minimum Spec Kit CLI (`>=1.2.3`),
+  while CI keeps its exact validation pin. The release-preparation PR template
+  escapes Markdown backticks so Bash cannot interpret them as commands.
+
+### Tests
+
+- Distribution validation, 73 contract tests, release-stamp tests, README
+  structure checks, link checks, and clean-project Bundle installation passed for
+  OpenCode and Codex. The new behavioral evaluation scenarios are inputs for
+  future live model comparison and have not themselves been executed as such.
+
 ## [0.4.6] - 2026-11-09
 
 ### Added
@@ -203,7 +243,7 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 - Delivery declares `sd` as an installer-managed alias of
   `speckit.delivery.route`, so a fresh Bundle or extension install provides
-  OpenCode's `/sd` without copying facade skills. Spec Kit 1.2.3 renders the
+  OpenCode's `/sd` without copying facade skills. Spec Kit `>=1.2.3` renders the
   same alias as `$speckit-sd` in Codex Skills mode and `/speckit-sd` in Claude Code.
 - Installation checks verify that the shortcut shares the router input/body,
   belongs to Delivery in the registry, is restored by reinstall, and is removed
@@ -617,8 +657,8 @@ bounded repair and snapshot-checked handoff.
 ### Fixed
 
 - Workflow catalog `requires` now matches each workflow YAML, so Bundle
-  installation works on Spec Kit 1.2.3 instead of failing before component
-  installation.
+  installation works with the supported Spec Kit `>=1.2.3` floor instead of
+  failing before component installation.
 - Bundle installation now requires Spec Kit `>=1.2.3`; individual extensions and
   workflows retain their `>=0.16.4` floor.
 - Distribution validation now checks catalog URLs, manifest/workflow versions,

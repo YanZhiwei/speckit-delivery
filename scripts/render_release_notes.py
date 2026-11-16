@@ -52,12 +52,12 @@ def render(
     )
     return f"""## Install / 安装
 
-Install the pinned Spec Kit CLI and the `speckit-delivery` Bundle:
+Install Spec Kit CLI `>={specify_version}` and the `speckit-delivery` Bundle:
 
-安装固定版本的 Spec Kit CLI 和 `speckit-delivery` Bundle：
+安装 Spec Kit CLI `>={specify_version}` 和 `speckit-delivery` Bundle：
 
 ```bash
-uv tool install specify-cli=={specify_version}
+uv tool install "specify-cli>={specify_version}"
 specify init my-project --integration codex
 cd my-project
 
@@ -99,7 +99,9 @@ def main() -> int:
     parser.add_argument("--version", required=True)
     parser.add_argument("--tag", required=True)
     parser.add_argument("--repository", default="YanZhiwei/speckit-delivery")
-    parser.add_argument("--specify-version", default="1.2.3")
+    parser.add_argument(
+        "--specify-version", default="1.2.3", help="minimum supported Spec Kit CLI version"
+    )
     parser.add_argument(
         "--changelog-en", type=Path, default=Path("CHANGELOG.md")
     )

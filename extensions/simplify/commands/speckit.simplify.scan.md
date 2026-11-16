@@ -61,7 +61,14 @@ route; this scan still does not impersonate that approval or perform the edit.
 2. Look for unused public methods/config/events, tests-or-docs-only behavior,
    duplicate representations, unused seams, speculative generality, redundant
    lifecycle state, obsolete compatibility machinery, and hand-rolled behavior
-   covered by a healthy builtin or dependency.
+   covered by a healthy builtin or dependency. Within the requested scope, consider
+   the context a capable newcomer needs for one concrete change: misleading names,
+   scattered ownership, hidden ordering/configuration, or excessive indirection.
+   Cite the actual navigation/contract burden and the proposed smaller model;
+   unfamiliar vocabulary or a count of files/layers alone is not a defect.
+   For historical machinery, inspect relevant rationale and whether its original
+   condition still applies. Old code or a missing local caller does not establish
+   safe removal; unresolved supported consumers or compatibility needs stay gaps.
 3. For each candidate, classify consumers as production, non-production, or
    ambiguous. Record the concrete evidence inspected, capability trade-off,
    likely risk, and net deletion estimate (removed implementation/tests/docs

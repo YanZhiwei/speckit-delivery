@@ -43,6 +43,7 @@ def check_delivery_install(
             "commands/speckit.delivery.close.md",
             "commands/speckit.delivery.context.md",
             "templates/exploration.md",
+            "templates/focused-audits.md",
             "templates/slices.md",
             "templates/bugfix-review-repair.md",
             "templates/repair-docs.md",
@@ -58,6 +59,10 @@ def check_delivery_install(
             "scripts/delivery_outcome.py",
         ),
         "review": ("commands/speckit.review.run.md", "commands/speckit.review.standards.md", "templates/reviewer.md"),
+        "simplify": (
+            "commands/speckit.simplify.scan.md",
+            "commands/speckit.simplify.verify.md",
+        ),
         "quality": (
             "commands/speckit.quality.brief.md",
             "commands/speckit.quality.check.md",

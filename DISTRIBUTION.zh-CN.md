@@ -41,8 +41,8 @@ Changelog。只有当已有 Tag 指向同一个来源 Commit 时才允许复用�
 其他 Commit，Workflow 会拒绝发布。
 
 发布的 Release 正文会从 `CHANGELOG.md` 和 `CHANGELOG.zh-CN.md` 中对应版本的
-段落生成，包含双语的 Install / 安装和 What's Changed / 更新内容，以及固定版本
-的 CLI、Catalog、Bundle 安装命令和版本检查命令。如果任一语言缺少对应版本的
+段落生成，包含双语的 Install / 安装和 What's Changed / 更新内容，以及 CLI 最低版本要求、
+固定版本的 Catalog／Bundle 安装命令和版本检查命令。如果任一语言缺少对应版本的
 Changelog 段落，或该段落为空，Workflow 会在创建 Tag 前阻止发布。
 
 ## 本地验证
@@ -80,7 +80,8 @@ OpenCode，Codex 变体验证 Skills 模式。结构检查不能证明调研质�
 
 `scripts/test_workflow_handoff.py` 使用 Spec Kit Command／Gate 的真实传输边界、假宿主消费者和
 临时磁盘包，验证新上下文、真实 Gate 选择和缺包失败。在已安装 `specify_cli` 与 PyYAML
-的 Python 环境运行（已验证 Spec Kit 1.2.3）；它不是实际模型调用、语义评估、性能验证或端到端交付。
+的 Python 环境运行。发布 CI 为这项确定性验证固定使用 `specify-cli==1.2.3`；Bundle 支持的最低版本仍为
+Spec Kit `>=1.2.3`。它不是实际模型调用、语义评估、性能验证或端到端交付。
 
 随包提供的 Delivery Runtime Helper 在目标项目根目录运行时需要 Python 3.11
 或更高版本以及 Git，只使用标准库和 Git。Helper 新增的本地忽略规则包括 Spec Kit 的
