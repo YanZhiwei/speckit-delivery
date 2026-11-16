@@ -116,6 +116,16 @@ Check candidate findings against actual callers, tests, and design intent before
 confirmation; explain a rejected false positive with evidence. Existing unrelated
 defects are follow-ups unless this change exposes/worsens them or scope covers them.
 
+For a material design or behavior change, actively try to disprove its central
+assumption with the strongest plausible caller, failure, or boundary scenario.
+Trace credible indirect effects across affected modules, user behavior, and
+operational/maintenance cost using the packet's analysis and current source.
+Record the trigger and causal evidence in the applicable existing dimensions; a
+hypothetical chain remains an investigation question, not a confirmed finding.
+Use a focused probe for an unresolved material doubt under the normal execution
+boundary. Do not manufacture an objection, require three effects, or add another
+reviewer/round when current evidence resolves the concern.
+
 Severity is `critical`, `important`, or `minor`. Confirmed material defects and
 applicable policy violations block unless an authorized durable exception applies.
 Heuristic smells or personal architecture/style preferences are suggestions,

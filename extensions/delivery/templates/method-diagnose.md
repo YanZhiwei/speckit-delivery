@@ -17,10 +17,15 @@ as the Bugfix-Feature workflow's required assessment path; official
    working path or prior revision; inspect implicated changes, callers, and tests.
    Reuse exploration evidence instead of mapping the whole repository again.
 3. Form one falsifiable hypothesis at a time and propose the narrowest experiment
-   that distinguishes it from alternatives. Have the owner perform any permitted
-   reproduction/test execution and supply actual outputs; do not fabricate them.
-4. Explain the smallest cause-level correction inside approved scope. New durable
-   contracts or material architecture changes return to lane/scope/ADR decisions.
+   that distinguishes it from alternatives, including evidence that would disprove
+   the preferred explanation. Have the owner perform any permitted reproduction/test
+   execution and supply actual outputs; do not fabricate them.
+4. Connect the symptom to the violated requirement/invariant and evidenced causal
+   path before explaining the smallest cause-level correction inside approved scope.
+   Distinguish mitigation from correction and identify contributing conditions when
+   supported; do not force one universal root cause or treat a first-principles
+   narrative as reproduction evidence. New durable contracts or material architecture
+   changes return to lane/scope/ADR decisions.
 5. Propose a behavioral regression at a meaningful interface: fixture/input,
    independently derived expected result, the real defect it catches, and the
    expected RED-to-GREEN observation. Avoid source-text assertions and tests that

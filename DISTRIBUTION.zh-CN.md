@@ -80,7 +80,8 @@ OpenCode，Codex 变体验证 Skills 模式。结构检查不能证明调研质�
 
 `scripts/test_workflow_handoff.py` 使用 Spec Kit Command／Gate 的真实传输边界、假宿主消费者和
 临时磁盘包，验证新上下文、真实 Gate 选择和缺包失败。在已安装 `specify_cli` 与 PyYAML
-的 Python 环境运行（已验证 Spec Kit 1.2.3）；它不是实际模型调用、语义评估、性能验证或端到端交付。
+的 Python 环境运行。发布 CI 为这项确定性验证固定使用 `specify-cli==1.2.3`；Bundle 支持的最低版本仍为
+Spec Kit `>=1.2.3`。它不是实际模型调用、语义评估、性能验证或端到端交付。
 
 随包提供的 Delivery Runtime Helper 在目标项目根目录运行时需要 Python 3.11
 或更高版本以及 Git，只使用标准库和 Git。Helper 新增的本地忽略规则包括 Spec Kit 的

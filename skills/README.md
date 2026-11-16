@@ -13,7 +13,7 @@ required:
 | Codex Skills mode | `$speckit-sd <request>` | `$speckit-delivery-route <request>` |
 | Claude Code | `/speckit-sd <request>` | `/speckit-delivery-route <request>` |
 
-Spec Kit 1.2.3 prefixes skill names with `speckit-`, including aliases. OpenCode
+Spec Kit `>=1.2.3` prefixes skill names with `speckit-`, including aliases. OpenCode
 keeps the declared command name and creates `.opencode/commands/sd.md`.
 The alias and full command are rendered from the same router source and belong
 to Delivery in the installation registry. Refreshing or removing the extension

@@ -538,6 +538,78 @@
         "Explains the new screen's absent prior state rather than fabricating a before capture",
         "Does not generate validation images or claim unperformed testing"
       ]
+    },
+    {
+      "id": 54,
+      "prompt": "Prepare an Explore scope packet for 'Add Redis so inventory stops showing stale stock'. Existing source and traces show current server stock reaches the UI, but its existing local cache ignores an invalidation event. The established goal is fresh stock display, infrastructure additions are prohibited, and the user already requested minimal operating cost. A teammate says every request needs a preference interview, three new designs, and a full Git-history audit. The user has not requested those. Do not fix code or confirm the Bug assessment yourself.",
+      "expected_output": "Separates observed stale display, desired freshness, and the proposed Redis mechanism; uses verified local behavior and known constraints to recommend investigating the existing invalidation path rather than adding prohibited infrastructure. Asks only a material unresolved question if one remains, compares genuinely viable choices proportionately without padding three designs, and keeps history bounded. Presents supported scope with actual approval pending, distinguishes Explore hypotheses from official Bug diagnosis, and preserves the user's outcome rather than silently replacing it.",
+      "files": [],
+      "expectations": [
+        "Separates outcome, symptom and mechanism using the existing implementation and infrastructure constraint",
+        "Reuses established preferences without a ritual interview or invented third design",
+        "Keeps research proportionate and does not activate a broad audit from a teammate's generic rule",
+        "Preserves scope approval and official Bug assessment ownership without edits or a fabricated confirmed cause"
+      ]
+    },
+    {
+      "id": 55,
+      "prompt": "Review a proposed payment retry design. The preferred change immediately retries acknowledgment timeouts to reduce displayed waiting time. Supplied source shows the payment effect can succeed before the acknowledgment is lost; the downstream endpoint has no idempotency key. Traces show clients also repeat requests after their own timeout. Unit tests cover only failures before the effect. The implementer says the direct latency improvement proves the design. Trace consequences and challenge the choice without inventing measurements or changing the approved design yourself.",
+      "expected_output": "Tests the central retry assumption against the evidenced effect-before-acknowledgment counterexample and caller behavior. Connects retries to duplicate irreversible effects and potentially increased downstream requests, distinguishing directly supported failure paths from unmeasured amplification or user-response hypotheses. Revises the recommendation or requests the narrowest discriminating evidence, names the missing behavioral regression, and routes a material design change through its existing owner. Uses the native review dimensions/findings without manufacturing a third-order effect, measured benefit, extra reviewer, or repair loop.",
+      "files": [],
+      "expectations": [
+        "Uses the effect-before-lost-acknowledgment case to challenge the preferred retry assumption",
+        "Traces concrete cross-module and client-response consequences while labeling unmeasured amplification",
+        "Does not infer correctness from direct latency claims or happy-path tests",
+        "Routes material changes to the design owner and retains the native review scope, evidence and finding rules"
+      ]
+    },
+    {
+      "id": 56,
+      "prompt": "Compare exactly three approaches for a bounded delivery design using cross-domain ideas. The supplied comparison has two viable approaches that meet the project's immutable no-duplicate-side-effect constraint. A proposed third borrows hedged requests from a read-only search system; this target performs irreversible side effects and has no deduplication facility. The user wants useful alternatives, not fictional compliance. Use the supplied evidence; no other qualifying approach has been established.",
+      "expected_output": "Explains the analogy's shared latency goal and the decisive mismatch between repeatable reads and irreversible non-idempotent effects. Rejects the unsupported hedged design under the binding invariant, compares the two genuinely viable approaches, and explicitly explains why a third compliant option is not currently supported rather than silently ignoring the user's requested count or inventing one. States the evidence or constraint change needed to reconsider, recommends within the actual constraints, and makes no globally optimal or unperformed-research claim.",
+      "files": [],
+      "expectations": [
+        "Tests the cross-domain analogy against invariants, assumptions and failure behavior",
+        "Rejects unsupported hedging without silently weakening the no-duplicate constraint",
+        "Acknowledges the explicit three-option request and explains the lack of a third evidenced compliant option",
+        "Compares viable options and states reconsideration conditions without fabricating research or optimality"
+      ]
+    },
+    {
+      "id": 57,
+      "prompt": "Run the requested bounded history and newcomer-comprehension audit for the plugin loader. A seven-year-old adapter was introduced in a linked PR for plugin API v1, which current support policy still promises to external plugins despite no in-repository caller. A second shim was introduced for runtime v2, which the current minimum runtime excludes and whose consumers have been checked. A proposed cleanup cuts lines by hiding loader state transitions behind a generic registry, requiring a maintainer to consult four unrelated modules to change one plugin setting. Inspect the supplied evidence and propose candidates only.",
+      "expected_output": "Relates each historical rationale to current support and consumer evidence: retains the v1 seam or treats any missing external-consumer evidence as a gap, while considering the obsolete runtime shim only through evidence-backed Simplify routing. Uses a real plugin-setting change to expose the proposed registry's navigation, ownership and invariant burden; fewer lines do not prove simpler maintenance. Proposes the smallest clearer model with preserved contracts and verification needs, records unresolved evidence, and performs no deletions, approval, or unrelated refactor.",
+      "files": [],
+      "expectations": [
+        "Distinguishes documented original rationale from whether the condition still applies today",
+        "Preserves supported external plugin contracts despite age and absent local callers",
+        "Evaluates newcomer context on a concrete change and rejects line-count-only simplification",
+        "Routes only supported candidates through existing Simplify acceptance and verification without edits"
+      ]
+    },
+    {
+      "id": 58,
+      "prompt": "Audit all PRs created from 2026-10-01T00:00:00Z inclusive to 2026-11-01T00:00:00Z exclusive. The tracker returned only page one of three: one PR waited in draft for ten days, another remains open at the observation date, and a third merged after a CI queue wait. A summary calls these the slowest code changes and assigns invented review/CI stage durations from creation/merge timestamps. Runtime telemetry is unavailable. The user wants delivery bottlenecks and asks whether any introduced code causes runtime stalls. State supported conclusions and the remaining investigation without modifying anything.",
+      "expected_output": "Preserves the explicit creation cohort/window and marks coverage partial until all matching pages are retrieved and reconciled. Separates draft time, open age, actual CI queue facts and completed cycle time; does not invent review/run stage timings or rank the unseen population. Distinguishes delivery delay from code execution, uses available comparable events for supported process observations, and returns an identified scenario/revision/environment/profile or benchmark plan for unproven runtime stalls. Missing telemetry and pages remain concrete gaps rather than performance or exhaustive-audit claims.",
+      "files": [],
+      "expectations": [
+        "Requires all matching pages for full-cohort claims and reports the current partial coverage",
+        "Keeps open age separate from completed duration and does not invent timing stages or rank unseen PRs",
+        "Separates delivery waiting from runtime performance with evidence-backed process conclusions",
+        "Names missing runtime measurement and its owner instead of inferring stalls or speedups from PR duration"
+      ]
+    },
+    {
+      "id": 59,
+      "prompt": "Perform the explicitly requested recurring-failure audit for a supplied, complete incident window. R-7 needed two repair attempts before verified resolution; a reserved third attempt never ran. A later explicitly associated incident reintroduced the same stale-receipt failure after verified resolution. Another similarly named Bug has no cross-run association, and a rollback in the window was a documented product-requirement reversal. Actual linked diffs and incident evidence show a shared omitted-input identity check in the two associated failures; an existing Quality rule already owns that check. Recommend prevention without writing project rules, tools, skills or tracker records.",
+      "expected_output": "Counts the original unresolved defect's attempts separately from the later verified recurrence, excludes the unexecuted reservation from actual fixes, and does not merge the unassociated Bug or requirement reversal into a common technical cause. Connects the linked failures to the omitted-input check and escape point using actual evidence, retaining limitations and contrary cases. Proposes a narrow update to the existing Quality owner/control with a failing scenario, verification, adoption authority and maintenance/false-positive cost; avoids duplicating policy or claiming the proposal has already prevented recurrence. Returns recommendations in the existing exploration packet without another ledger, queue, approval round or automatic skill edit.",
+      "files": [],
+      "expectations": [
+        "Distinguishes unresolved attempts, a verified recurrence, unexecuted reservations and intentional requirement changes",
+        "Requires explicit evidence for cross-run association and a common causal mechanism",
+        "Targets the existing Quality owner with a concrete control, verification and cost rather than duplicate policy",
+        "Keeps prevention proposed until governed adoption and claims no observed recurrence reduction or automatic edits"
+      ]
     }
   ]
 }

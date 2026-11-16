@@ -23,6 +23,29 @@
 SD 在此基础上增加有界 Issue／PR／Commit 溯源、按场景检索 GitHub 参考、两棵目录树及
 范围／设计确认点；参考方案不能覆盖目标项目既有治理和 ADR。
 
+## 问题定义与专项复盘
+
+用户提供的十条调查／评审提示，按职责选择性融入现有契约。它们是方法要求，不代表
+已经执行过对应审计，也不成为所有任务的固定前置流程：
+
+| 提示意图 | 执行归属 | 采纳边界 |
+| --- | --- | --- |
+| 1. 从本质原因修复 | [诊断 Profile](extensions/delivery/templates/method-diagnose.md) 与官方 Bug 评估 | 用证据连接症状、违反的不变量和故障路径；第一性原理不能替代复现，也不强求单一根因。 |
+| 2. 澄清偏好、比较方案 | [目标与方案](extensions/delivery/templates/exploration.md#outcome-and-problem-framing) | 复用已知偏好，只问影响决策的未知项；比较真实可行方案，明确要求且可行时才固定三版。 |
+| 3. 质疑问题定义 | [目标定义](extensions/delivery/templates/exploration.md#outcome-and-problem-framing) | 区分目标、症状和手段，有证据时建议重定义；保留用户意图与范围决定权。 |
+| 4. 推演间接影响 | [范围风险](extensions/delivery/templates/exploration.md#scope-risks-and-verification) 与 [Review](extensions/review/templates/reviewer.md#review-method-and-calibration) | 用可信因果链连接模块、用户行为与维护成本；尚未验证的影响保持为假设。 |
+| 5. 跨领域参考 | [方案比较](extensions/delivery/templates/exploration.md#options-and-candidate-change-tree) | 核对共享不变量、前提和失败模式，记录来源；类比不能证明适配或全局最优。 |
+| 6. 主动反驳首选方案 | [方案比较](extensions/delivery/templates/exploration.md#options-and-candidate-change-tree)、诊断与 Review | 检查最强合理反例和区分性证据，复用现有决策／评审路径。 |
+| 7. 还原设计历史 | [历史专项审计](extensions/delivery/templates/focused-audits.md#2-history-and-current-design-intent) | 明确请求才扩大历史范围；关联原始理由与当前约束，证据缺失保留为未知。 |
+| 8. 评估新人认知成本 | [接手成本审计](extensions/delivery/templates/focused-audits.md#3-newcomer-comprehension) 与 [Simplify](extensions/simplify/commands/speckit.simplify.scan.md) | 沿真实变更追踪 owner 与隐含不变量；代码／层数减少不等于更易理解。 |
+| 9. 找出慢 PR 或慢代码 | [PR 性能审计](extensions/delivery/templates/focused-audits.md#4-pr-performance) | 定义时间口径与完整覆盖，区分流程等待和运行性能，要求可比较的实测证据。 |
+| 10. 将重复失败转为预防措施 | [重复缺陷复盘](extensions/delivery/templates/focused-audits.md#5-recurring-bugs-rework-and-rollbacks) | 关联真实事件，区分修复尝试与复发，先提出有 owner、验证方法和成本的控制措施，再按项目治理采纳。 |
+
+普通交付仍做有界历史调查和适度评审；可选 [审计方法](extensions/delivery/templates/focused-audits.md)
+复用同一 Explore 工件并返回建议，不增加远程写入、规则采纳权、自动跨 Run 关联或分析运行时。
+缺失的 Tracker 分页、性能测量和事故记录必须如实作为覆盖缺口。行为场景位于
+`evals/evals.json`；结构与安装检查不证明这些分析的语义效果。
+
 ## 独立 Code Review 参考
 
 选择性借鉴 Superpowers 的 Reviewer Packet 和反馈核实、Codex 的具体可行动缺陷校准、

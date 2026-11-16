@@ -51,11 +51,23 @@ new mechanisms/architecture choices also need it. Small understood extensions
 may skip with a reason. Bugfixes prioritize local evidence and implicated upstream
 history. Unavailable research is a limitation, not a fabricated success.
 
-The packet also bounds core concepts, adjacent owners and research questions,
-preserves rejected hypotheses, reconciles conflicting sources, and states when
-research can stop. Authorized read-only research is sized by independent questions
-and resource limits; repeated citations from multiple agents are not independent
-evidence. Decision-critical gaps still block readiness.
+The packet separates the desired outcome, symptom, and proposed mechanism, asks
+only material unanswered questions, and compares viable alternatives without a
+fixed option count. Consequential choices include counterevidence and credible
+indirect effects, with hypotheses kept distinct from observed behavior. It also
+bounds concepts, adjacent owners and research questions, preserves rejected
+hypotheses, reconciles conflicting sources, and states when research can stop.
+Authorized read-only research is sized by independent questions and resource
+limits; repeated citations from multiple agents are not independent evidence.
+Decision-critical gaps still block readiness.
+
+Explicit requests for broader history, newcomer-comprehension, PR-performance, or
+recurring-defect audits load [focused audit guidance](templates/focused-audits.md).
+It defines coverage/time cohorts, separates delivery delay from runtime slowness,
+checks whether historical constraints still apply, and returns supported prevention
+proposals to existing owners. These are optional prompt methods, not automatic
+telemetry, cross-run correlation, or permission to refactor/adopt project rules.
+Ordinary delivery keeps its bounded research and existing packet/approval path.
 
 The user sees two repository-relative trees in the conversation: current code
 and candidate changes, including tests. Candidate paths are marked new, modify,

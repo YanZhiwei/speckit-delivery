@@ -44,7 +44,7 @@ Spec Kit 负责把需求变成 `Spec → Plan → Tasks`。Spec Kit Delivery 负
 | 能力 | 命令 | 深入阅读 |
 | --- | --- | --- |
 | 路由与预检：三 Lane 选择、Doctor | `speckit.delivery.route`、`.doctor` | [入口说明](skills/README.md) |
-| 取证与影响面：现状/候选目录树、外部参考 | `speckit.delivery.explore`、`.context` | [交付契约](extensions/delivery/README.md) |
+| 取证与影响面：问题定义、现状/候选目录树、历史与外部参考、专项审计 | `speckit.delivery.explore`、`.context` | [交付契约](extensions/delivery/README.md) |
 | 决策记忆：ADR 发现、提案、定稿、一致性检查 | `speckit.decision.context`、`.propose`、`.finalize`、`.check` | [决策契约](extensions/decision/README.md) |
 | 切片与合并：Slice 边界、trunk-safe 分类、PR 分组 | `speckit.delivery.slice` | [交付契约](extensions/delivery/README.md) |
 | 任务执行：逐 Task 门禁、独立评审、已验证提交 | `speckit.ralph.run` | [Ralph](extensions/ralph/README.md) |
@@ -119,7 +119,7 @@ specify init . --integration opencode --script sh
 ### 3. 安装 Bundle
 
 ```bash
-base=https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.6/catalogs
+base=https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.7/catalogs
 specify extension catalog add "$base/extensions.json" --name speckit-delivery --install-allowed
 specify workflow catalog add "$base/workflows.json" --name speckit-delivery
 specify bundle catalog add "$base/bundles.json" --id speckit-delivery --policy install-allowed

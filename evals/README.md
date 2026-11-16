@@ -17,7 +17,11 @@ context recovery, correlated research evidence, proportionate stopping condition
 cooperation-plan drift, and design-deviation dispositions across all three lanes.
 Cases 50–51 cover Evidence output language and project overrides. Cases 52–53
 cover factual Bugfix repair history, attempt/finding distinctions, and comparable
-before/after UI evidence with honest missing-capture disclosure. These new cases
+before/after UI evidence with honest missing-capture disclosure. Cases 54–59 cover
+outcome versus mechanism and known preferences, indirect effects and disconfirmation,
+cross-domain analogy limits and explicit option counts, historical intent and
+newcomer context cost, complete PR cohorts versus runtime-performance evidence,
+and recurring-failure prevention routed to an existing owner. These new cases
 have not been executed as live baseline/updated model comparisons.
 
 ## Review fixtures

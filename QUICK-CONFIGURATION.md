@@ -97,7 +97,7 @@ commands), `delivery` (11), and `review` (2). Delivery also installs
 Released versions pin every catalog to a tag; never mix components from different tags:
 
 ```powershell
-$base = 'https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.6/catalogs'
+$base = 'https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.7/catalogs'
 specify extension catalog remove speckit-delivery
 specify extension catalog add "$base/extensions.json" --name speckit-delivery --install-allowed
 specify workflow catalog remove 0

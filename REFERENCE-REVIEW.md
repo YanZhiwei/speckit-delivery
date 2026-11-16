@@ -31,6 +31,33 @@ SD adds its own bounded Issue/PR/commit provenance, proportionate GitHub referen
 research, two-tree scope presentation, and explicit scope/design checkpoints.
 Reference patterns do not override the target project's governance or ADRs.
 
+## Problem framing and focused audits
+
+The ten user-supplied investigation/review prompts are adopted selectively as
+methods within existing owners. They are not a universal preamble or evidence
+that an audit has run. Executable guidance lives in the linked contracts:
+
+| Prompt intent | Integration owner | Adoption boundary |
+| --- | --- | --- |
+| 1. Explain and fix the cause | [Diagnosis profile](extensions/delivery/templates/method-diagnose.md) and official Bug assessment | Trace symptoms to an evidenced invariant failure; first-principles reasoning does not replace reproduction or force a single cause. |
+| 2. Clarify preferences and compare options | [Outcome and options](extensions/delivery/templates/exploration.md#outcome-and-problem-framing) | Reuse known preferences, ask material unknowns, compare viable choices; three is required only when explicitly requested and feasible. |
+| 3. Challenge the problem definition | [Outcome framing](extensions/delivery/templates/exploration.md#outcome-and-problem-framing) | Separate goal, symptom, and mechanism; recommend a better framing with evidence while preserving user intent and scope authority. |
+| 4. Trace indirect consequences | [Scope risks](extensions/delivery/templates/exploration.md#scope-risks-and-verification) and [Review](extensions/review/templates/reviewer.md#review-method-and-calibration) | Explain credible causal links across modules, user behavior, and maintenance; hypothetical effects stay hypotheses. |
+| 5. Learn from other domains | [Options](extensions/delivery/templates/exploration.md#options-and-candidate-change-tree) | Check shared invariants, assumptions and failure modes with reference provenance; analogy does not establish optimality. |
+| 6. Try to disprove the preferred option | [Options](extensions/delivery/templates/exploration.md#options-and-candidate-change-tree), diagnosis, and Review | Use the strongest plausible counterexample and discriminating evidence; reuse existing decision/review paths. |
+| 7. Reconstruct design history | [Focused history audit](extensions/delivery/templates/focused-audits.md#2-history-and-current-design-intent) | Broad history needs an explicit request; connect original rationale to current constraints, with unknowns retained. |
+| 8. Assess newcomer context burden | [Newcomer audit](extensions/delivery/templates/focused-audits.md#3-newcomer-comprehension) and [Simplify](extensions/simplify/commands/speckit.simplify.scan.md) | Trace a real change through owners and invariants; fewer lines/layers alone do not demonstrate easier maintenance. |
+| 9. Find slow PRs or code | [PR performance audit](extensions/delivery/templates/focused-audits.md#4-pr-performance) | Define the time cohort and complete coverage, separate process waiting from runtime regression, and require comparable timing evidence. |
+| 10. Turn recurring failures into prevention | [Recurring-defect audit](extensions/delivery/templates/focused-audits.md#5-recurring-bugs-rework-and-rollbacks) | Associate actual events, distinguish attempts from recurrence, and propose a control with owner/verification/cost before governed adoption. |
+
+Ordinary delivery retains bounded history research and proportionate review. The
+optional [audit method](extensions/delivery/templates/focused-audits.md) uses the
+same exploration packet and returns recommendations; it adds no tracker writes,
+policy authority, automatic longitudinal correlation, or analytics runtime.
+Missing tracker pages, telemetry, or incident records remain coverage gaps.
+Behavioral scenarios are specified in `evals/evals.json`; installation/structural
+checks do not demonstrate the semantic quality of these analyses.
+
 ## Independent review references
 
 The review update draws selectively on Superpowers' reviewer packets and verified

@@ -3,6 +3,31 @@
 所有重要变更遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)
 和语义化版本规范。
 
+## [0.4.7] - 2026-11-17
+
+### 新增
+
+- 新增按需加载的专项审计指导，覆盖明确请求的设计历史／意图、新人接手认知成本、
+  PR 性能和重复缺陷审计。指导定义证据覆盖、时间窗口、因果分析和预防措施提案，
+  不增加 Tracker 分析服务、第二本账或新的编排器。
+- 新增行为评估场景 54–59，覆盖目标与手段区分、反证、跨领域类比、历史理由、新人
+  上下文、PR 时间与运行性能区分，以及重复失败预防。
+
+### 变更
+
+- Delivery Explore 现在区分期望结果、观察到的症状和提出的手段；只询问影响决策的
+  未知项；按比例比较真实可行方案；记录可信的间接影响和反证。
+- Diagnosis、Review 和 Simplify 现在会质疑首选解释或设计，把结论连接到不变量和
+  受影响消费者，并评估具体的维护上下文负担，不把风格偏好变成阻断条件。
+- Bundle 安装检查纳入共享专项审计资源和 Simplify 命令资源；参考文档把十条调查提示
+  映射到现有 owner 及批准边界。
+
+### 测试
+
+- 分发校验、73 项契约测试、发布 stamp 测试、README 结构检查、链接检查，以及
+  OpenCode 和 Codex 的干净项目 Bundle 安装均通过。新增行为评估场景用于后续真实模型
+  对比，目前尚未作为实时模型对比执行。
+
 ## [0.4.6] - 2026-11-09
 
 ### 新增
@@ -166,7 +191,7 @@
 ### 修复
 
 - Delivery 为 `speckit.delivery.route` 声明安装器管理的 `sd` 别名，全新 Bundle 或
-  扩展安装后 OpenCode 可直接使用 `/sd`，无需复制门面技能。Spec Kit 1.2.3 在 Codex
+  扩展安装后 OpenCode 可直接使用 `/sd`，无需复制门面技能。Spec Kit `>=1.2.3` 在 Codex
   Skills 模式将同一别名渲染为 `$speckit-sd`，在 Claude Code 渲染为 `/speckit-sd`。
 - 安装检查验证快捷入口与路由的输入／正文一致、登记归属于 Delivery、重新安装可恢复
   缺失入口、卸载时同步清理入口并保留项目配置。
@@ -490,8 +515,8 @@
 
 ### 修复
 
-- Workflow Catalog 的 `requires` 现在与 Workflow YAML 一致，Bundle 在 Spec Kit 1.2.3
-  上不会再于组件安装前失败。
+- Workflow Catalog 的 `requires` 现在与 Workflow YAML 一致，Bundle 在支持的 Spec Kit
+  `>=1.2.3` 最低版本上不会再于组件安装前失败。
 - Bundle 安装最低版本调整为 Spec Kit `>=1.2.3`；单独安装 Extension 和 Workflow 仍为
   `>=0.16.4`。
 - 分发校验现在检查 Catalog URL、Manifest/Workflow 版本、Workflow requirements、Bundle
