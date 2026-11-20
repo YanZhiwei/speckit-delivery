@@ -20,6 +20,11 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 - Copilot uses the canonical `/speckit-delivery-route` entry because Spec Kit
   `1.2.3` omits manifest aliases in its Skills registration path.
 
+### Fixed
+
+- Windows CI explicitly uses UTF-8 for Python and its standard streams so
+  Unicode CLI output remains printable when captured by the installation probe.
+
 ### Compatibility and validation
 
 - Existing Codex, Claude Code, and OpenCode entries remain unchanged. Bundle

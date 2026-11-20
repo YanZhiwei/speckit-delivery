@@ -18,6 +18,11 @@
   探针和已记录的真实模型交付证据。
 - Copilot 使用完整入口 `/speckit-delivery-route`，因为 Spec Kit `1.2.3` 的 Skills 注册路径不生成 Manifest 别名。
 
+### 修复
+
+- Windows CI 显式启用 Python UTF-8 模式及标准流编码，避免安装探针转发 Unicode CLI
+  输出时因系统字符集不支持而失败。
+
 ### 兼容性与验证
 
 - Codex、Claude Code、OpenCode 的现有入口保持不变；Bundle 与 Workflow 继续要求
