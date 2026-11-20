@@ -1,0 +1,69 @@
+name: Host installation matrix
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: Exact source commit to validate
+        required: true
+        type: string
+      version:
+        description: Expected distribution version (empty uses the Bundle version)
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  hosts:
+    runs-on: ubuntu-latest
+    outputs:
+      integrations: ${{ steps.matrix.outputs.integrations }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Read supported installation layouts
+        id: matrix
+        run: echo "integrations=$(python scripts/test_bundle_install.py --list-integrations)" >> "$GITHUB_OUTPUT"
+
+  install:
+    name: ${{ matrix.integration }} / ${{ matrix.os }}
+    needs: hosts
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        integration: ${{ fromJSON(needs.hosts.outputs.integrations) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: astral-sh/setup-uv@v6
+      - name: Install the pinned validation CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          uv tool install specify-cli==1.2.3
+          uv tool dir --bin >> "$GITHUB_PATH"
+      - name: Install, upgrade, reinstall, and remove in a clean project
+        shell: bash
+        env:
+          INTEGRATION: ${{ matrix.integration }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          args=(--integration "$INTEGRATION")
+          if [[ -n "$VERSION" ]]; then
+            args+=(--version "${VERSION#v}")
+          fi
+          python scripts/test_bundle_install.py "${args[@]}"

@@ -119,7 +119,7 @@ Initialization creates `.specify/` and the host command surface; it does not rep
 ### 3. Install the Bundle
 
 ```bash
-base=https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.7/catalogs
+base=https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.8/catalogs
 specify extension catalog add "$base/extensions.json" --name speckit-delivery --install-allowed
 specify workflow catalog add "$base/workflows.json" --name speckit-delivery
 specify bundle catalog add "$base/bundles.json" --id speckit-delivery --policy install-allowed
@@ -166,9 +166,12 @@ A Windows project using the Python Launcher can pass `--input runtime_python="py
 | Claude Code | `specify init . --integration claude --script sh` | `/speckit-sd`, full `/speckit-delivery-route` | `.claude/skills/` |
 | Codex | `specify init . --integration codex --integration-options="--skills" --script ps` | `$speckit-sd`, full `$speckit-delivery-route` | `.agents/skills/` |
 | OpenCode | `specify init . --integration opencode --script sh` | `/sd`, full `/speckit.delivery.route` | OpenCode command directory |
+| GitHub Copilot | `specify init . --integration copilot --script sh` | `/speckit-delivery-route` | `.github/skills/` |
+| Gemini CLI | `specify init . --integration gemini --script sh` | `/sd`, full `/speckit.delivery.route` | `.gemini/commands/` (TOML) |
+| Cursor | `specify init . --integration cursor-agent --script sh` | `/speckit-sd`, full `/speckit-delivery-route` | `.cursor/skills/` |
 | Generic adapter | `specify init . --integration generic ...` | Run the rendered `speckit.delivery.route` command file | Chosen command directory |
 
-Extension commands are the stable cross-host surface. Do not use `Get-Command speckit*` or `which speckit*` to decide whether an extension is installed: Codex Skills mode should check for the `speckit-delivery-route` skill under the active skills root, and other hosts should check the rendered command file.
+On Windows, replace `--script sh` with `--script ps`. Extension commands are the stable cross-host surface; check native skill/command files instead of `Get-Command speckit*` or `which speckit*`. See [host support](skills/README.md#installation-and-execution-coverage) for the six-host install matrix, CLI dispatch requirements, and live-model validation limits.
 
 ## Local development and release
 
@@ -204,7 +207,7 @@ Releasing is two steps: run **Prepare release PR** to stamp versions and catalog
 
 - Current line: `0.4.x` provides persistent runtime checkpoints, conditional dispatch and recovery, the Core/Ralph compatibility contract, and guarded Review/Converge.
 - Next: provider-level parallel Ralph and cross-host semantic gates.
-- `1.0.0`: clean-project installation evidence across supported integrations.
+- `1.0.0`: live-model delivery, repair, and resume validation across hosts; the installation matrix proves distribution and local runtime contracts only.
 
 See the [changelog](CHANGELOG.md) for per-release changes.
 

@@ -53,6 +53,38 @@ evaluation artifacts, not shipped extensions or release readiness evidence.
 Stronger follow-up evaluation should use less-leading cases and isolated real
 repositories: execute repair → re-review → resume, preserve unresolved IDs and
 attempt counts, introduce late ADR/worktree mutations, and verify actual task
-state/commit ownership. Structural regression tests and clean OpenCode/Codex
+state/commit ownership. Structural regression tests and the six-host clean
 Bundle installations complement these probes; they do not establish semantic
 correctness across all hosts.
+
+## Live-host smoke protocol
+
+The installation CI does not run models. No six-host live delivery result is
+claimed by this change. Record each real run separately rather than converting
+an installed Skill, a fake-consumer probe, or an available CLI into a live pass.
+
+For each host, use an isolated temporary Git repository with a small Python
+package, `unittest` checks, and explicit project quality commands. Install the
+same Bundle source/version and initialize project governance. Keep each scenario
+on its own branch and launch a fresh host context through the documented native
+entry point. Respect each real approval gate; record the operator's actual
+choice. Use the portable sequential path unless isolated parallel execution has
+its own provider contract.
+
+| Scenario | Concrete change | Required observations |
+| --- | --- | --- |
+| Lightweight | Fix a misspelled README heading | Correct lane, bounded edit, targeted evidence, review and handoff |
+| Bugfix | Repair an off-by-one boundary in a small pure function | Reproducing failed test, assessment, approved repair, passing regression test and final review |
+| Feature | Add a bounded public function with explicit edge cases | Scope/design/execution approvals, tasks, per-task current owner receipts and commits, task-closure audit and final review |
+| Resume/repair | Pause at a real gate or after a review finding, then resume in a fresh process | Same run identity and packet, preserved finding IDs/attempt budget, no stale approval/result reuse |
+
+Record the distribution source SHA, Spec Kit and host versions, OS/shell/Python,
+entry point, scenario, source snapshots, actual commands/results, native review
+reports, runtime/evidence paths, approvals, and final Git/task state. Explicitly
+report unavailable independent review, CLI authentication, or other required
+capabilities under the existing owner contracts. Do not supply a passing receipt
+for work that did not run. Keep authentication material out of records.
+
+For IDE hosts, distinguish an interactive native-Skill run from
+`specify workflow run`: the latter requires an authenticated provider CLI.
+A successful result applies only to its recorded host, platform, and scenario.

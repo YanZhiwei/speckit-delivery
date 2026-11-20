@@ -58,8 +58,8 @@ uv run --with pyyaml python scripts/test_stamp_release.py
 python scripts/test_docs_readme_structure.py
 python scripts/test_delivery_runtime.py
 python scripts/test_workflow_runtime.py
-python scripts/test_bundle_install.py
-python scripts/test_bundle_install.py --integration codex
+python scripts/test_bundle_install.py --integration all
+# 单宿主：--integration codex|claude|opencode|copilot|gemini|cursor-agent
 cp -R /path/to/speckit-delivery/bundle /tmp/speckit-bundle-check/bundle
 specify bundle validate --path /tmp/speckit-bundle-check/bundle
 specify bundle build --path /path/to/speckit-delivery/bundle --output ./dist
@@ -73,15 +73,23 @@ Spec Kit `>=1.2.3`，也是 Bundle 和 `0.4.x` Workflow 的最低版本；单独
 Workflow requirements、压缩包根布局、README 命令和版本完全一致时，才能认为可发布。
 
 本地 Bundle 测试还检查 Explore／Review 模板、review-fix 与 Ralph 资源是否完整打包／安装、
-宿主是否渲染命令，以及三个已安装 Workflow 是否与源码一致。它还校验 `sd` 别名与路由
-共用正文／输入和登记归属，重装能恢复入口，卸载会清理入口并保留项目配置。默认验证
-OpenCode，Codex 变体验证 Skills 模式。结构检查不能证明调研质量或用户实际批准；
+宿主是否渲染命令，以及三个已安装 Workflow 是否与源码一致。在可生成别名的宿主上，
+还校验 `sd` 别名与路由共用正文／输入和登记归属；所有宿主均验证重装恢复入口、卸载清理入口并保留项目配置。默认验证
+OpenCode，`--integration all` 验证六个原生宿主，包括 Skills 布局与 Gemini TOML 的解析及
+原生输入占位符。各变体均执行已安装的 Runtime Helper；五个支持别名的宿主验证旧别名升级，
+Copilot 因固定版本安装器不生成别名而验证完整路由的更新。结构检查不能证明调研质量或用户实际批准；
 行为验收案例位于 `evals/evals.json`。
 
 `scripts/test_workflow_handoff.py` 使用 Spec Kit Command／Gate 的真实传输边界、假宿主消费者和
 临时磁盘包，验证新上下文、真实 Gate 选择和缺包失败。在已安装 `specify_cli` 与 PyYAML
 的 Python 环境运行。发布 CI 为这项确定性验证固定使用 `specify-cli==1.2.3`；Bundle 支持的最低版本仍为
 Spec Kit `>=1.2.3`。它不是实际模型调用、语义评估、性能验证或端到端交付。
+
+可复用的 `Host installation matrix` 从 `test_bundle_install.py --list-integrations` 读取宿主列表，
+对每个宿主分别运行 Linux／Windows 干净安装检查；PR／Push 校验与正式发布共用此矩阵。
+正式发布先将输入 Ref 固定为 Commit，再用同一 Commit 执行矩阵及发布；矩阵失败会阻止
+创建 Tag／Release。制版流程对实际写入版本或复用的工作树在 Linux 上检查全部六宿主。
+安装证据与真实模型执行的区别见[宿主支持说明](skills/README.md#installation-and-execution-coverage)。
 
 随包提供的 Delivery Runtime Helper 在目标项目根目录运行时需要 Python 3.11
 或更高版本以及 Git，只使用标准库和 Git。Helper 新增的本地忽略规则包括 Spec Kit 的

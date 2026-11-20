@@ -2,14 +2,14 @@ schema_version: "1.0"
 workflow:
   id: "bugfix-delivery"
   name: "Spec Kit Bugfix Delivery"
-  version: "0.4.7"
+  version: "0.4.8"
   author: "Yan Zhiwei"
   description: "Evidence-first structure/history exploration, bug assessment and scope approval, guarded repair, regression validation, quality, review, and handoff."
 
 requires:
   speckit_version: ">=1.2.3"
   integrations:
-    any: ["codex", "claude", "copilot", "gemini", "opencode", "generic"]
+    any: ["codex", "claude", "copilot", "gemini", "opencode", "cursor-agent", "generic"]
 
 inputs:
   bug_slug:

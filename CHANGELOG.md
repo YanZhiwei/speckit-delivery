@@ -2,6 +2,36 @@
 
 All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and Semantic Versioning.
 
+## [0.4.8] - 2026-11-20
+
+### Added
+
+- Clean-project Bundle lifecycle checks for Claude Code, GitHub Copilot Skills,
+  Gemini CLI TOML commands, and Cursor Skills, alongside Codex and OpenCode.
+- A reusable six-host Linux/Windows installation matrix for PR validation and
+  release publication, with the release source pinned once across both.
+- Cursor's `cursor-agent` integration in all three workflows and their catalog.
+
+### Changed
+
+- Release preparation checks all six hosts against the stamped source. Host
+  documentation separates declared compatibility, installation/runtime probes,
+  and recorded live-model delivery evidence.
+- Copilot uses the canonical `/speckit-delivery-route` entry because Spec Kit
+  `1.2.3` omits manifest aliases in its Skills registration path.
+
+### Compatibility and validation
+
+- Existing Codex, Claude Code, and OpenCode entries remain unchanged. Bundle
+  and workflow requirements remain Spec Kit `>=1.2.3`; the bundled official Bug
+  extension retains its independent `1.0.1` version.
+- Clean-project lifecycle validation covers all six native hosts on Windows and
+  Ubuntu: built archives, native arguments, installed resources/runtime, entry
+  ownership, Bundle update, reinstall/removal, and configuration preservation.
+- Distribution, version-stamping, README, runtime, task-closure, outcome,
+  handoff, and workflow-engine regression checks validate the prepared source.
+  These checks do not establish live-model end-to-end delivery quality.
+
 ## [0.4.7] - 2026-11-17
 
 ### Added

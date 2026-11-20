@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import dataclass
 import http.server
 import json
 import os
@@ -15,6 +16,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import tomllib
 import zipfile
 
 
@@ -25,6 +27,48 @@ TAG_URL = re.compile(
 ASSET_URL = re.compile(
     r"https://github\.com/YanZhiwei/speckit-delivery/releases/download/v[^/]+/"
 )
+
+
+@dataclass(frozen=True)
+class HostLayout:
+    root: str
+    skills: bool = False
+    suffix: str = ".md"
+    arguments: str = "$ARGUMENTS"
+    alias: bool = True
+
+
+# Layouts provided by the pinned Spec Kit 1.2.3 validation environment.
+HOSTS = {
+    "codex": HostLayout(".agents/skills", skills=True),
+    "claude": HostLayout(".claude/skills", skills=True),
+    "opencode": HostLayout(".opencode/commands"),
+    # The dual-layout Skills registration path in 1.2.3 renders primary
+    # commands, but not manifest aliases. Verify its canonical route instead.
+    "copilot": HostLayout(".github/skills", skills=True, alias=False),
+    "gemini": HostLayout(".gemini/commands", suffix=".toml", arguments="{{args}}"),
+    "cursor-agent": HostLayout(".cursor/skills", skills=True),
+}
+
+
+def rendered_command(project: Path, integration: str, name: str) -> Path:
+    host = HOSTS[integration]
+    if host.skills:
+        skill = name.replace(".", "-")
+        if not skill.startswith("speckit-"):
+            skill = f"speckit-{skill}"
+        return project / host.root / skill / "SKILL.md"
+    return project / host.root / f"{name}{host.suffix}"
+
+
+def read_prompt(path: Path) -> str:
+    text = path.read_text(encoding="utf-8")
+    if path.suffix == ".toml":
+        prompt = tomllib.loads(text)["prompt"]
+        if not isinstance(prompt, str):
+            raise ValueError(f"{path}: TOML prompt must be a string")
+        return prompt
+    return text
 
 
 def check_delivery_install(
@@ -112,39 +156,24 @@ def check_delivery_install(
         ("speckit.evidence.collect", "project's explicit output-language convention first"),
         ("speckit.evidence.collect", "paths, commands, hashes, and original logs/receipts unchanged"),
     ):
-        if integration == "codex":
-            rendered = list(project.glob(f".agents/skills/{name.replace('.', '-')}/SKILL.md"))
-        else:
-            rendered = list(project.glob(f".opencode/**/{name}.md"))
-        if not rendered or not any(
-            marker in path.read_text(encoding="utf-8") for path in rendered
-        ):
+        rendered = rendered_command(project, integration, name)
+        if not rendered.is_file() or marker not in read_prompt(rendered):
             raise RuntimeError(f"{integration} command missing/stale: {name}")
 
     # Doctor checks a resource owned by Review. The renderer rewrites bare
     # extension-relative paths to the owning extension, so verify the rendered
     # result names Review and resolves to the installed template.
-    if integration == "codex":
-        doctor_commands = list(
-            project.glob(".agents/skills/speckit-delivery-doctor/SKILL.md")
-        )
-    else:
-        doctor_commands = list(
-            project.glob(".opencode/**/speckit.delivery.doctor.md")
-        )
-    if not doctor_commands:
+    doctor = rendered_command(project, integration, "speckit.delivery.doctor")
+    if not doctor.is_file():
         raise RuntimeError(f"{integration} command missing: speckit.delivery.doctor")
     reviewer_template = project / ".specify/extensions/review/templates/reviewer.md"
     reviewer_path = ".specify/extensions/review/templates/reviewer.md"
     wrong_path = ".specify/extensions/delivery/templates/reviewer.md"
     if not reviewer_template.is_file():
         raise RuntimeError("installed review templates/reviewer.md is missing")
-    for command in doctor_commands:
-        text = command.read_text(encoding="utf-8")
-        if reviewer_path not in text or wrong_path in text:
-            raise RuntimeError(
-                f"{integration} Doctor has a stale Reviewer path: {command}"
-            )
+    text = read_prompt(doctor)
+    if reviewer_path not in text or wrong_path in text:
+        raise RuntimeError(f"{integration} Doctor has a stale Reviewer path: {doctor}")
 
     installed_workflows = project / ".specify" / "workflows"
     candidates = [
@@ -162,27 +191,22 @@ def check_delivery_install(
     print("Explore/Review/Ralph resources, rendering, and all workflows verified.", flush=True)
 
 
-def check_router_alias(project: Path, integration: str) -> tuple[Path, Path]:
-    """Require the installed alias to share the router body and installer owner."""
-    if integration == "codex":
-        root = project / ".agents/skills"
-        router = root / "speckit-delivery-route/SKILL.md"
-        alias = root / "speckit-sd/SKILL.md"
-    else:
-        root = project / ".opencode/commands"
-        router = root / "speckit.delivery.route.md"
-        alias = root / "sd.md"
-    if not router.is_file() or not alias.is_file():
-        raise RuntimeError(f"{integration} delivery router or sd alias was not installed")
-    router_text = router.read_text(encoding="utf-8")
-    alias_text = alias.read_text(encoding="utf-8")
+def check_router_entry(project: Path, integration: str) -> tuple[Path, Path | None]:
+    """Verify the canonical entry and any supported alias share an owner/body."""
+    host = HOSTS[integration]
+    router = rendered_command(project, integration, "speckit.delivery.route")
+    alias = rendered_command(project, integration, "sd") if host.alias else None
+    if not router.is_file() or (alias is not None and not alias.is_file()):
+        raise RuntimeError(f"{integration} delivery entry missing: route={router}, alias={alias}")
+    router_text = read_prompt(router)
+    alias_text = read_prompt(alias) if alias is not None else router_text
     heading = "# Spec Kit Delivery Route\n"
     if heading not in router_text or heading not in alias_text:
-        raise RuntimeError(f"{integration} sd alias does not contain the installed router")
+        raise RuntimeError(f"{integration} entry does not contain the installed router")
     if router_text.split(heading, 1)[1].strip() != alias_text.split(heading, 1)[1].strip():
         raise RuntimeError(f"{integration} sd alias differs from the installed router")
-    if "$ARGUMENTS" not in alias_text:
-        raise RuntimeError(f"{integration} sd alias lost its request argument")
+    if host.arguments not in alias_text:
+        raise RuntimeError(f"{integration} entry lost its native request argument")
     runtime_reference = ".specify/extensions/delivery/scripts/delivery_runtime.py"
     if runtime_reference not in router_text or runtime_reference not in alias_text:
         raise RuntimeError(f"{integration} route/alias lost its installed runtime helper reference")
@@ -208,16 +232,24 @@ def check_router_alias(project: Path, integration: str) -> tuple[Path, Path]:
         raise RuntimeError(
             f"{integration} route/alias lost the installed task-closure guard reference"
         )
-    if integration == "codex":
-        if not re.search(r"^name: speckit-sd$", alias_text, re.MULTILINE):
-            raise RuntimeError("Codex alias skill has the wrong name")
+    if host.skills:
+        for entry in (router, alias):
+            if entry is not None and not re.search(
+                rf"^name: {re.escape(entry.parent.name)}$", read_prompt(entry), re.MULTILINE
+            ):
+                raise RuntimeError(f"{integration} skill has the wrong name: {entry}")
     elif router_text != alias_text:
-        raise RuntimeError("OpenCode sd alias must match the router command exactly")
+        raise RuntimeError(f"{integration} sd alias must match the router prompt exactly")
     registry = json.loads((project / ".specify/extensions/.registry").read_text(encoding="utf-8"))
-    registered = registry["extensions"]["delivery"]["registered_commands"].get(integration, [])
-    if not {"speckit.delivery.route", "sd"}.issubset(registered):
-        raise RuntimeError(f"{integration} registry does not assign both router names to Delivery")
-    print(f"{integration} sd alias, request input, and Delivery ownership verified.", flush=True)
+    metadata = registry["extensions"]["delivery"]
+    if alias is not None:
+        registered = metadata["registered_commands"].get(integration, [])
+        if not {"speckit.delivery.route", "sd"}.issubset(registered):
+            raise RuntimeError(f"{integration} registry does not assign both router names to Delivery")
+    elif router.parent.name not in metadata.get("registered_skills", []):
+        raise RuntimeError(f"{integration} registry does not assign the route skill to Delivery")
+    entry_label = "route and sd alias" if alias is not None else "canonical route"
+    print(f"{integration} {entry_label}, request input, and Delivery ownership verified.", flush=True)
     return router, alias
 
 
@@ -228,10 +260,18 @@ def check_controlled_alias_upgrade(
     original_config: bytes,
     config_path: Path,
 ) -> None:
-    """Exercise adoption of an old custom sd shim through the normal update path."""
-    _router, alias = check_router_alias(project, integration)
+    """Verify Bundle update and, where supported, adoption of an old sd shim."""
+    _router, alias = check_router_entry(project, integration)
+    if alias is None:
+        run([specify, "bundle", "update", "speckit-delivery", "--integration", integration], project)
+        check_router_entry(project, integration)
+        if config_path.read_bytes() != original_config:
+            raise RuntimeError("Controlled Bundle update overwrote the project configuration")
+        print(f"{integration} canonical-route Bundle update verified (no alias in this CLI layout).", flush=True)
+        return
     legacy_marker = "# legacy custom sd forwarding shim"
-    if integration == "codex":
+    host = HOSTS[integration]
+    if host.skills:
         legacy = (
             "---\n"
             "name: speckit-sd\n"
@@ -241,6 +281,9 @@ def check_controlled_alias_upgrade(
             "Delegate to the old Delivery route with the request below.\n"
             "$ARGUMENTS\n"
         )
+    elif host.suffix == ".toml":
+        body = f"{legacy_marker}\nDelegate to the old Delivery route.\n{host.arguments}\n"
+        legacy = 'description = "Legacy local Delivery shortcut"\n' + f"prompt = {json.dumps(body)}\n"
     else:
         legacy = (
             "---\n"
@@ -268,7 +311,7 @@ def check_controlled_alias_upgrade(
         [specify, "bundle", "update", "speckit-delivery", "--integration", integration],
         project,
     )
-    check_router_alias(project, integration)
+    check_router_entry(project, integration)
     if legacy_marker in alias.read_text(encoding="utf-8"):
         raise RuntimeError(f"{integration} controlled Bundle update kept the old sd forwarding shim")
     if config_path.read_bytes() != original_config:
@@ -302,12 +345,37 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--specify", default=shutil.which("specify"))
     parser.add_argument("--version", default=None)
-    parser.add_argument("--integration", choices=["opencode", "codex"], default="opencode")
+    parser.add_argument("--integration", choices=[*HOSTS, "all"], default="opencode")
+    parser.add_argument(
+        "--list-integrations", action="store_true",
+        help="Print the CI integration matrix as JSON",
+    )
     args = parser.parse_args()
+    if args.list_integrations:
+        print(json.dumps(list(HOSTS)))
+        return 0
     if not args.specify:
         print("specify CLI is not on PATH")
         return 1
     version = args.version or version_from_bundle()
+    if args.integration == "all":
+        failed = []
+        for integration in HOSTS:
+            try:
+                run(
+                    [
+                        sys.executable, str(Path(__file__).resolve()),
+                        "--specify", args.specify, "--version", version,
+                        "--integration", integration,
+                    ],
+                    ROOT,
+                )
+            except RuntimeError:
+                failed.append(integration)
+        print(f"Host installation matrix: {len(HOSTS) - len(failed)}/{len(HOSTS)} passed.", flush=True)
+        if failed:
+            print(f"Failed integrations: {', '.join(failed)}", flush=True)
+        return int(bool(failed))
     temporary = Path(tempfile.mkdtemp(prefix="speckit-bundle-install-"))
     server = None
     try:
@@ -425,7 +493,7 @@ def main() -> int:
         if "speckit-delivery" not in text or version not in text:
             raise RuntimeError("Bundle installation record is missing the expected id/version")
         check_delivery_install(project, dist, version, args.integration)
-        router, alias = check_router_alias(project, args.integration)
+        router, alias = check_router_entry(project, args.integration)
         config_path = project / ".specify/extensions/delivery/delivery-config.yml"
         custom_config = config_path.read_text(encoding="utf-8").replace(
             "max_review_fix_rounds: 3", "max_review_fix_rounds: 2"
@@ -454,17 +522,22 @@ def main() -> int:
             original_config,
             config_path,
         )
-        alias.unlink()
+        missing_entry = alias if alias is not None else router
+        missing_entry.unlink()
+        if missing_entry.name == "SKILL.md":
+            # Model a missing installed entry, not an existing user directory:
+            # the dual-layout installer deliberately preserves the latter.
+            missing_entry.parent.rmdir()
         run([args.specify, "extension", "add", "delivery", "--force"], project)
-        check_router_alias(project, args.integration)
+        check_router_entry(project, args.integration)
         if config_path.read_bytes() != original_config:
             raise RuntimeError("Reinstalling Delivery overwrote the project configuration")
         run([args.specify, "extension", "remove", "delivery", "--keep-config", "--force"], project)
-        if router.exists() or alias.exists():
+        if router.exists() or (alias is not None and alias.exists()):
             raise RuntimeError(f"{args.integration} removal left a router or sd alias behind")
         if config_path.read_bytes() != original_config:
             raise RuntimeError("Removing Delivery with --keep-config lost the project configuration")
-        print("Bundle install, sd alias refresh/removal, and config preservation passed.", flush=True)
+        print(f"{args.integration}: Bundle install, entry refresh/removal, and config preservation passed.", flush=True)
         return 0
     except (OSError, RuntimeError, ValueError, KeyError, zipfile.BadZipFile) as exc:
         print(f"Bundle installation test failed: {exc}")
