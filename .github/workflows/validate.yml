@@ -9,6 +9,11 @@ permissions:
   contents: read
 
 jobs:
+  host-install:
+    uses: ./.github/workflows/host-install.yml
+    with:
+      ref: ${{ github.sha }}
+
   validate:
     runs-on: ubuntu-latest
     steps:
@@ -75,9 +80,6 @@ jobs:
           cp -R "$repo_root/bundle" "$project_dir/bundle"
           specify bundle validate --path "$project_dir/bundle"
           specify bundle build --path "$repo_root/bundle" --output "$repo_root/dist"
-
-      - name: Test Bundle installation from local catalogs
-        run: python scripts/test_bundle_install.py
 
       - name: Check whitespace
         run: git diff --check

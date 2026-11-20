@@ -17,12 +17,34 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  resolve-source:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      sha: ${{ steps.source.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
+      - name: Pin the source commit for validation and publication
+        id: source
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  host-install:
+    needs: resolve-source
+    uses: ./.github/workflows/host-install.yml
+    with:
+      ref: ${{ needs.resolve-source.outputs.sha }}
+      version: ${{ inputs.version }}
+
+  release:
+    needs: [resolve-source, host-install]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve-source.outputs.sha }}
           fetch-depth: 0
 
       - name: Resolve release metadata
@@ -93,7 +115,6 @@ jobs:
           python scripts/test_task_closure.py
           python scripts/test_delivery_outcome.py
           uv run --with specify-cli==1.2.3 python scripts/test_workflow_runtime.py
-          python scripts/test_bundle_install.py --version "$VERSION"
           python scripts/package_components.py --version "$VERSION" --output dist
           repo_root="$PWD"
           project_dir="$(mktemp -d)"

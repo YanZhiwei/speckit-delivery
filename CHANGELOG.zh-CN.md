@@ -3,6 +3,35 @@
 所有重要变更遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)
 和语义化版本规范。
 
+## [0.4.8] - 2026-11-20
+
+### 新增
+
+- 在 Codex、OpenCode 之外，为 Claude Code、GitHub Copilot Skills、Gemini CLI TOML
+  命令和 Cursor Skills 增加干净项目 Bundle 生命周期检查。
+- PR 校验与正式发布共用六宿主 Linux／Windows 安装矩阵，发布校验与发布本身固定为同一 Commit。
+- 三条 Workflow 及 Catalog 增加 Cursor 的 `cursor-agent` 集成。
+
+### 变更
+
+- 制版流程对写入版本后的实际源码检查全部六宿主；文档明确区分声明兼容、安装／Runtime
+  探针和已记录的真实模型交付证据。
+- Copilot 使用完整入口 `/speckit-delivery-route`，因为 Spec Kit `1.2.3` 的 Skills 注册路径不生成 Manifest 别名。
+
+### 修复
+
+- Windows CI 显式启用 Python UTF-8 模式及标准流编码，避免安装探针转发 Unicode CLI
+  输出时因系统字符集不支持而失败。
+
+### 兼容性与验证
+
+- Codex、Claude Code、OpenCode 的现有入口保持不变；Bundle 与 Workflow 继续要求
+  Spec Kit `>=1.2.3`，随包安装的官方 Bug 扩展保留独立版本 `1.0.1`。
+- 在 Windows 和 Ubuntu 上验证六个原生宿主的干净项目生命周期，覆盖构建包、原生参数、
+  已安装资源／Runtime、入口归属、Bundle 更新、重装／卸载及配置保留。
+- 对准备发布的源码执行分发、版本写入、README、Runtime、任务闭环、结果写入、交接和
+  Workflow 引擎回归检查；这些检查不代表真实模型端到端交付质量已经验证。
+
 ## [0.4.7] - 2026-11-17
 
 ### 新增

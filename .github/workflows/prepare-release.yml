@@ -25,7 +25,7 @@ jobs:
   prepare:
     name: Prepare release branch and PR
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
         with:
@@ -92,7 +92,7 @@ jobs:
           python scripts/test_task_closure.py
           python scripts/test_delivery_outcome.py
           uv run --with specify-cli==1.2.3 python scripts/test_workflow_runtime.py
-          python scripts/test_bundle_install.py --version "$VERSION"
+          python scripts/test_bundle_install.py --version "$VERSION" --integration all
           python scripts/package_components.py --version "$VERSION" --output dist
           git diff --check
 
@@ -145,7 +145,7 @@ jobs:
           - \`stamp_release.py\`
           - \`validate_distribution.py --version $VERSION\`
           - Distribution contract tests
-          - Local-catalog Bundle installation using the pinned \`specify-cli==1.2.3\` validation environment (supported minimum: Spec Kit >=1.2.3)
+          - Six-host local-catalog Bundle installation on Linux using the pinned \`specify-cli==1.2.3\` validation environment (supported minimum: Spec Kit >=1.2.3)
           - Component packaging
 
           **Do not publish from this branch.** After review and merge, run

@@ -119,7 +119,7 @@ specify init . --integration opencode --script sh
 ### 3. 安装 Bundle
 
 ```bash
-base=https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.7/catalogs
+base=https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.8/catalogs
 specify extension catalog add "$base/extensions.json" --name speckit-delivery --install-allowed
 specify workflow catalog add "$base/workflows.json" --name speckit-delivery
 specify bundle catalog add "$base/bundles.json" --id speckit-delivery --policy install-allowed
@@ -166,9 +166,12 @@ Windows 使用 Python Launcher 时可加 `--input runtime_python="py -3"`，Linu
 | Claude Code | `specify init . --integration claude --script sh` | `/speckit-sd`，完整 `/speckit-delivery-route` | `.claude/skills/` |
 | Codex | `specify init . --integration codex --integration-options="--skills" --script ps` | `$speckit-sd`，完整 `$speckit-delivery-route` | `.agents/skills/` |
 | OpenCode | `specify init . --integration opencode --script sh` | `/sd`，完整 `/speckit.delivery.route` | OpenCode 命令目录 |
+| GitHub Copilot | `specify init . --integration copilot --script sh` | `/speckit-delivery-route` | `.github/skills/` |
+| Gemini CLI | `specify init . --integration gemini --script sh` | `/sd`，完整 `/speckit.delivery.route` | `.gemini/commands/`（TOML） |
+| Cursor | `specify init . --integration cursor-agent --script sh` | `/speckit-sd`，完整 `/speckit-delivery-route` | `.cursor/skills/` |
 | 通用适配器 | `specify init . --integration generic ...` | 执行渲染出的 `speckit.delivery.route` 命令文件 | 自定义命令目录 |
 
-Extension 命令是跨宿主的稳定接口。不要用 `Get-Command speckit*` 或 `which speckit*` 判断扩展是否安装：Codex Skills 模式检查实际 skills root 下的 `speckit-delivery-route` 技能，其他宿主检查渲染后的命令文件。
+Windows 可将 `--script sh` 换成 `--script ps`。Extension 命令是跨宿主的稳定接口，安装状态应检查原生 Skill／命令文件，不能用 `Get-Command speckit*` 或 `which speckit*` 判断；六宿主的安装矩阵、CLI 调度条件与真实模型验证边界见[宿主支持说明](skills/README.md#installation-and-execution-coverage)。
 
 ## 本地开发与发布
 
@@ -204,7 +207,7 @@ specify bundle build --path ./bundle --output ./dist   # 分发仓库 checkout
 
 - 当前线：`0.4.x` 提供持久运行时检查点、条件调度与恢复、Core/Ralph 兼容契约，以及 guarded Review／Converge。
 - 下一步：Provider 级并行 Ralph、跨宿主语义 Gate。
-- `1.0.0`：完成多 Integration 的干净项目安装验证。
+- `1.0.0`：完成多宿主真实模型交付、修复与恢复验证；安装矩阵只证明分发与本地运行时契约。
 
 逐版本变化见[变更日志](CHANGELOG.zh-CN.md)。
 

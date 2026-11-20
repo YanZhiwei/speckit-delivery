@@ -68,8 +68,8 @@ python scripts/test_delivery_runtime.py
 python scripts/test_task_closure.py
 python scripts/test_delivery_outcome.py
 python scripts/test_workflow_runtime.py
-python scripts/test_bundle_install.py
-python scripts/test_bundle_install.py --integration codex
+python scripts/test_bundle_install.py --integration all
+# One host: --integration codex|claude|opencode|copilot|gemini|cursor-agent
 cp -R /path/to/speckit-delivery/bundle /tmp/speckit-bundle-check/bundle
 specify bundle validate --path /tmp/speckit-bundle-check/bundle
 specify bundle build --path /path/to/speckit-delivery/bundle --output ./dist
@@ -86,12 +86,14 @@ workflow requirements, packaged roots, README commands, and versions agree.
 The local Bundle test also checks that Explore/Review/Plan, method-adapter,
 repair-docs, review-fix, and Ralph slice resources survive packaging/installation,
 the active host renders the commands, and all three installed workflows match source.
-It also checks that the `sd` alias shares the router body/input and registry owner,
-is restored by reinstall, and is removed with Delivery while configuration survives.
-Its default host is OpenCode; the Codex variant verifies Skills-mode rendering.
-Both variants execute the installed helper for identity/resume, hash-bound check
-reuse, planning handoff and checkbox-only closure rejection, then exercise an
-older forwarding-alias upgrade while preserving project configuration.
+Where supported, it checks that the `sd` alias shares the router body/input and
+registry owner. All hosts check entry restoration/removal and configuration preservation.
+Its default host is OpenCode; `--integration all` checks all six native hosts,
+including Skills layouts and Gemini's parsed TOML prompt/native argument input.
+Every variant executes the installed helper for identity/resume, hash-bound check
+reuse, planning handoff and checkbox-only closure rejection, then exercises an
+older forwarding-alias upgrade where aliases are rendered. Copilot's pinned
+Skills path tests the canonical route because its upstream installer omits aliases.
 Structural and fake-owner behavioral checks do not prove semantic
 research quality or user approval; behavioral prompts live in `evals/evals.json`.
 
@@ -102,6 +104,15 @@ Run it in a Python environment containing `specify_cli` and PyYAML. Release CI
 pins `specify-cli==1.2.3` for this deterministic validation fixture; the supported
 Bundle minimum remains Spec Kit `>=1.2.3`. It is not live model execution, semantic evaluation,
 performance validation, or end-to-end delivery.
+
+The reusable `Host installation matrix` workflow derives the host list from
+`test_bundle_install.py --list-integrations` and checks each host on Linux and
+Windows. PR/push validation and Release distribution call the same matrix.
+Release distribution resolves the requested ref once and uses that exact commit
+for both the matrix and publication; a failed matrix prevents tag/release writes.
+Prepare release PR checks all six hosts against its actual stamped/reused working
+tree on Linux. See [host coverage](skills/README.md#installation-and-execution-coverage)
+for the distinction between installation evidence and live-model execution.
 
 The packaged Delivery runtime helper requires Python 3.11 or later and Git when
 run from the target project root. It uses only the standard library and Git; its
