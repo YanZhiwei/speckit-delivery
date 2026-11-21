@@ -1134,7 +1134,7 @@ class DeliveryRuntimeTest(unittest.TestCase):
         self.assertEqual(state["attempts"]["review:outgoing-diff"], {"used": 1, "pending": None})
         self.assertEqual(state["attempts"]["convergence:outgoing-diff"], {"used": 1, "pending": None})
 
-    def test_planning_manifest_uses_configured_direct_proposed_adr_directory(self) -> None:
+    def test_planning_manifest_uses_configured_proposed_adr_root(self) -> None:
         runtime, _ = self.feature_runtime("adr-manifest")
         state = runtime.load()
         config = self.write(
@@ -1172,6 +1172,108 @@ class DeliveryRuntimeTest(unittest.TestCase):
             "# Legacy ADR\nADR_STATUS: Proposed\n",
         )
         self.assertTrue(legacy_runtime._planning_path_allowed(legacy_runtime.load(), legacy_runtime.relative(legacy), "adr"))
+
+    def test_planning_manifest_accepts_nested_proposed_adr_only(self) -> None:
+        runtime, _ = self.feature_runtime("nested-adr")
+        self.write(
+            ".specify/extensions/decision/decision-config.yml",
+            "adr_directories: [docs/decisions]\nproposed_statuses: [Proposed]\n",
+        )
+        state = runtime.load()
+        for path, text, expected in (
+            ("docs/decisions/agent/0015-mcp.md", "ADR_STATUS: Proposed\n", True),
+            ("docs/decisions/agent/nested/0016.md", "status: Proposed\n", True),
+            ("docs/decisions/agent/accepted.md", "ADR_STATUS: Accepted\n", False),
+            ("docs/decisions-elsewhere/0015.md", "ADR_STATUS: Proposed\n", False),
+            ("docs/decisions/agent/source.py", "ADR_STATUS: Proposed\n", False),
+        ):
+            self.write(path, text)
+            for owner in ("decision", "adr"):
+                with self.subTest(path=path, owner=owner):
+                    self.assertEqual(runtime._planning_path_allowed(state, path, owner), expected)
+
+    def test_planning_companions_need_exact_current_design_approval(self) -> None:
+        runtime, _ = self.feature_runtime("planning-companions")
+        self.write(
+            ".specify/extensions/decision/decision-config.yml",
+            "adr_directories: [docs/decisions]\nproposed_statuses: [Proposed]\n"
+            "context_files:\n  - docs/architecture/boundaries.md\n"
+            "  - docs/decisions/accepted.md\n  - src/app.py\n"
+            "  - docs/architecture/*.md\n",
+        )
+        companions = ["docs/decisions/README.md", "docs/architecture/boundaries.md"]
+        rejected = [
+            "docs/architecture/undeclared.md", "docs/decisions/notes.md",
+            "docs/decisions/accepted.md", "src/app.py",
+        ]
+        for path in companions + rejected[:-1]:
+            self.write(path, "# Planning document\n")
+        self.write("docs/decisions/accepted.md", "ADR_STATUS: Accepted\n")
+        for path in companions:
+            self.assertFalse(runtime._planning_path_allowed(runtime.load(), path, "decision"))
+        runtime.present("design", companions + rejected)
+        runtime.decide("design", "approve")
+        state = runtime.load()
+        for path in companions + rejected:
+            with self.subTest(path=path):
+                self.assertEqual(runtime._planning_path_allowed(state, path, "decision"), path in companions)
+                self.assertFalse(runtime._planning_path_allowed(state, path, "core"))
+        changed = companions[1]
+        self.write(changed, "# Unapproved changed design\n")
+        self.assertFalse(runtime._planning_path_allowed(runtime.load(), changed, "decision"))
+        runtime.present("design", companions)
+        runtime.decide("design", "reject")
+        self.assertFalse(runtime._planning_path_allowed(runtime.load(), companions[0], "decision"))
+
+    def test_checkpoint_commits_approved_decision_documents_and_tracks_freshness(self) -> None:
+        runtime, _ = self.feature_runtime("decision-doc-checkpoint")
+        self.write(
+            ".specify/extensions/decision/decision-config.yml",
+            "adr_directories: [docs/decisions]\nproposed_statuses: [Proposed]\n"
+            "context_files: [docs/architecture/boundaries.md]\n",
+        )
+        self.commit("configure decision policy")
+        docs = {
+            "docs/decisions/agent/0015-mcp.md": "ADR_STATUS: Proposed\n",
+            "docs/decisions/README.md": "# ADR index\n",
+            "docs/architecture/boundaries.md": "# Approved product boundary\n",
+        }
+        for path, text in docs.items():
+            self.write(path, text)
+        runtime.present("design", list(docs))
+        runtime.decide("design", "approve")
+        analyze = runtime.begin("analyze")
+        self.result_file(runtime, analyze, "pass", {"coverage": "complete"})
+        runtime.record("analyze")
+        approved = [runtime.load()["bindings"][name] for name in ("spec", "plan", "tasks")]
+        checkpoint = runtime.begin("checkpoint", scope="initial")
+        (runtime.local / f"planning-inputs-{checkpoint['ticket']}.json").write_text(
+            json.dumps({
+                "schema_version": 1, "delivery_run": runtime.run, "lane": "feature",
+                "authorization": "fixture user approved exact planning commit",
+                "paths": [
+                    *[{"path": path, "source_owner": "core"} for path in approved],
+                    *[{"path": path, "source_owner": "decision"} for path in docs],
+                ],
+            }) + "\n", encoding="utf-8",
+        )
+        planning_commit = self.commit("record approved decision documents")
+        self.result_file(runtime, checkpoint, "pass", {
+            "planning_stage": "initial", "approved_paths": approved + list(docs),
+            "branch": self.git("branch", "--show-current").stdout.strip(),
+            "base_head": checkpoint["snapshot"]["head"],
+            "planning_commit": planning_commit,
+            "authorization": "fixture user approved exact planning commit",
+            "analyze_fingerprint": runtime.load()["stages"]["analyze"]["output_fingerprint"],
+            "content_fingerprint": checkpoint["snapshot"]["fingerprint"],
+        })
+        runtime.record("checkpoint")
+        self.assertTrue(runtime.current(runtime.load(), "checkpoint", "pass"))
+        self.assertTrue(runtime.current(runtime.load(), "analyze", "pass"))
+        self.write("docs/architecture/boundaries.md", "# Later change\n")
+        self.assertIsInstance(runtime.load(), dict)
+        self.assertFalse(runtime.current(runtime.load(), "checkpoint", "pass"))
+        self.assertFalse(runtime.current(runtime.load(), "analyze", "pass"))
 
     def test_slice_approval_metadata_does_not_change_analyze_fingerprint_but_plan_bytes_do(self) -> None:
         runtime, feature = self.feature_runtime("slice-freshness")

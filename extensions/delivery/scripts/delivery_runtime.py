@@ -1486,10 +1486,10 @@ class Runtime:
             normalized.append(value)
         return normalized
 
-    def _adr_policy(self) -> tuple[list[Path], set[str]]:
+    def _adr_policy(self) -> tuple[list[Path], set[str], set[str]]:
         config = self.inside(".specify/extensions/decision/decision-config.yml")
         if not config.is_file():
-            return [self.inside(".specify/decisions")], {"proposed"}
+            return [self.inside(".specify/decisions")], {"proposed"}, set()
         try:
             text = config.read_text(encoding="utf-8")
         except (OSError, UnicodeError) as exc:
@@ -1506,7 +1506,7 @@ class Runtime:
         proposed = {value.strip().lower() for value in self._config_list(text, "proposed_statuses")}
         if not proposed:
             raise ProtocolError("Decision proposed_statuses must contain at least one status.")
-        return paths, proposed
+        return paths, proposed, set(self._config_list(text, "context_files"))
 
     def _planning_path_allowed(self, state: dict[str, Any], item: str, owner: str, require_proposed: bool = True) -> bool:
         path = self.inside(item)
@@ -1528,14 +1528,27 @@ class Runtime:
                 return len(path.relative_to(self.directory).parts) == 1 and path.name in PLANNING_RUN_NAMES
             return False
         if owner in {"decision", "adr"}:
-            directories, proposed_statuses = self._adr_policy()
-            if not any(path.parent == directory for directory in directories):
+            if path.suffix.lower() != ".md":
                 return False
+            directories, proposed_statuses, context_files = self._adr_policy()
+            adr_index = any(path.parent == directory for directory in directories) and path.name in {"README.md", "README.en.md", "README.zh-CN.md"}
+            if any(path.is_relative_to(directory) for directory in directories) and not adr_index:
+                if not require_proposed:
+                    return True
+                header = fields(path)
+                status = header.get("adr_status", header.get("status", "")).strip().lower()
+                return status in proposed_statuses
+            if not adr_index and item not in context_files:
+                return False
+            # Saved checkpoint structure must survive later edits; freshness
+            # still binds it to the original snapshot and manifest identities.
             if not require_proposed:
                 return True
             header = fields(path)
-            status = header.get("adr_status", header.get("status", "")).strip().lower()
-            return status in proposed_statuses
+            if header.get("adr_status") or header.get("status"):
+                return False
+            approval = state.get("approvals", {}).get("design", {})
+            return approval.get("choice") == "approve" and approval.get("inputs", {}).get(item) == digest(path.read_bytes())
         return False
 
     def validate_data(
@@ -1706,7 +1719,7 @@ class Runtime:
                 if self.relative(path) != item or "*" in item or not path.is_file() or path.is_symlink() or path.is_relative_to(self.local):
                     raise ProtocolError("Approved planning paths must be existing normalized non-symlink files outside runtime bookkeeping.")
                 if not self._planning_path_allowed(state, item, manifest_entries[item], require_proposed=dynamic):
-                    raise ProtocolError("Approved planning path is outside the actual Core output/explicit Proposed ADR allowlist.")
+                    raise ProtocolError("Approved planning path is outside the actual Core output/Proposed ADR/design-approved decision document allowlist.")
             branch = data.get("branch")
             base_head = data.get("base_head")
             if not isinstance(branch, str) or not branch.strip() or not isinstance(base_head, str) or not GIT_OBJECT.fullmatch(base_head):

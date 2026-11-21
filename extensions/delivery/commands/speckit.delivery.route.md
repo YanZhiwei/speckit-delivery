@@ -59,8 +59,14 @@ new delivery routing. They must not start a lane implicitly:
   and every exact path plus `source_owner` (`core`, `decision`, or `adr`). Only
   bound Spec/Plan/Tasks, actual Core outputs (research/data-model/quickstart/
   contracts/checklist), this run's canonical planning files (`exploration.md`,
-  `code-context.md`, `decision-context.md`, `slices.md`), or a Proposed ADR under
-  the configured ADR directory may appear; no wildcard or unrelated path.
+  `code-context.md`, `decision-context.md`, `slices.md`), or a Markdown Proposed ADR
+  beneath a configured ADR root may appear. Decision-owned companion documents
+  may also appear: a configured root's `README.md`, `README.en.md`, or
+  `README.zh-CN.md` index, or an exact Markdown `context_files` entry from Decision
+  configuration, with current bytes in this run's approved native `design` input
+  map. Context-only references do not authorize an edit; include only actual
+  companion changes explicitly approved at the design gate. Accepted ADRs cannot
+  enter as companions. No wildcard, source file, or unrelated path is allowed.
   Save the native `SD_CORE_HANDOFF: PASS|BLOCKED` at exactly
   `.specify/delivery/<delivery_run>/runtime/core-handoff.md` and, when runtime
   arguments are supplied, reference that file from the `checkpoint` result with the
