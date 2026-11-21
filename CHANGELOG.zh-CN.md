@@ -3,6 +3,32 @@
 所有重要变更遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)
 和语义化版本规范。
 
+## [0.4.9] - 2026-11-21
+
+### 修复
+
+- Feature 规划检查点现在允许 Markdown Proposed ADR 位于配置 ADR 根目录下的领域
+  子目录，不再要求所有 ADR 平铺在根目录。
+- Decision 配套修改可以包含根目录 README 索引或准确配置的 Markdown `context_files`
+  文件，但当前内容哈希必须匹配同一运行已批准的原生 `design` 输入。Accepted ADR、
+  源码、未声明文档及审批后的内容变化继续被拦截。
+- 后续编辑文档时，已保存的检查点仍可加载，同时新鲜度检查会使旧规划基线失效。
+
+### 变更
+
+- Delivery Route、Core adapter 和 runtime 契约统一规划文档的准确路径、owner、状态
+  与设计审批要求。
+- 已安装 helper 探针覆盖分层 ADR、已批准配套文档，以及后续未批准修改的拒绝行为。
+
+### 兼容性与验证
+
+- 不新增依赖、配置键或 runtime state schema，保留既有运行标识和审批记录。
+  Bundle 与 Workflow 最低要求仍为 Spec Kit `>=1.2.3`，Python 仍为 `>=3.11`，
+  官方 Bug 扩展继续独立固定为 `1.0.1`。
+- 回归覆盖缺失、拒绝及过期审批，准确配置路径，临时仓库中的真实 Git 规划提交，
+  检查点新鲜度，以及打包安装后的 runtime 行为。模拟 owner 检查不代表真实模型交付
+  质量，也不执行消费者的 MCP 会话。
+
 ## [0.4.8] - 2026-11-20
 
 ### 新增

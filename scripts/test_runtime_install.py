@@ -170,6 +170,22 @@ def run_planning_checkpoint_smoke(
     (feature / "spec.md").write_text("# Spec\n\nInstalled helper checkpoint smoke.\n", encoding="utf-8")
     (feature / "plan.md").write_text("# Plan\n\nUse the installed helper.\n", encoding="utf-8")
     (feature / "tasks.md").write_text("# Tasks\n\n- [X] T1 Verify the installed checkpoint\n", encoding="utf-8")
+    decision_config = project / ".specify/extensions/decision/decision-config.yml"
+    decision_config.parent.mkdir(parents=True, exist_ok=True)
+    decision_config.write_text(
+        "adr_directories: [docs/decisions]\nproposed_statuses: [Proposed]\n"
+        "context_files: [docs/architecture/boundaries.md]\n",
+        encoding="utf-8",
+    )
+    decision_docs = {
+        "docs/decisions/agent/0015-install-smoke.md": "ADR_STATUS: Proposed\n",
+        "docs/decisions/README.md": "# Installed ADR index\n",
+        "docs/architecture/boundaries.md": "# Approved installed boundary\n",
+    }
+    for name, text in decision_docs.items():
+        document = project / name
+        document.parent.mkdir(parents=True, exist_ok=True)
+        document.write_text(text, encoding="utf-8")
     commit_if_needed(project, "checkpoint smoke planning fixture")
 
     initialized = json_output(
@@ -191,6 +207,15 @@ def run_planning_checkpoint_smoke(
         )
     )
     approved = [bindings[name] for name in ("spec", "plan", "tasks")]
+    presentation_inputs = [item for name in decision_docs for item in ("--input", name)]
+    json_output(runtime_cli(
+        helper, project, "present", "--run", run, "--name", "design",
+        *presentation_inputs, "--json",
+    ))
+    json_output(runtime_cli(
+        helper, project, "decide", "--run", run, "--name", "design",
+        "--choice", "approve", "--json",
+    ))
 
     analyze = json_output(
         runtime_cli(helper, project, "begin", "--run", run, "--stage", "analyze", "--json")
@@ -230,7 +255,8 @@ def run_planning_checkpoint_smoke(
                 "lane": "feature",
                 "authorization": "installed helper planning checkpoint smoke",
                 "paths": [
-                    {"path": path, "source_owner": "core"} for path in approved
+                    *[{"path": path, "source_owner": "core"} for path in approved],
+                    *[{"path": path, "source_owner": "decision"} for path in decision_docs],
                 ],
             },
             indent=2,
@@ -245,10 +271,10 @@ def run_planning_checkpoint_smoke(
         checkpoint,
         {
             "planning_stage": "initial",
-            "approved_paths": approved,
+            "approved_paths": approved + list(decision_docs),
             "branch": branch,
             "base_head": checkpoint["snapshot"]["head"],
-            "planning_commit": "none",
+            "planning_commit": checkpoint["snapshot"]["head"],
             "authorization": "installed helper planning checkpoint smoke",
             "analyze_fingerprint": recorded_analyze["output_fingerprint"],
             "content_fingerprint": checkpoint["snapshot"]["fingerprint"],
@@ -263,6 +289,15 @@ def run_planning_checkpoint_smoke(
     )
     if planning != {"required": "planning", "ready": True}:
         raise RuntimeError("installed helper did not accept the native planning checkpoint")
+    context = project / "docs/architecture/boundaries.md"
+    original_context = context.read_bytes()
+    context.write_text("# Unapproved boundary change\n", encoding="utf-8")
+    runtime_cli(
+        helper, project, "require", "--run", run, "--kind", "planning",
+        "--json", expected=1,
+    )
+    context.write_bytes(original_context)
+    runtime_cli(helper, project, "require", "--run", run, "--kind", "planning", "--json")
     closure = runtime_cli(
         helper,
         project,
@@ -416,7 +451,7 @@ def run_runtime_install_smoke(project: Path, helper: Path) -> None:
     )
     if config.is_file():
         assert_config_unchanged(config, config_before)
-    print("Installed runtime init/resume, planning checkpoint, SHA-bound Quality, and freshness smoke passed.", flush=True)
+    print("Installed runtime init/resume, nested ADR/approved companion checkpoint, SHA-bound Quality, and freshness smoke passed.", flush=True)
 
 
 def main() -> int:

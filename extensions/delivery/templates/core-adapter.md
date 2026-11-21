@@ -157,6 +157,14 @@ selection:
    a directory glob, "all Core artifacts," or a later-discovered path. A source,
    Spec, Plan, ADR, task, slice, or other declared output change outside this
    manifest is a stale or changed input and returns to its owning approval.
+   Decision-owned Markdown ADRs may live in domain subdirectories beneath a
+   configured ADR root and must be Proposed at a new checkpoint. Companion
+   changes are limited to a root's `README.md`, `README.en.md`, or
+   `README.zh-CN.md` index and exact Markdown `context_files` entries in Decision
+   configuration. Their current hashes must appear in this run's approved native
+   `design` input map, and the design gate must have explicitly covered those
+   changes. Reading a context file does not itself approve editing it. Accepted
+   ADRs cannot be relabeled as companions; source files remain excluded.
 2. **Fingerprints and association.** Preserve the original content and
    requirements/policy fingerprints from the displayed approval, the declared
    native-output manifest identity, and the TaskID set/order and slice mapping
