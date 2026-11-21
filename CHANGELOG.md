@@ -2,6 +2,37 @@
 
 All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and Semantic Versioning.
 
+## [0.4.9] - 2026-11-21
+
+### Fixed
+
+- Feature planning checkpoints now accept Markdown Proposed ADRs in domain
+  subdirectories beneath configured ADR roots instead of requiring a flat layout.
+- Decision-owned companion changes can include a root README index or an exact
+  Markdown `context_files` entry when the current content hash matches the same
+  run's approved native `design` inputs. Accepted ADRs, source files, undeclared
+  documents, and changes made after approval remain blocked.
+- Saved checkpoints remain loadable after later document edits while freshness
+  checks correctly invalidate the old planning baseline.
+
+### Changed
+
+- Delivery Route, Core adapter, and runtime contracts use the same exact-path,
+  owner, status, and design-approval requirements for planning documents.
+- Installed-helper probes cover nested ADRs, approved companion documents, and
+  rejection of subsequent unapproved edits.
+
+### Compatibility and validation
+
+- No dependency, configuration key, or runtime-state schema change is required.
+  Existing run identities and approval records are preserved. The Bundle and
+  workflows still require Spec Kit `>=1.2.3`; Python remains `>=3.11`, and the
+  official Bug extension retains its independent `1.0.1` pin.
+- Regression coverage includes missing, rejected, or stale approval; exact
+  configured paths; a real temporary Git planning commit; checkpoint freshness;
+  and packaged/installed runtime behavior. Fake-owner checks do not establish
+  live-model delivery quality or execute consumer MCP sessions.
+
 ## [0.4.8] - 2026-11-20
 
 ### Added

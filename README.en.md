@@ -119,7 +119,7 @@ Initialization creates `.specify/` and the host command surface; it does not rep
 ### 3. Install the Bundle
 
 ```bash
-base=https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.8/catalogs
+base=https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.9/catalogs
 specify extension catalog add "$base/extensions.json" --name speckit-delivery --install-allowed
 specify workflow catalog add "$base/workflows.json" --name speckit-delivery
 specify bundle catalog add "$base/bundles.json" --id speckit-delivery --policy install-allowed
