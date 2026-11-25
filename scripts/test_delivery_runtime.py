@@ -1620,6 +1620,73 @@ class DeliveryRuntimeTest(unittest.TestCase):
         self.assertTrue(runtime.current(state, "analyze", "pass"))
         self.assertEqual(runtime.require("planning"), {"required": "planning", "ready": True})
 
+    def test_final_publication_checks_the_actual_commit_without_local_run_state(self) -> None:
+        run = "portable-publication"
+        path = f".specify/delivery/{run}/evidence.md"
+        base = self.git("rev-parse", "HEAD").stdout.strip()
+        self.write("src/app.py", "VALUE = 2\n")
+        reviewed = self.commit("reviewed change")
+        args = {"lane": "feature", "base": base, "reviewed_head": reviewed}
+        record = (
+            f"- **delivery_run**: {run}\n- **lane**: feature\n- **evidence_path**: {path}\n"
+            f"- **reviewed_head**: {reviewed}\n- **content_fingerprint**: {hashlib.sha256(b'code').hexdigest()}\n"
+            f"- **requirements_fingerprint**: {hashlib.sha256(b'requirements').hexdigest()}\n"
+            f"\n## Earlier validation\nreviewed_head: {base}\nstatus: delivered\n"
+        )
+        self.write(path, record)
+        self.git("add", "--", path)
+        missing = self.cli("verify-publication", run, **args, head=reviewed, expected=1)
+        self.assertIn("regular file", missing.stderr)
+        published = self.commit("publish final Evidence")
+        self.git("checkout", "--detach", "--quiet", base)
+        self.assertFalse((self.root / path).exists())
+        verified = json.loads(self.cli("verify-publication", run, **args, head=published).stdout)
+        self.assertEqual(verified["evidence_blob"], self.git("rev-parse", f"{published}:{path}").stdout.strip())
+        self.assertEqual(verified["reviewed_head"], reviewed)
+        self.assertFalse((self.root / ".specify").exists())
+
+        self.git("checkout", "--detach", "--quiet", published)
+        self.write("src/app.py", "VALUE = 3\n")
+        changed = self.commit("later product change")
+        stale = self.cli("verify-publication", run, **args, head=changed, expected=1)
+        self.assertIn("outside its Evidence file", stale.stderr)
+        inherited = self.cli("verify-publication", run, lane="feature", base=published,
+                             head=changed, reviewed_head=reviewed, expected=1)
+        self.assertIn("add or update", inherited.stderr)
+
+        for old, new, error in (
+            (f"delivery_run**: {run}", "delivery_run**: other", "delivery_run"),
+            ("lane**: feature", "lane**: bugfix", "lane"),
+            (path, ".specify/delivery/other/evidence.md", "evidence_path"),
+            (reviewed, base, "reviewed_head"),
+            ("reviewed_head**:", "earlier_head**:", "reviewed_head"),
+            ("requirements_fingerprint**:", "old_fingerprint**:", "fingerprints"),
+        ):
+            with self.subTest(field=old):
+                self.write(path, record.replace(old, new))
+                head = self.commit("record with incorrect review identity")
+                failure = self.cli("verify-publication", run, **args, head=head, expected=1)
+                self.assertIn(error, failure.stderr)
+
+        self.write(path, "<!-- DELIVERY_CURRENT_OUTCOME_BEGIN -->\n" + record)
+        closed = self.commit("historical Close record")
+        self.assertIn("Close follow-up", self.cli("verify-publication", run, **args, head=closed, expected=1).stderr)
+        link = self.git("hash-object", "-w", "--stdin", input_text="another.md").stdout.strip()
+        self.git("update-index", "--cacheinfo", f"120000,{link},{path}")
+        self.git("commit", "--quiet", "-m", "store a symbolic link")
+        head = self.git("rev-parse", "HEAD").stdout.strip()
+        self.assertIn("regular file", self.cli("verify-publication", run, **args, head=head, expected=1).stderr)
+
+    def test_legacy_terminal_label_without_close_proof_remains_snapshot_bound(self) -> None:
+        runtime = self.new_runtime("legacy-terminal")
+        self.write(
+            ".specify/delivery/legacy-terminal/evidence.md",
+            "delivery_run: legacy-terminal\nlane: lightweight\nstatus: delivered\npull_request: owner/repo#31\n",
+        )
+        runtime.require("evidence")
+        self.write("later.md", "A later worktree input.\n")
+        self.assertEqual(runtime.status()["status"], "verification-required")
+
     def test_status_reports_disappeared_observed_evidence_as_a_blocker(self) -> None:
         runtime = self.new_runtime("evidence-disappears", "lightweight")
         evidence = self.write(
@@ -1630,6 +1697,8 @@ class DeliveryRuntimeTest(unittest.TestCase):
             "pull_request: pending\n",
         )
         runtime.require("evidence")
+        self.write("later.md", "A new input while the run is active.\n")
+        self.assertTrue(any("project inputs changed" in reason.lower() for reason in runtime.status()["blockers"]))
         evidence.unlink()
         status = runtime.status()
         self.assertEqual(status["status"], "active")

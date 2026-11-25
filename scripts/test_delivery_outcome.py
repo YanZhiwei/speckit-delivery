@@ -264,6 +264,20 @@ class DeliveryOutcomeTest(unittest.TestCase):
         self.assertEqual(self.evidence.read_bytes(), after_first)
         self.assertEqual(first["reviewed_head"], second["reviewed_head"])
 
+    def test_merge_observation_order_uses_instants_and_preserves_offsets(self) -> None:
+        original = self.evidence.read_bytes()
+        merged = "2026-11-23T17:46:03Z"
+        self.write_observation(merged_at=merged, observed_at="2026-11-24T01:45:41.740086+08:00")
+        with self.assertRaisesRegex(OUTCOME.OutcomeError, "observed_at precedes merged_at"):
+            self.call()
+        self.assertEqual(self.evidence.read_bytes(), original)
+
+        simultaneous = "2026-11-24T01:46:03+08:00"
+        self.write_observation(merged_at=merged, observed_at=simultaneous)
+        self.assertEqual(self.call()["status"], "delivered")
+        self.assertIn(f"- **observed_at**: {simultaneous}", self.evidence.read_text(encoding="utf-8"))
+        self.assertFalse(self.call()["changed"])
+
     def test_runtime_close_record_refreshes_observation_after_success(self) -> None:
         run = "runtime-close-run"
         runtime_module_path = ROOT / "extensions/delivery/scripts/delivery_runtime.py"
@@ -317,6 +331,22 @@ class DeliveryOutcomeTest(unittest.TestCase):
 
         before_evidence = evidence.read_bytes()
         before_state = runtime.path.read_bytes()
+        self.write("later.md", "Unrelated work after the verified merge.\n")
+        self.assertEqual(runtime.status()["status"], "delivered")
+        self.git("add", "--", "later.md")
+        self.git("commit", "--quiet", "-m", "unrelated follow-up")
+        self.assertEqual(runtime.status()["status"], "delivered")
+        legacy_checkpoint = runtime.load()
+        del legacy_checkpoint["terminal_status"]
+        self.assertEqual(runtime.status(legacy_checkpoint)["status"], "delivered")
+        self.assertEqual(runtime.path.read_bytes(), before_state)
+        evidence.write_bytes(before_evidence + b"changed historical evidence\n")
+        self.assertEqual(runtime.status()["status"], "verification-required")
+        evidence.unlink()
+        self.assertEqual(runtime.status()["status"], "verification-required")
+        with self.assertRaisesRegex(runtime_module.ProtocolError, "terminal run"):
+            runtime.phase("planning")
+        evidence.write_bytes(before_evidence)
         observed["merged_revision"] = "0" * 40
         (local / "observed-pr.json").write_text(json.dumps(observed) + "\n", encoding="utf-8")
         with self.assertRaises(runtime_module.ProtocolError):
