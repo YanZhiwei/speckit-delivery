@@ -112,15 +112,17 @@ def atomic_json(path: Path, value: dict[str, Any]) -> None:
             Path(temporary).unlink(missing_ok=True)
 
 
-def fields(path: Path) -> dict[str, str]:
-    if not path.is_file():
-        return {}
+def text_fields(text: str) -> dict[str, str]:
     output: dict[str, str] = {}
-    for line in path.read_text(encoding="utf-8").splitlines():
+    for line in text.splitlines():
         match = re.match(r"^\s*(?:-\s*)?(?:\*\*)?([A-Za-z_]+)(?:\*\*)?\s*:\s*(.*?)\s*$", line)
         if match:
             output.setdefault(match[1].lower(), match[2].strip().strip("`"))
     return output
+
+
+def fields(path: Path) -> dict[str, str]:
+    return text_fields(path.read_text(encoding="utf-8")) if path.is_file() else {}
 
 
 class Runtime:
@@ -291,6 +293,10 @@ class Runtime:
             raise ProtocolError("Checkpoint lane/worktree mismatch; inspect the original run binding.")
         if state.get("phase") not in PHASES:
             raise ProtocolError("Checkpoint phase is invalid; recover the original owner transition instead of skipping it.")
+        if "terminal_status" in state and (
+            not isinstance(state["terminal_status"], str) or state["terminal_status"] not in TERMINAL
+        ):
+            raise ProtocolError("Checkpoint terminal status is invalid; inspect the original Close record.")
         if type(state.get("revision")) is not int or state["revision"] < 0:
             raise ProtocolError("Checkpoint revision is malformed; recover the original state before resuming it.")
         for key in ("bindings", "stages", "pending", "attempts", "approvals"):
@@ -460,6 +466,7 @@ class Runtime:
             raise ProtocolError(str(exc)) from exc
         state = self.load()
         state["evidence_observation"] = self._observe_evidence(state)
+        state["terminal_status"] = result["status"]
         self.save(state)
         return result
 
@@ -1985,7 +1992,7 @@ class Runtime:
             "head": snapshot["head"], "input_fingerprint": snapshot["fingerprint"],
         }
 
-    def _evidence_current(self, state: dict[str, Any]) -> tuple[bool, str | None]:
+    def _evidence_current(self, state: dict[str, Any], *, check_worktree: bool = True) -> tuple[bool, str | None]:
         observation = state.get("evidence_observation")
         if not isinstance(observation, dict):
             return False, "Evidence has not been observed and persisted by the runtime."
@@ -1996,12 +2003,13 @@ class Runtime:
             return False, "Previously recorded canonical Evidence is missing; rerun Evidence before handoff."
         if digest(path.read_bytes()) != observation["sha256"]:
             return False, "Previously recorded canonical Evidence changed; rerun Evidence before handoff."
-        snapshot = self.snapshot(state)
-        if snapshot["head"] != observation["head"] or snapshot["fingerprint"] != observation["input_fingerprint"]:
-            return False, "The project inputs changed after Evidence was observed; refresh Evidence before handoff."
         header = fields(path)
         if header.get("delivery_run") != self.run or header.get("lane") != state["lane"]:
             return False, "Canonical Evidence identity no longer matches this run/lane."
+        if check_worktree:
+            snapshot = self.snapshot(state)
+            if snapshot["head"] != observation["head"] or snapshot["fingerprint"] != observation["input_fingerprint"]:
+                return False, "The project inputs changed after Evidence was observed; refresh Evidence before handoff."
         return True, None
 
     def _find_handoff_body(self, state: dict[str, Any]) -> Path:
@@ -2026,6 +2034,63 @@ class Runtime:
         if len(valid) > 1 and (self.directory / "pull-request.md") not in valid:
             raise ProtocolError("Multiple slice PR bodies exist without a canonical selected body; record PR_BODY_PATH in same-run Evidence.")
         return self.directory / "pull-request.md" if self.directory / "pull-request.md" in valid else valid[0]
+
+    def verify_publication(self, lane: str, base: str, head: str, reviewed_head: str) -> dict[str, Any]:
+        """Verify a single/final publication from Git objects, including in a clean checkout."""
+        if lane not in LANES:
+            raise ProtocolError("Publication requires the approved run's --lane.")
+        for label, revision in (("base", base), ("head", head), ("reviewed-head", reviewed_head)):
+            if not revision or not re.fullmatch(r"(?:[0-9a-fA-F]{40}|[0-9a-fA-F]{64})", revision):
+                raise ProtocolError(f"--{label} must be a full Git commit ID.")
+            try:
+                commit = self.git("rev-parse", "--verify", f"{revision}^{{commit}}").decode("ascii").strip()
+            except ProtocolError as exc:
+                raise ProtocolError(f"--{label} commit {revision} is unavailable; provide the observed Git objects.") from exc
+            if commit != revision.lower():
+                raise ProtocolError(f"--{label} must name the commit itself.")
+
+        path = f".specify/delivery/{self.run}/evidence.md"
+
+        def tree_entry(revision: str) -> list[bytes]:
+            return self.git("ls-tree", "-z", revision, "--", path).partition(b"\t")[0].split()
+
+        entry = tree_entry(head)
+        if not entry or entry[0] not in {b"100644", b"100755"} or entry[1] != b"blob":
+            raise ProtocolError(f"The publication head must contain a regular file at {path}.")
+        merge_base = self.git("merge-base", base, head).decode("ascii").strip()
+        prior = tree_entry(merge_base)
+        if prior and prior[2] == entry[2]:
+            raise ProtocolError(f"The final publication must add or update its own Evidence at {path}.")
+        blob = entry[2].decode("ascii")
+        try:
+            record = self.git("cat-file", "blob", blob).decode("utf-8-sig")
+        except UnicodeDecodeError as exc:
+            raise ProtocolError(f"The published Evidence at {path} must be UTF-8.") from exc
+        # Later validation snapshots may name a different review or a prior outcome.
+        sections = re.split(r"(?m)^ {0,3}#{1,6}[ \t]+.*$", record)
+        header = next(
+            (values for values in map(text_fields, sections) if "delivery_run" in values or "evidence_path" in values),
+            {},
+        )
+        if header.get("status") in TERMINAL or record.lstrip().startswith("<!-- DELIVERY_CURRENT_OUTCOME_BEGIN -->"):
+            raise ProtocolError("A Close follow-up cannot serve as the acceptance record for a new publication.")
+        if (header.get("delivery_run"), header.get("lane"), header.get("evidence_path")) != (self.run, lane, path):
+            raise ProtocolError("Published Evidence must identify the expected delivery_run, lane, and canonical evidence_path.")
+        if header.get("reviewed_head", "").lower() != reviewed_head.lower():
+            raise ProtocolError("The published Evidence summary must identify the expected reviewed_head.")
+        if not header.get("content_fingerprint") or not header.get("requirements_fingerprint"):
+            raise ProtocolError("Published Evidence must identify the reviewed content and requirements fingerprints.")
+        changes = self.git(
+            "diff", "--name-only", "--no-ext-diff", "--no-textconv", "--no-renames",
+            "--ignore-submodules=none", reviewed_head, head, "--", ".", f":(top,exclude,literal){path}",
+        )
+        if changes:
+            raise ProtocolError("The publication head differs from reviewed_head outside its Evidence file; refresh Review and Evidence.")
+        return {
+            "verified": True, "delivery_run": self.run, "lane": lane,
+            "evidence_path": path, "evidence_blob": blob,
+            "base": base.lower(), "head": head.lower(), "reviewed_head": reviewed_head.lower(),
+        }
 
     def _require_handoff_native(self, state: dict[str, Any], persist: bool = True) -> dict[str, str]:
         body = self._find_handoff_body(state)
@@ -2190,7 +2255,7 @@ class Runtime:
         replay = self._operation_replay(state, operation_id, "phase", request)
         if replay is not None:
             return replay
-        if name not in PHASES or fields(self.directory / "evidence.md").get("status") in TERMINAL:
+        if name not in PHASES or state.get("terminal_status") in TERMINAL or fields(self.directory / "evidence.md").get("status") in TERMINAL:
             raise ProtocolError("Invalid phase or terminal run; do not reopen an outcome with a phase update.")
         if name == "handoff":
             self.require("review")
@@ -2253,6 +2318,8 @@ class Runtime:
             "kind": "evidence", "path": self.relative(evidence_path), "sha256": digest(evidence_path.read_bytes()),
             "head": snapshot["head"], "input_fingerprint": snapshot["fingerprint"],
         }
+        if terminal_status == expected_terminal and not terminal_blockers:
+            state["terminal_status"] = terminal_status
         self.save(state)
         return {"eligible": True, "outcome": outcome, "pull_request": pr or (existing if existing else None), "writes_performed": False}
 
@@ -2281,11 +2348,20 @@ class Runtime:
         phase = state["phase"]
         blockers = list(terminal_blockers)
         evidence_observed = state.get("evidence_observation")
-        if evidence_observed is not None:
-            evidence_ok, evidence_reason = self._evidence_current(state)
+        recorded_terminal = state.get("terminal_status")
+        if recorded_terminal is not None and (recorded_terminal != terminal_status or evidence_observed is None):
+            blockers.append("The verified Close record or its Evidence observation is missing or inconsistent; recover the original Evidence and checkpoint.")
+        terminal = terminal_status in TERMINAL or recorded_terminal is not None
+        # Older native Close records carry the hash-bound proof in Evidence.
+        # A legacy status label alone still requires a current worktree.
+        historical_close = terminal and (
+            recorded_terminal is not None or bool(header.get("published_head_proof") and header.get("merge_proof"))
+        )
+        if evidence_observed is not None and (terminal or phase != "handoff"):
+            evidence_ok, evidence_reason = self._evidence_current(state, check_worktree=not historical_close)
             if not evidence_ok and evidence_reason:
                 blockers.append(evidence_reason)
-        if terminal_status in TERMINAL:
+        if terminal:
             status = terminal_status if not blockers else "verification-required"
         else:
             status = "active"
@@ -2325,7 +2401,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("operation", choices=(
         "init", "bind", "phase", "begin", "record", "owner-result", "needs", "require",
         "reserve", "complete", "present", "decide", "status", "resume", "outcome",
-        "task-start", "task-gate", "task-record", "close-record",
+        "task-start", "task-gate", "task-record", "verify-publication", "close-record",
     ))
     parser.add_argument("--root", type=Path, default=Path.cwd())
     parser.add_argument("--run")
@@ -2356,6 +2432,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--outcome", choices=("merged", "closed", "superseded", "unverified"))
     parser.add_argument("--verified", action="store_true")
     parser.add_argument("--pr")
+    parser.add_argument("--base", help="observed PR base commit for final publication verification")
+    parser.add_argument("--head", help="observed PR source commit for final publication verification")
+    parser.add_argument("--reviewed-head", help="historical commit supplied by the approved Review/Handoff")
     parser.add_argument("--task", help="exact bound Task ID for a Ralph closure transition")
     parser.add_argument("--branch", help="approved execution branch required before task edits")
     parser.add_argument("--commit", help="exact task closure commit to associate with pre-commit evidence")
@@ -2431,6 +2510,8 @@ def main(argv: list[str] | None = None) -> int:
                 result = runtime.decide(args.name, args.choice, operation_id)
             elif operation == "outcome":
                 result = runtime.outcome(args.outcome, args.verified, args.pr)
+            elif operation == "verify-publication":
+                result = runtime.verify_publication(args.lane, args.base, args.head, args.reviewed_head)
             elif operation == "close-record":
                 result = runtime.close_record(args.outcome, args.verified, args.pr, args.file)
             elif operation == "task-start":

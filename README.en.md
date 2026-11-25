@@ -51,7 +51,7 @@ It builds on Spec Kit's Extension, Workflow, and Bundle mechanisms. It **does no
 | Quality gates: project profiles, standards, six-dimensional review | `speckit.quality.brief`, `.check`, `speckit.review.standards` | [Quality Gate](QUALITY-GATE.md) |
 | Code review and repair: guarded review, convergence, repair | `speckit.review.run`, `speckit.delivery.review-fix` | [Reviewer contract](extensions/review/templates/reviewer.md) |
 | Simplification: only accepted candidates are applied | `speckit.simplify.scan`, `.verify` | [Simplify](extensions/simplify/README.md) |
-| Evidence and close-out: snapshot-bound evidence, handoff, close | `speckit.evidence.collect`, `speckit.delivery.handoff`, `.close` | [Artifact lifecycle](LIFECYCLE.md) |
+| Verify the final PR's evidence and record the delivery outcome | `speckit.evidence.collect`, `speckit.delivery.handoff`, `.close` | [Final publication check](extensions/delivery/templates/runtime.md#final-publication-check) · [Artifact lifecycle](LIFECYCLE.md) |
 | Documentation sync: projection sync, project README structure guard, package README judgment | `speckit.docs-sync.run`, `.package-readme` | [Docs Sync](extensions/docs-sync/README.md) |
 | Diagrams: Mermaid by default, optional rendering | `speckit.diagram.render` | [Diagram](extensions/diagram/README.md) |
 | Defect handling: assessment, fix, regression | `speckit.bug.assess`, `.fix`, `.test` | [Spec Kit](https://github.com/github/spec-kit) |
@@ -119,7 +119,7 @@ Initialization creates `.specify/` and the host command surface; it does not rep
 ### 3. Install the Bundle
 
 ```bash
-base=https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.9/catalogs
+base=https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.10/catalogs
 specify extension catalog add "$base/extensions.json" --name speckit-delivery --install-allowed
 specify workflow catalog add "$base/workflows.json" --name speckit-delivery
 specify bundle catalog add "$base/bundles.json" --id speckit-delivery --policy install-allowed

@@ -2,6 +2,28 @@
 
 All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and Semantic Versioning.
 
+## [0.4.10] - 2026-11-25
+
+### Added
+
+- Projects that publish delivery evidence in Git can run `delivery_runtime.py verify-publication`
+  in a clean CI checkout before merging a single or final PR. Using the PR's actual base and
+  source commits, it checks that the PR adds or updates the run's `evidence.md`, that the record
+  identifies the reviewed commit, and that all other paths match that commit.
+
+### Changed
+
+- Handoff checks the approved slice-to-PR mapping before drafting PR bodies and identifies the
+  PR that will carry the evidence. For manual stacks, the merge plan now calls for retargeting
+  open dependent PRs and confirming they remain open before the parent branch is deleted.
+
+### Fixed
+
+- `status` preserves a verified Close outcome across later commits and working-tree edits.
+  Missing or altered evidence still returns `verification-required`.
+- Close compares `observed_at` and `merged_at` across time zones before writing a merged
+  outcome. If the observation predates the merge, refresh the PR observation and retry.
+
 ## [0.4.9] - 2026-11-21
 
 ### Fixed

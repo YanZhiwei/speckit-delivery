@@ -292,6 +292,8 @@ committing them. Bind evidence to the reviewed head the PR publishes plus the PR
 reference, not to a merge commit that does not exist before publication. A
 successful Handoff reports `HANDOFF_READY: ready` and a waiting-for-publication
 or waiting-for-outcome state; it is not a terminal Delivery result.
+Projects sharing Evidence in Git can check the actual single or final PR head
+before merge with the read-only [final publication check](templates/runtime.md#final-publication-check).
 
 After the PR merges or closes, run
 `speckit.delivery.close outcome=merged|closed|superseded`:

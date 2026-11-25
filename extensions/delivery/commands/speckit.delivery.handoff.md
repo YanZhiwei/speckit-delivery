@@ -84,6 +84,12 @@ and the unchanged slice approval/snapshot before rendering. A missing, stale,
 `undecided`, or classification-inconsistent value blocks. Slice approval is not
 remote publication authorization.
 
+Cross-check the coverage summary and approval against the group map. Verify
+each slice's assigned group, the groups' order and branch topology, and which
+group publishes the final record. If the summary says one group and approval
+lists several, return to Delivery Slice to reconcile the plan and renew its
+approval before rendering any affected body.
+
 - `slice=<id>`: render the approved internal layer/review artifact. State its
   goal, base branch, dependencies, reviewed task range, "not in this layer"
   deferrals, classification/probe evidence, flag or migration behavior, merge
@@ -222,6 +228,13 @@ For a sliced delivery, include the approved execution/publication plan from
 - explicit statement that publication/merge still requires separate user
   authorization.
 
+For a manual stack with parent-branch deletion enabled, list the open PRs
+whose base is the parent being retired. In the merge plan, retarget each
+dependent to its approved surviving base and verify that it remains open
+before an authorized merge that auto-deletes the parent, or before a separate
+deletion. Retain the parent when the retarget cannot be verified. Recheck the
+dependent's actual base, diff and required checks before its own merge.
+
 Emit suggested commands only when they are applicable to the verified provider.
 A native stack command, a manual bottom-up rebase sequence, and an integration
 rollup command are alternatives, not a script to run blindly. Do not execute
@@ -289,6 +302,16 @@ The rendered body is run workspace, not a second durable record. Under
 `artifact_policy: ephemeral`, keep the body local and publish it through
 `--body-file`; the durable summary belongs in the canonical run-root
 `evidence.md`.
+
+For projects that share Evidence through Git, name that file, its lane and
+the reviewed commit in the single or final PR body. Include the Evidence file
+in that publication after review, even when working artifacts are ephemeral.
+An intermediate group's body identifies the final group responsible for the
+file. Once the provider supplies the actual PR base and source head, the
+publisher or project CI runs the “Final publication check” in
+`.specify/extensions/delivery/templates/runtime.md` before merge.
+Until then report the check as pending. A later evidence-only
+Close update follows the Close contract for the original run.
 
 ## Boundaries
 

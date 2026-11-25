@@ -99,7 +99,7 @@ def _nullable_sha(value: Any, field: str) -> str | None:
     return _sha(value, field)
 
 
-def _timestamp(value: Any, field: str) -> str:
+def _timestamp(value: Any, field: str) -> datetime:
     text = _text(value, field)
     try:
         parsed = datetime.fromisoformat(text[:-1] + "+00:00" if text.endswith("Z") else text)
@@ -107,7 +107,7 @@ def _timestamp(value: Any, field: str) -> str:
         _fail(f"Observed tracker field {field!r} must be an RFC3339 timestamp.")
     if parsed.tzinfo is None:
         _fail(f"Observed tracker field {field!r} must include a timezone.")
-    return text
+    return parsed
 
 
 def _digest(value: bytes) -> str:
@@ -318,14 +318,15 @@ def _validate_observation(value: dict[str, Any], run: str, lane: str, pr: str) -
     base = _sha(value["base_revision"], "base_revision")
     merged = _nullable_sha(value["merged_revision"], "merged_revision")
     merged_at = value["merged_at"]
+    observed_at = _timestamp(value["observed_at"], "observed_at")
     if state == "MERGED":
         if merged is None:
             _fail("A MERGED tracker observation requires merged_revision and merged_at.")
-        merged_at = _timestamp(merged_at, "merged_at")
+        if observed_at < _timestamp(merged_at, "merged_at"):
+            _fail("observed_at precedes merged_at; read the tracker again before recording Close.")
     else:
         if merged is not None or merged_at is not None:
             _fail("A CLOSED tracker observation must have null merged_revision and merged_at.")
-    observed_at = _timestamp(value["observed_at"], "observed_at")
     url_repo, url_number = _canonical_pr(value["url"], repository)
     if (url_repo, url_number) != (repository, value["number"]):
         _fail("Observed tracker URL does not match repository/number.")
@@ -344,7 +345,7 @@ def _validate_observation(value: dict[str, Any], run: str, lane: str, pr: str) -
         "base_revision": base,
         "merged_revision": merged,
         "merged_at": merged_at.strip() if isinstance(merged_at, str) else None,
-        "observed_at": observed_at,
+        "observed_at": value["observed_at"].strip(),
         "url": f"https://github.com/{repository}/pull/{value['number']}",
     }
 

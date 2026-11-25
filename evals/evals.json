@@ -610,6 +610,18 @@
         "Targets the existing Quality owner with a concrete control, verification and cost rather than duplicate policy",
         "Keeps prevention proposed until governed adoption and claims no observed recurrence reduction or automatic edits"
       ]
+    },
+    {
+      "id": 60,
+      "prompt": "Prepare the Handoff for a manual six-layer squash stack. The approval lists P1 through P6, while the coverage summary assigns all slices to P1. The project shares Evidence in Git, keeps runtime files local and automatically deletes merged branches. P2 currently targets P1's branch. Describe the immediate Handoff result and what the publisher should verify after the owner reconciles the map and obtains renewed approval.",
+      "expected_output": "Blocks the inconsistent handoff and returns the map to Delivery Slice. With consistent approval, identifies P6 as the group carrying the canonical Evidence, lists P2's approved surviving base and the order for retargeting and confirming it before P1 can disappear, and checks P2's new diff and CI before its merge. The final publication check uses the provider's actual base and source commit plus the historical reviewed commit. Local files or a successful body render leave that check pending.",
+      "files": [],
+      "expectations": [
+        "Explains the conflicting one-group and six-group assignments and identifies the owner of the correction",
+        "Names the final evidence-bearing group and permits intermediate deferral under the approved map",
+        "Checks dependent PR targets before parent deletion and describes when their new diff and checks are verified",
+        "Binds final publication evidence to the provider-observed source commit and preserves separate publication authorization"
+      ]
     }
   ]
 }

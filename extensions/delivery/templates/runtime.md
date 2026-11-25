@@ -341,6 +341,10 @@ at that content. This means ready to publish/review, not published or delivered.
 Status identifies the external event still pending and reports a previously
 observed Evidence/PR body that disappeared or changed as a blocker.
 
+After Close, status checks the recorded Evidence bytes and run/lane identity.
+A verified outcome stays closed across later HEAD and working-tree changes.
+An active Handoff still requires the original reviewed inputs to be current.
+
 Before terminal native Close writes, `outcome --outcome merged|closed|superseded
 --verified --pr <reference>` validates the transition. `unverified` always exits
 nonzero without changing state or artifacts. A concrete existing PR cannot be
@@ -349,3 +353,25 @@ native Close owner still verifies the configured tracker, writes durable evidenc
 and applies its exact retirement allowlist; the helper never deletes artifacts.
 `--verified` records the native owner's observed fact; it does not query a tracker
 or turn a user assertion into observed evidence.
+
+### Final publication check
+
+When Git carries the durable Evidence, select the single or final publication
+group from the approved slice map. For an intermediate group, identify the
+final group that will carry the record. Project CI or the authorized publisher
+resolves the actual PR base and source commit from the provider and takes
+`reviewed_head` from the run's Review/Handoff. Run the following command from
+the repository root with those commits available locally.
+
+```text
+<python> .specify/extensions/delivery/scripts/delivery_runtime.py verify-publication --run <id> --lane <lane> --base <pr-base-sha> --head <pr-source-sha> --reviewed-head <reviewed-sha>
+```
+
+The read-only check works in a clean checkout without the run's local state.
+It reads the canonical Evidence blob from the specified source tree, checks
+that this PR adds or updates it relative to its merge base, and verifies its
+run, lane, path, reviewed commit and fingerprint fields. Every other tree
+entry must match the reviewed commit. A source change requires refreshed
+Review and Evidence. Use the actual source SHA even when CI has checked out a
+synthetic merge. Preserve the separate publication binding and any archive
+needed by Close when the published SHA differs from the reviewed SHA.

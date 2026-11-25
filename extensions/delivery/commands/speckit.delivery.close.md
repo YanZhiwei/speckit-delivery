@@ -132,7 +132,9 @@ For `state: "CLOSED"`, keep `head_revision`, `base_revision`, `observed_at`,
 and `url`, and set `merged_revision` and `merged_at` to `null`. For `MERGED`,
 all revision and merge-time values are required. `number`, repository, URL,
 run, lane, and PR input must identify the same PR. `observed_at` records when
-this exact tracker response was obtained; it is not the merge time.
+this exact tracker response was obtained. For a merged PR it must be at or
+after `merged_at` when compared as timezone-aware instants. If it precedes the
+merge, read the tracker again and capture the new observation before Close.
 
 After the native tracker check, run the standard-library guard from the project
 root using the verified Python invocation. The file path is run-relative to the
