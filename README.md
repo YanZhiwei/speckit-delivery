@@ -51,7 +51,7 @@ Spec Kit 负责把需求变成 `Spec → Plan → Tasks`。Spec Kit Delivery 负
 | 质量门禁：项目 Profile、Standards、六维评审 | `speckit.quality.brief`、`.check`、`speckit.review.standards` | [质量闸门](QUALITY-GATE.zh-CN.md) |
 | 代码评审与修复：guarded Review、收敛、Repair | `speckit.review.run`、`speckit.delivery.review-fix` | [评审契约](extensions/review/templates/reviewer.md) |
 | 简化审查：只处理已接受的候选 | `speckit.simplify.scan`、`.verify` | [Simplify](extensions/simplify/README.md) |
-| 证据与收口：绑定快照的证据、Handoff、Close | `speckit.evidence.collect`、`speckit.delivery.handoff`、`.close` | [产物生命周期](LIFECYCLE.zh-CN.md) |
+| 核验最终 PR 的验收记录，记录交付结果 | `speckit.evidence.collect`、`speckit.delivery.handoff`、`.close` | [发布前证据校验](extensions/delivery/templates/runtime.md#final-publication-check) · [产物生命周期](LIFECYCLE.zh-CN.md) |
 | 文档同步：投影同步、项目 README 结构门禁、包 README 漂移判断 | `speckit.docs-sync.run`、`.package-readme` | [Docs Sync](extensions/docs-sync/README.md) |
 | 图表：Mermaid 默认、可选渲染 | `speckit.diagram.render` | [Diagram](extensions/diagram/README.md) |
 | 缺陷处理：评估、修复、回归 | `speckit.bug.assess`、`.fix`、`.test` | [Spec Kit](https://github.com/github/spec-kit) |
@@ -119,7 +119,7 @@ specify init . --integration opencode --script sh
 ### 3. 安装 Bundle
 
 ```bash
-base=https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.9/catalogs
+base=https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.10/catalogs
 specify extension catalog add "$base/extensions.json" --name speckit-delivery --install-allowed
 specify workflow catalog add "$base/workflows.json" --name speckit-delivery
 specify bundle catalog add "$base/bundles.json" --id speckit-delivery --policy install-allowed
