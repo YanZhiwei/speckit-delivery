@@ -172,6 +172,65 @@ class DistributionContractTest(unittest.TestCase):
         errors = validator.validate(root)
         self.assertTrue(any("missing speckit.delivery.explore" in error for error in errors), errors)
 
+    def test_delivery_hook_events_and_commands_are_required(self) -> None:
+        root = self.fixture()
+        path = root / "extensions/delivery/extension.yml"
+        manifest = yaml.safe_load(path.read_text(encoding="utf-8"))
+        del manifest["hooks"]["after_tasks"]
+        path.write_text(yaml.safe_dump(manifest), encoding="utf-8")
+        errors = validator.validate(root)
+        self.assertTrue(
+            any("missing after_tasks hook for speckit.delivery.hook-slice" in error for error in errors),
+            errors,
+        )
+        self.assertTrue(any("hook count differs from manifest" in error for error in errors), errors)
+
+    def test_hook_must_reference_a_declared_command(self) -> None:
+        root = self.fixture()
+        path = root / "extensions/delivery/extension.yml"
+        manifest = yaml.safe_load(path.read_text(encoding="utf-8"))
+        manifest["hooks"]["after_plan"]["command"] = "speckit.decision.propose"
+        path.write_text(yaml.safe_dump(manifest), encoding="utf-8")
+        errors = validator.validate(root)
+        self.assertTrue(
+            any("hook after_plan references undeclared command" in error for error in errors),
+            errors,
+        )
+
+    def test_hook_conditions_are_rejected_because_templates_skip_them(self) -> None:
+        root = self.fixture()
+        path = root / "extensions/delivery/extension.yml"
+        manifest = yaml.safe_load(path.read_text(encoding="utf-8"))
+        manifest["hooks"]["before_implement"]["condition"] = "config.lane == feature"
+        path.write_text(yaml.safe_dump(manifest), encoding="utf-8")
+        errors = validator.validate(root)
+        self.assertTrue(
+            any("hook before_implement declares a condition" in error for error in errors),
+            errors,
+        )
+
+    def test_hook_catalog_count_must_match_manifest(self) -> None:
+        root = self.fixture()
+        catalog_path = root / "catalogs" / "extensions.json"
+        catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+        catalog["extensions"]["delivery"]["provides"]["hooks"] = 0
+        catalog_path.write_text(json.dumps(catalog), encoding="utf-8")
+        errors = validator.validate(root)
+        self.assertTrue(any("delivery: hook count differs" in error for error in errors), errors)
+
+    def test_hook_adapter_must_keep_shared_contract_owner(self) -> None:
+        root = self.fixture()
+        path = root / "extensions/delivery/commands/speckit.delivery.hook-slice.md"
+        path.write_text(
+            path.read_text(encoding="utf-8").replace("templates/hooks.md", "templates/runtime.md"),
+            encoding="utf-8",
+        )
+        errors = validator.validate(root)
+        self.assertTrue(
+            any("hook adapter must reference the shared templates/hooks.md contract" in error for error in errors),
+            errors,
+        )
+
     def test_explore_command_and_template_must_ship(self) -> None:
         for relative in (
             "extensions/delivery/commands/speckit.delivery.explore.md",

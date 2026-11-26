@@ -155,7 +155,20 @@ fix/test reports and adding per-attempt evidence rather than bypassing their
 automated overwrite refusal. Initial Bug commands remain unchanged.
 
 `speckit.quality.brief` is the pre-edit advisory layer; `speckit.quality.check`
-is the post-edit closure gate. Host hooks may call the brief, and Bugfix and
-Lightweight workflows invoke it directly. Feature Delivery delegates the brief
+is the post-edit closure gate. Bugfix and Lightweight workflows invoke the
+brief directly. Feature Delivery delegates the brief
 to Ralph's task iteration so each task gets the exact target-path context without
 a second whole-run dispatch; the portable path does not depend on hook support.
+
+Delivery registers Spec Kit extension hooks through argument-less
+`speckit.delivery.hook-*` adapters, governed by the shared
+[hook contract](extensions/delivery/templates/hooks.md), for Specify, Plan,
+Tasks, Implement, Converge, and Bug assess/fix/test lifecycle events. Adapters
+resolve exactly one active run through the read-only runtime `active`
+operation (no active run means a no-op, multiple runs require a user choice),
+reuse current native artifacts before dispatching an owner, and cover direct
+Core/Bug command invocations. Portable workflows keep their explicit steps and
+reuse hook-produced artifacts instead of repeating the work. Hooks never create
+runtime tickets or attempt budgets, never record design/assessment/execution/
+simplify/review approvals (only a direct-path scope choice), and never replace
+quality, review, or closure gates.

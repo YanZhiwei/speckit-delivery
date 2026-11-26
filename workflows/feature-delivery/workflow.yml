@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "feature-delivery"
   name: "Spec Kit Feature Delivery"
-  version: "0.4.10"
+  version: "0.5.0"
   author: "Yan Zhiwei"
   description: "Evidence-first Feature delivery with bounded research, role-aware context and cooperation planning, approved slices, guarded execution, review, and handoff."
 
@@ -216,7 +216,11 @@ steps:
         delivery_run={{ inputs.delivery_run }}
         exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
         {{ inputs.spec }} Read this packet's exact plan and establish the Proposed
-        ADR baseline. Then, as Delivery coordinator, follow the installed Plan
+        ADR baseline. If the after_plan hook already established this exact
+        plan's baseline and recorded its presented fingerprint/method/input
+        manifest in this packet, verify that identity against the unchanged
+        plan bytes and reuse it instead of proposing twice. Then, as Delivery
+        coordinator, follow the installed Plan
         checkpoint to record the final presented fingerprint/method/input manifest
         in this packet and present the design, ADR baseline, and Architecture
         constraints plus the cooperation/context plan for the existing plan gate.
@@ -271,7 +275,10 @@ steps:
         exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md
         slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md
         design_approval={{ steps.plan-gate.output.choice }} {{ inputs.spec }}
-        Read the approved plan and generated tasks. Map every task exactly once,
+        Read the approved plan and generated tasks. If the after_tasks hook
+        already wrote a current slice plan whose fingerprint matches the
+        unchanged approved plan/tasks and maps every Task ID exactly once,
+        verify and reuse it instead of replanning. Otherwise map every task exactly once,
         classify trunk safety with executable evidence, derive the merge mode, and
         write the slice plan. Do not edit tasks.md or implement. Return
         needs_decision instead of forcing a mode when evidence or policy is missing.
@@ -532,7 +539,9 @@ steps:
                 slices=.specify/delivery/{{ inputs.delivery_run }}/slices.md
                 design_approval={{ steps.plan-gate.output.choice }} {{ inputs.spec }}
                 Plan a renewed slice mapping for every actual appended TaskID.
-                Preserve prior receipt history and boundaries; mark the changed
+                If the after_converge hook already planned this exact renewed
+                mapping with preserved history, verify and reuse it instead of
+                replanning. Preserve prior receipt history and boundaries; mark the changed
                 mapping pending until the new combined gate. Do not edit tasks.md.
 
           - id: convergence-analyze-runtime-begin

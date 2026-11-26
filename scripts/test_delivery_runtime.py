@@ -1966,6 +1966,57 @@ class DeliveryRuntimeTest(unittest.TestCase):
         )
         self.assertIn("state.json", missing.stderr)
 
+    def test_active_discovery_reports_none_single_and_ambiguous(self) -> None:
+        empty = json.loads(self.cli("active").stdout)
+        self.assertEqual(empty["selection"], "none")
+        self.assertEqual(empty["active"], [])
+        self.assertEqual(empty["inactive"], [])
+
+        self.new_runtime("hook-run", "bugfix", "bug-actual")
+        single = json.loads(self.cli("active").stdout)
+        self.assertEqual(single["selection"], "single")
+        self.assertEqual(len(single["active"]), 1)
+        selected = single["active"][0]
+        self.assertEqual(selected["delivery_run"], "hook-run")
+        self.assertEqual(selected["lane"], "bugfix")
+        self.assertEqual(selected["status"], "active")
+        self.assertIn("bindings", selected)
+        self.assertIn("approvals", selected)
+
+        self.new_runtime("second-run")
+        ambiguous = json.loads(self.cli("active").stdout)
+        self.assertEqual(ambiguous["selection"], "ambiguous")
+        self.assertEqual(
+            {item["delivery_run"] for item in ambiguous["active"]},
+            {"hook-run", "second-run"},
+        )
+        rejected = self.cli("active", "hook-run", expected=1)
+        self.assertIn("without --run", rejected.stderr)
+
+    def test_active_discovery_excludes_terminal_and_corrupt_runs(self) -> None:
+        self.new_runtime("live-run")
+        self.write(
+            ".specify/delivery/done-run/evidence.md",
+            "status: delivered\n"
+            "delivery_run: done-run\n"
+            "lane: lightweight\n"
+            "pull_request: owner/repo#7\n"
+            "outcome: merged\n"
+            "verified: true\n",
+        )
+        self.write(
+            ".specify/delivery/broken-run/runtime/state.json",
+            "{not-json\n",
+        )
+        result = json.loads(self.cli("active").stdout)
+        self.assertEqual(result["selection"], "single")
+        self.assertEqual(
+            [item["delivery_run"] for item in result["active"]], ["live-run"]
+        )
+        inactive = {item["delivery_run"]: item["status"] for item in result["inactive"]}
+        self.assertEqual(inactive.get("done-run"), "delivered")
+        self.assertEqual(inactive.get("broken-run"), "corrupt")
+
 
 if __name__ == "__main__":
     unittest.main()

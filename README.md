@@ -119,7 +119,7 @@ specify init . --integration opencode --script sh
 ### 3. 安装 Bundle
 
 ```bash
-base=https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.4.10/catalogs
+base=https://raw.githubusercontent.com/YanZhiwei/speckit-delivery/v0.5.0/catalogs
 specify extension catalog add "$base/extensions.json" --name speckit-delivery --install-allowed
 specify workflow catalog add "$base/workflows.json" --name speckit-delivery
 specify bundle catalog add "$base/bundles.json" --id speckit-delivery --policy install-allowed

@@ -61,6 +61,12 @@ completion. Leave non-empty condition expressions to the supported HookExecutor;
 do not invent an evaluator or silently assume a mandatory conditional hook passed
 when applicability/execution cannot be established.
 
+Delivery's own read-only hooks (`speckit.delivery.hook-brief` on
+`before_bug_fix` and `speckit.delivery.hook-simplify` on `after_bug_test`)
+follow this same lifecycle with current-round context; their shared contract is
+`.specify/extensions/delivery/templates/hooks.md`. They never apply a repair,
+rescan an immutable accepted proposal, or write runtime transport.
+
 Explicitly pass actual Bug slug/directory, Delivery run, reserved attempt, phase,
 current contents identity, and available round-local fix/test report paths to
 each hook. Do not relabel round paths as original official reports. A hook that

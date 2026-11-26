@@ -793,6 +793,30 @@ def validate(root: Path, expected_version: str | None = None) -> list[str]:
         catalog_provides = _mapping(entry.get("provides"), f"{extension_id}:provides", errors)
         if type(catalog_provides.get("commands")) is not int or catalog_provides["commands"] != len(commands):
             errors.append(f"catalogs/extensions.json:{extension_id}: command count differs from manifest")
+        hooks = _mapping(
+            manifest.get("hooks") or {}, f"{manifest_path}:hooks", errors
+        )
+        for event, definition in hooks.items():
+            entries = definition if isinstance(definition, list) else [definition]
+            for hook in entries:
+                hook = _mapping(hook, f"{manifest_path}:hooks.{event}", errors)
+                command = hook.get("command")
+                if command not in command_names:
+                    errors.append(
+                        f"{manifest_path}: hook {event} references undeclared command {command!r}"
+                    )
+                if hook.get("condition") not in (None, ""):
+                    errors.append(
+                        f"{manifest_path}: hook {event} declares a condition; current Spec Kit "
+                        "command templates skip conditioned hooks, so applicability belongs in the command"
+                    )
+                priority = hook.get("priority", 10)
+                if type(priority) is not int or priority < 1:
+                    errors.append(f"{manifest_path}: hook {event} priority must be an integer >= 1")
+                if type(hook.get("optional", True)) is not bool:
+                    errors.append(f"{manifest_path}: hook {event} optional must be a boolean")
+        if type(catalog_provides.get("hooks")) is not int or catalog_provides["hooks"] != len(hooks):
+            errors.append(f"catalogs/extensions.json:{extension_id}: hook count differs from manifest")
         if extension_id == "delivery":
             route = next(
                 (command for command in commands if command.get("name") == "speckit.delivery.route"),
@@ -812,6 +836,36 @@ def validate(root: Path, expected_version: str | None = None) -> list[str]:
             template = manifest_path.parent / "templates" / "exploration.md"
             if not template.is_file():
                 errors.append(f"{manifest_path}: missing templates/exploration.md")
+            hooks_template = manifest_path.parent / "templates" / "hooks.md"
+            if not hooks_template.is_file():
+                errors.append(f"{manifest_path}: missing templates/hooks.md")
+            expected_hooks = {
+                "before_specify": "speckit.delivery.hook-explore",
+                "after_specify": "speckit.delivery.hook-bind-feature",
+                "before_plan": "speckit.delivery.hook-plan-context",
+                "after_plan": "speckit.delivery.hook-propose",
+                "after_tasks": "speckit.delivery.hook-slice",
+                "after_converge": "speckit.delivery.hook-slice",
+                "before_implement": "speckit.delivery.hook-brief",
+                "after_implement": "speckit.delivery.hook-simplify",
+                "after_bug_assess": "speckit.delivery.hook-bind-assessment",
+                "before_bug_fix": "speckit.delivery.hook-brief",
+                "after_bug_test": "speckit.delivery.hook-simplify",
+            }
+            for event, command in expected_hooks.items():
+                definition = hooks.get(event)
+                entries = definition if isinstance(definition, list) else [definition]
+                if not any(isinstance(entry, dict) and entry.get("command") == command for entry in entries):
+                    errors.append(f"{manifest_path}: missing {event} hook for {command}")
+            for command in sorted(set(expected_hooks.values())):
+                hook_command = next((item for item in commands if item.get("name") == command), {})
+                hook_file = hook_command.get("file")
+                if not isinstance(hook_file, str):
+                    errors.append(f"{manifest_path}: missing {command} command")
+                    continue
+                path = manifest_path.parent / hook_file
+                if path.is_file() and "templates/hooks.md" not in path.read_text(encoding="utf-8"):
+                    errors.append(f"{path}: hook adapter must reference the shared templates/hooks.md contract")
             slices_template = manifest_path.parent / "templates" / "slices.md"
             if not slices_template.is_file():
                 errors.append(f"{manifest_path}: missing templates/slices.md")

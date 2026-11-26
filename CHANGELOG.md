@@ -2,6 +2,30 @@
 
 All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and Semantic Versioning.
 
+## [0.5.0] - 2026-11-26
+
+### Added
+
+- Delivery now registers Spec Kit extension hooks for Specify, Plan, Tasks, Implement,
+  Converge, and Bug assess/fix/test lifecycle events. Eight argument-less
+  `speckit.delivery.hook-*` adapters cover direct Core/Bug command invocations: exploration
+  and scope approval before Specify, Feature/assessment binding, ADR resolution and Proposed
+  baselines around Plan, slice planning after Tasks/Converge, optional pre-edit quality briefs,
+  and optional read-only simplification scans. The shared contract lives in
+  `extensions/delivery/templates/hooks.md`.
+- `delivery_runtime.py active` provides read-only active-run discovery for those hooks:
+  exactly one active run is selected, none is a no-op, and multiple runs require a user choice.
+
+### Changed
+
+- Portable workflows keep their explicit steps and now reuse hook-produced native artifacts
+  (ADR baseline, slice plan, candidate scan, quality brief) instead of repeating the work.
+  Hooks create no runtime tickets or attempt budgets and record no design/assessment/execution/
+  simplify/review approval; every gate and closure verdict stays with the native owners.
+- Distribution validation checks extension hook registrations against declared commands,
+  rejects conditions that current Spec Kit templates would silently skip, and compares catalog
+  hook counts with each manifest.
+
 ## [0.4.10] - 2026-11-25
 
 ### Added
