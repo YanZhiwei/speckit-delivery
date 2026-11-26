@@ -106,6 +106,40 @@ isolation, names integration verification and review independence, and scales
 down to a short sequential plan for simple work. These are prompt contracts,
 not an automatic multi-agent scheduler or a new runtime receipt schema.
 
+## Spec Kit hooks
+
+The manifest registers argument-less `speckit.delivery.hook-*` adapters so a
+direct Core/Bug command invocation keeps the active run's governance instead of
+bypassing it. The shared [hook contract](templates/hooks.md) owns run
+resolution, reuse, and limits. Each adapter resolves the single active run with
+the read-only `delivery_runtime.py active` operation: no active run is a no-op,
+multiple active runs require a user choice, and a lane that does not own the
+surrounding command is skipped.
+
+| Event | Adapter | Optional | Native preparation (reused when current) |
+| --- | --- | --- | --- |
+| `before_specify` | `hook-explore` | no | Decision discovery + exploration packet; records the actual direct-path scope choice |
+| `after_specify` | `hook-bind-feature` | no | Bind the actual Core Feature directory |
+| `before_plan` | `hook-plan-context` | no | ADR resolution + gap-only code context |
+| `after_plan` | `hook-propose` | no | Proposed ADR baseline + pre-gate design snapshot |
+| `after_tasks` | `hook-slice` | no | Slice plan mapped to real Task IDs |
+| `after_converge` | `hook-slice` | no | Renewed mapping for appended Task IDs |
+| `before_implement` | `hook-brief` | yes | Pre-edit quality/architecture brief |
+| `after_implement` | `hook-simplify` | yes | Read-only simplification scan |
+| `after_bug_assess` | `hook-bind-assessment` | no | Bind the actual Bug assessment |
+| `before_bug_fix` | `hook-brief` | no | Assessment-bound pre-edit brief, including repair rounds |
+| `after_bug_test` | `hook-simplify` | yes | Read-only scan on current repaired contents |
+
+Hooks are prompt-level and may be skipped or disabled; they are never evidence
+of completion. They create no runtime tickets or attempt budgets, record no
+design/assessment/execution/simplify/review approval, and replace no quality,
+review, or closure gate. Portable workflows keep their explicit steps and reuse
+hook-produced native artifacts (ADR baseline, slice plan, candidate scan,
+brief) rather than repeating the work; runtime transport and every gate stay
+with the workflow and Delivery Route. Lightweight has no Core command event, so
+its explicit brief/simplify steps are unchanged, and Ralph's per-task brief
+remains the Feature execution path.
+
 ## Optional method adapters
 
 `method_adapters` in `delivery-config.yml` can select external design, diagnosis,

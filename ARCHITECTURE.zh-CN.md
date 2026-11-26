@@ -111,6 +111,15 @@ integration Rollup 使用 merge commit，禁止 squash 最终 Rollup、rebase �
 Feature Delivery 把 Brief 委托给 Ralph 的逐任务迭代，使每个任务获得精确的目标路径
 上下文，同时避免重复的整轮调用；因此跨宿主流程仍然有效。
 
+Delivery 通过无参数的 `speckit.delivery.hook-*` 适配命令注册 Spec Kit 扩展 Hook，
+统一遵循 [Hook 契约](extensions/delivery/templates/hooks.md)，覆盖 Specify、Plan、
+Tasks、Implement、Converge 以及 Bug assess/fix/test 生命周期事件。适配器通过只读的
+runtime `active` 操作解析唯一活跃 Run（无活跃 Run 时 no-op，多个活跃 Run 必须由用户
+选择），先复用当前原生工件再决定是否调度原生 owner，从而覆盖直接调用 Core／Bug 命令
+的路径。可移植 Workflow 保留显式步骤，并复用 Hook 已产出的原生工件而不是重复执行。
+Hook 不创建 runtime ticket 或尝试预算，不记录 design／assessment／execution／simplify／
+review 审批（仅允许直接调用路径下的 scope 选择），也不替代质量、评审或关闭闸门。
+
 Code Review 复用有效检查回执，但独立覆盖需求符合性、代码质量、架构与设计规范、运行
 正确性、安全与兼容性、测试有效性。遵循 Plan 不能掩盖有证据的设计缺陷，重大重设计返回
 确认。[Reviewer 模板](extensions/review/templates/reviewer.md) 统一拥有快照、覆盖、

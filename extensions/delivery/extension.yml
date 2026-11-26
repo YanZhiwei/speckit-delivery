@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: delivery
   name: Spec Kit Delivery Core
-  version: "0.4.10"
+  version: "0.5.0"
   description: "Bound delivery research, prepare role-aware context and cooperation plans, select methods, slice changes, and orchestrate evidence-backed handoff."
   category: process
   effect: read-write
@@ -51,10 +51,87 @@ provides:
     - name: speckit.delivery.context
       file: commands/speckit.delivery.context.md
       description: "Assemble a short, evidence-backed map of the implementation the current change touches."
+    - name: speckit.delivery.hook-explore
+      file: commands/speckit.delivery.hook-explore.md
+      description: "before_specify hook: reuse or prepare exploration and scope approval for the active Feature run."
+    - name: speckit.delivery.hook-bind-feature
+      file: commands/speckit.delivery.hook-bind-feature.md
+      description: "after_specify hook: bind the actual Core Feature directory to the active Delivery run."
+    - name: speckit.delivery.hook-plan-context
+      file: commands/speckit.delivery.hook-plan-context.md
+      description: "before_plan hook: reuse or prepare ADR resolution and code context for the active Feature run."
+    - name: speckit.delivery.hook-propose
+      file: commands/speckit.delivery.hook-propose.md
+      description: "after_plan hook: reuse or establish the Proposed ADR baseline and pre-gate design snapshot."
+    - name: speckit.delivery.hook-slice
+      file: commands/speckit.delivery.hook-slice.md
+      description: "after_tasks/after_converge hook: reuse the slice plan or map newly generated/appended tasks."
+    - name: speckit.delivery.hook-brief
+      file: commands/speckit.delivery.hook-brief.md
+      description: "before_implement/before_bug_fix hook: render the applicable pre-edit quality brief."
+    - name: speckit.delivery.hook-simplify
+      file: commands/speckit.delivery.hook-simplify.md
+      description: "after_implement/after_bug_test hook: run or reuse a read-only simplification scan."
+    - name: speckit.delivery.hook-bind-assessment
+      file: commands/speckit.delivery.hook-bind-assessment.md
+      description: "after_bug_assess hook: bind the actual Bug assessment to the active Bugfix run."
   config:
     - name: delivery-config.yml
       template: config-template.yml
       description: "Project-local delivery lanes, artifact policy, paths, and loop bounds."
       required: true
+
+# Argument-less event adapters for direct Core/Bug command invocations. The
+# shared contract lives in templates/hooks.md; portable workflows keep their
+# explicit steps and reuse hook-produced native artifacts. No conditions are
+# declared because current Spec Kit command templates skip conditioned hooks.
+hooks:
+  before_specify:
+    command: speckit.delivery.hook-explore
+    optional: false
+    description: "Reuse or prepare the active Feature run's exploration packet and record the actual scope choice."
+  after_specify:
+    command: speckit.delivery.hook-bind-feature
+    optional: false
+    description: "Bind the actual Core Feature directory to the active Delivery run."
+  before_plan:
+    command: speckit.delivery.hook-plan-context
+    optional: false
+    description: "Reuse or prepare the active Feature run's ADR resolution and code context."
+  after_plan:
+    command: speckit.delivery.hook-propose
+    optional: false
+    description: "Reuse or establish the Proposed ADR baseline and pre-gate design snapshot."
+  after_tasks:
+    command: speckit.delivery.hook-slice
+    optional: false
+    description: "Reuse the current slice plan or map newly generated Task IDs."
+  after_converge:
+    command: speckit.delivery.hook-slice
+    optional: false
+    description: "Reuse the current slice plan or map Converge-appended Task IDs."
+  before_implement:
+    command: speckit.delivery.hook-brief
+    optional: true
+    prompt: "Render the active Delivery run's quality and architecture brief before implementation?"
+    description: "Advisory pre-edit brief; Ralph's per-task brief and closure checks are unchanged."
+  after_implement:
+    command: speckit.delivery.hook-simplify
+    optional: true
+    prompt: "Scan the current diff for simplification candidates (read-only)?"
+    description: "Read-only candidate scan; approval and application stay with the lane."
+  after_bug_assess:
+    command: speckit.delivery.hook-bind-assessment
+    optional: false
+    description: "Bind the actual Bug assessment to the active Bugfix Delivery run."
+  before_bug_fix:
+    command: speckit.delivery.hook-brief
+    optional: false
+    description: "Render the approved assessment's pre-edit quality brief, including continuation rounds."
+  after_bug_test:
+    command: speckit.delivery.hook-simplify
+    optional: true
+    prompt: "Scan the repaired diff for simplification candidates (read-only)?"
+    description: "Read-only candidate scan on current repaired contents; originals stay immutable."
 
 tags: ["sdd", "delivery", "slicing", "routing", "handoff", "configuration"]

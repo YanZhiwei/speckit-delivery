@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "bugfix-delivery"
   name: "Spec Kit Bugfix Delivery"
-  version: "0.4.10"
+  version: "0.5.0"
   author: "Yan Zhiwei"
   description: "Evidence-first structure/history exploration, bug assessment and scope approval, guarded repair, regression validation, quality, review, and handoff."
 
@@ -140,7 +140,7 @@ steps:
   - id: quality-brief-before-fix
     command: speckit.quality.brief
     integration: "{{ inputs.integration }}"
-    input: { args: "lane=bugfix delivery_run={{ inputs.delivery_run }} bug_slug={{ inputs.bug_slug }} assessment=.specify/bugs/{{ inputs.bug_slug }}/assessment.md exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md scope=bugfix {{ inputs.report }} Use this run's approved assessment; do not infer a Feature plan from another run." }
+    input: { args: "lane=bugfix delivery_run={{ inputs.delivery_run }} bug_slug={{ inputs.bug_slug }} assessment=.specify/bugs/{{ inputs.bug_slug }}/assessment.md exploration=.specify/delivery/{{ inputs.delivery_run }}/exploration.md scope=bugfix {{ inputs.report }} Use this run's approved assessment; do not infer a Feature plan from another run. If the before_bug_fix hook already rendered this brief for the same approved assessment and current contents in this session, reuse it instead of rendering a second brief." }
 
   - id: runtime-phase-execution
     type: shell
@@ -173,7 +173,11 @@ steps:
         scope=diff runtime_stage=simplify
         runtime_result=.specify/delivery/{{ inputs.delivery_run }}/runtime/result-simplify.json
         {{ inputs.report }} Read the pending runtime input and approved assessment;
-        write only this run's simplifications.md and normalized result. Do not edit
+        write only this run's simplifications.md and normalized result. If the
+        after_bug_test hook already wrote a current read-only candidate scan for
+        the same diff, reuse that canonical native report and write only the
+        required machine receipt and normalized envelope instead of rescanning
+        unchanged contents. Do not edit
         source, the assessment, or create Feature tasks.
 
   - id: simplify-runtime-record

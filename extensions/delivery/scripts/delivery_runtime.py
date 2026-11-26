@@ -2400,7 +2400,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("operation", choices=(
         "init", "bind", "phase", "begin", "record", "owner-result", "needs", "require",
-        "reserve", "complete", "present", "decide", "status", "resume", "outcome",
+        "reserve", "complete", "present", "decide", "status", "resume", "active", "outcome",
         "task-start", "task-gate", "task-record", "verify-publication", "close-record",
     ))
     parser.add_argument("--root", type=Path, default=Path.cwd())
@@ -2442,24 +2442,49 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
     try:
-        if not args.run and args.operation == "status":
+        if not args.run and args.operation in {"status", "active"}:
             directory = args.root.resolve() / ".specify/delivery"
-            result = []
+            runs = []
             if directory.is_dir():
                 for path in sorted(directory.iterdir()):
                     if not path.is_dir():
                         continue
                     try:
-                        result.append(Runtime(args.root, path.name).status())
+                        runs.append(Runtime(args.root, path.name).status())
                     except (ProtocolError, OSError) as exc:
-                        result.append({
+                        runs.append({
                             "delivery_run": path.name,
                             "status": "corrupt",
                             "next_action": f"Inspect and recover this run without initializing over it: {exc}",
                         })
+            if args.operation == "active":
+                # Read-only run discovery for argument-less Spec Kit hooks.
+                # Terminal/absent/corrupt runs are never selected; a run whose
+                # status needs verification stays visible with its blockers so
+                # the caller stops for recovery instead of guessing another run.
+                active = [
+                    item for item in runs
+                    if item.get("status") in {"active", "handoff-ready", "verification-required", "legacy"}
+                ]
+                result = {
+                    "selection": "single" if len(active) == 1 else "none" if not active else "ambiguous",
+                    "active": active,
+                    "inactive": [
+                        {
+                            "delivery_run": item.get("delivery_run"),
+                            "status": item.get("status"),
+                            "next_action": item.get("next_action"),
+                        }
+                        for item in runs if item not in active
+                    ],
+                }
+            else:
+                result = runs
         else:
             if not args.run:
                 raise ProtocolError("An explicit --run is required; use status to list available runs.")
+            if args.operation == "active":
+                raise ProtocolError("active discovers runs without --run; use status --run <id> for one known run.")
             runtime = Runtime(args.root, args.run)
             operation = args.operation
             mutation_operations = {"init", "bind", "phase", "begin", "record", "owner-result", "reserve", "complete", "present", "decide"}

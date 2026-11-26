@@ -66,6 +66,15 @@ a new protocol run; do not give interrupted work a new run ID to reset budgets.
    status plus the pending owner/action. Neither command executes that action or
    reopens valid approvals. Unfinished reservations and missing/stale results are
    explicit blockers or next actions, not an empty budget.
+5. `active` (no `--run`) is read-only run discovery for the argument-less Spec
+   Kit hook adapters in `templates/hooks.md`. It returns `selection:
+   single|none|ambiguous`, full status for every non-terminal run under
+   `active`, and terminal/absent/corrupt runs under `inactive`. Exactly one
+   active run may be selected; `none` makes a hook a no-op and `ambiguous`
+   requires an explicit user choice, never recency. `verification-required` and
+   `legacy` runs stay visible with their blockers so the caller stops for
+   recovery instead of selecting another run. `active` takes no `--run`; use
+   `status --run <id>` for a known run.
 
 For Core Tasks/Analyze/Converge, also read the installed
 `.specify/extensions/delivery/templates/core-adapter.md`.

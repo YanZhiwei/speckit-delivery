@@ -3,6 +3,27 @@
 所有重要变更遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)
 和语义化版本规范。
 
+## [0.5.0] - 2026-11-26
+
+### 新增
+
+- Delivery 注册 Spec Kit 扩展 Hook，覆盖 Specify、Plan、Tasks、Implement、Converge 以及
+  Bug assess/fix/test 生命周期事件。八个无参数的 `speckit.delivery.hook-*` 适配命令覆盖
+  直接调用 Core／Bug 命令的路径：Specify 前的探索与 scope 审批、Feature／assessment 绑定、
+  Plan 前后的 ADR 解析与 Proposed 基线、Tasks／Converge 后的切片规划、可选的编辑前质量
+  Brief，以及可选的只读简化扫描。共享契约位于
+  `extensions/delivery/templates/hooks.md`。
+- `delivery_runtime.py active` 为这些 Hook 提供只读活跃 Run 发现：恰好一个活跃 Run 才可
+  被选中，无活跃 Run 时 no-op，多个活跃 Run 必须由用户选择。
+
+### 变更
+
+- 可移植 Workflow 保留显式步骤，并复用 Hook 已产出的原生工件（ADR 基线、切片计划、
+  候选扫描、质量 Brief）而不是重复执行。Hook 不创建 runtime ticket 或尝试预算，不记录
+  design／assessment／execution／simplify／review 审批；所有闸门与关闭判定仍归原生 owner。
+- 分发校验会核对扩展 Hook 注册与已声明命令的一致性，拒绝当前 Spec Kit 模板会静默跳过的
+  condition，并比较 catalog 中的 Hook 数量与各 manifest。
+
 ## [0.4.10] - 2026-11-25
 
 ### 新增
